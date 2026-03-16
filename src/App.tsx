@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
-import HomePage from './pages/HomePage'
+import SelectRolePage from './pages/SelectRolePage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import PlayerHomePage from './pages/player/PlayerHomePage'
@@ -21,13 +21,14 @@ import CoachHomePage from './pages/coach/CoachHomePage'
 import AdminHomePage from './pages/admin/AdminHomePage'
 import NotFoundPage from './pages/NotFoundPage'
 import PlayerLayout from './layouts/PlayerLayout'
+import RegisterCoachPage from './pages/RegisterCoachPage'
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/login" element={<LoginPage />} />
+      <Route path="/" element={<SelectRolePage />} />      <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/register-coach" element={<RegisterCoachPage />} />
 
       <Route path="/player" element={<PlayerLayout />}>
         <Route index element={<Navigate to="home" replace />} />
