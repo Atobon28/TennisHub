@@ -1,15 +1,26 @@
-import { Routes, Route } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
-import NotFoundPage from './pages/NotFoundPage'
 import PlayerHomePage from './pages/player/PlayerHomePage'
 import FindMatchesPage from './pages/player/FindMatchesPage'
 import BookCourtPage from './pages/player/BookCourtPage'
 import TournamentsPage from './pages/player/TournamentsPage'
 import PlayerProfilePage from './pages/player/PlayerProfilePage'
+import NotificationsPage from './pages/player/NotificationsPage'
+import TournamentViewPage from './pages/player/TournamentViewPage'
+import CourtViewPage from './pages/player/CourtViewPage'
+import PlayersPage from './pages/player/PlayersPage'
+import PlayerViewPage from './pages/player/PlayerViewPage'
+import FindCoachPage from './pages/player/FindCoachPage'
+import CoachViewPage from './pages/player/CoachViewPage'
+import ProfileTournamentsPage from './pages/player/ProfileTournamentsPage'
+import ProfileChangePasswordPage from './pages/player/ProfileChangePasswordPage'
+import CreateMatchPage from './pages/player/CreateMatchPage'
 import CoachHomePage from './pages/coach/CoachHomePage'
 import AdminHomePage from './pages/admin/AdminHomePage'
+import NotFoundPage from './pages/NotFoundPage'
+import PlayerLayout from './layouts/PlayerLayout'
 
 function App() {
   return (
@@ -18,11 +29,24 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
 
-      <Route path="/player/home" element={<PlayerHomePage />} />
-      <Route path="/player/matches" element={<FindMatchesPage />} />
-      <Route path="/player/book-court" element={<BookCourtPage />} />
-      <Route path="/player/tournaments" element={<TournamentsPage />} />
-      <Route path="/player/profile" element={<PlayerProfilePage />} />
+      <Route path="/player" element={<PlayerLayout />}>
+        <Route index element={<Navigate to="home" replace />} />
+        <Route path="home" element={<PlayerHomePage />} />
+        <Route path="tournaments" element={<TournamentsPage />} />
+        <Route path="tournaments/view" element={<TournamentViewPage />} />
+        <Route path="courts" element={<BookCourtPage />} />
+        <Route path="courts/view" element={<CourtViewPage />} />
+        <Route path="notifications" element={<NotificationsPage />} />
+        <Route path="profile" element={<PlayerProfilePage />} />
+        <Route path="profile/tournaments" element={<ProfileTournamentsPage />} />
+        <Route path="profile/change-password" element={<ProfileChangePasswordPage />} />
+        <Route path="players" element={<PlayersPage />} />
+        <Route path="players/view" element={<PlayerViewPage />} />
+        <Route path="coaches" element={<FindCoachPage />} />
+        <Route path="coaches/view" element={<CoachViewPage />} />
+        <Route path="create-match" element={<CreateMatchPage />} />
+        <Route path="matches" element={<FindMatchesPage />} />
+      </Route>
 
       <Route path="/coach/home" element={<CoachHomePage />} />
       <Route path="/admin/home" element={<AdminHomePage />} />
@@ -33,4 +57,3 @@ function App() {
 }
 
 export default App
-
