@@ -275,26 +275,30 @@ body {
     min-height: 100vh;
   }
 
-  .player-layout__sidebar {
-    display: block;
-    position: sticky;
-    top: 0;
-    height: 100vh;
-  }
+.player-layout__sidebar {
+  display: block;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  z-index: 60;
+}
 
   .player-layout__main-area {
     min-height: 100vh;
   }
 
-  .player-layout__desktop-topbar {
-    height: 112px;
-    background-color: var(--player-dark);
-    border-bottom: 3px solid var(--player-green);
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding: 0 34px;
-  }
+.player-layout__desktop-topbar {
+  height: 112px;
+  background-color: var(--player-dark);
+  border-bottom: 3px solid var(--player-green);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 34px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
 
   .player-layout__desktop-topbar-right {
     display: flex;
