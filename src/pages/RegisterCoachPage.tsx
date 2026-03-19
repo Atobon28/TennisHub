@@ -1,11 +1,11 @@
 import { Link, useNavigate } from 'react-router-dom'
 import '../styles/access-pages.css'
-import registerImage from '../assets/register.jpg'
+import registerCoachImage from '../assets/register-coach.jpg'
 
-function RegisterPage() {
+function RegisterCoachPage() {
   const navigate = useNavigate()
 
-  const handleRegister = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleRegisterCoach = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     navigate('/login')
   }
@@ -19,7 +19,7 @@ function RegisterPage() {
             Register
           </h2>
 
-          <form className="access-form" onSubmit={handleRegister}>
+          <form className="access-form" onSubmit={handleRegisterCoach}>
             <div className="access-form__group">
               <label className="access-form__label" htmlFor="email">
                 Email
@@ -56,6 +56,18 @@ function RegisterPage() {
               />
             </div>
 
+            <div className="access-form__group">
+              <label className="access-form__label" htmlFor="pricePerHour">
+                Price per hour
+              </label>
+              <input
+                id="pricePerHour"
+                type="text"
+                className="access-form__input"
+                placeholder="Enter your price..."
+              />
+            </div>
+
             <button type="submit" className="access-form__button-primary">
               Register
             </button>
@@ -75,8 +87,8 @@ function RegisterPage() {
 
       <section className="access-screen__right">
         <img
-          src={registerImage}
-          alt="TennisHub register"
+          src={registerCoachImage}
+          alt="TennisHub register coach"
           className="access-screen__image"
         />
       </section>
@@ -84,4 +96,4 @@ function RegisterPage() {
   )
 }
 
-export default RegisterPage
+export default RegisterCoachPage

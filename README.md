@@ -2,7 +2,7 @@
 
 TennisHub is a web application developed by **Ana Tobon** and **Juan Pablo Castro**.
 
-The project is designed to connect the tennis community through a platform that supports different user roles and allows users to interact with courts, matches, tournaments, and role-based features in one place.
+It is a platform created for the tennis community, where different types of users can access different sections depending on their role.
 
 ---
 
@@ -15,158 +15,88 @@ The project is designed to connect the tennis community through a platform that 
 
 ## Project Overview
 
-TennisHub is a multi-role platform for the tennis community.  
-It includes three main user profiles:
+TennisHub is a multi-role platform designed for:
 
-- **Player**
-- **Coach**
-- **Admin**
+- Players
+- Coaches
+- Admins
 
-The purpose of the application is to provide an organized and intuitive experience for users who want to:
-
-- check available courts
-- connect with players of similar level
-- explore tournaments
-- manage role-specific information and views
+The project is currently focused on the frontend structure, navigation, and responsive design.
 
 ---
 
-## Main Features
+## Technologies Used
 
-### Player
-- View and explore available courts
-- Find matches with players of a similar level
-- Explore tournaments
-- Manage personal profile
-
-### Coach
-- Access coach-related views
-- Manage training-related information
-- Interact with platform services from the coach perspective
-
-### Admin
-- Manage courts
-- Manage tournaments
-- Oversee platform information
-- Control administrative views and flows
-
----
-
-## Technologies and Libraries
-
-### Frontend
-- React 18
+- React
 - TypeScript
 - Vite
 - React Router DOM
 - CSS
-
-### Backend
-- Supabase
-
-### Notes
-This project follows a component-based structure and uses TypeScript for safer and clearer development.
+- Iconify
 
 ---
 
-## Project Structure
+## Installation
+
+Clone the repository and install dependencies:
 
 ```bash
-src/
-  pages/
-    player/
-    coach/
-    admin/
-  components/
-  types/
-  data/
-  App.tsx
-  main.tsx
-```
-
-## Setup Instructions
-Clone the repository
-git clone https://github.com/Atobon28/TennisHub
-
-2. Enter the project folder
-cd TennisHub
-
-3. Install dependencies
+git clone <your-repository-url>
+cd tennishub
 npm install
 
-4. Run the development server
+Run the project locally:
 npm run dev
 
-5. Open in browser
+Main Scripts
 
-The project usually runs at:
+npm run dev → starts the project
 
-http://localhost:5173
+npm run build → builds the project
 
-## Branching Model
-This project follows the branching logic defined in the team code of conduct.
+npm run preview → previews the production version
+```
 
-## Main Branch
-- main
-- Contains the stable and approved version of the project
+## Project Structure
+src/
+├─ assets/
+├─ components/
+├─ layouts/
+├─ pages/
+├─ styles/
+├─ App.tsx
+├─ main.tsx
 
-## Development Branch
-- dev
-- Used to integrate current development before merging into main
+## Simple folder explanation
 
-## Feature Branches
-Used for new functionalities.
+assets: images and static files
 
-Naming convention:
-feature/type-short-description
+components: reusable interface parts
 
-Examples:
-feature/ui-login-page
-feature/api-player-data
-feature/db-create-users-table
+layouts: shared page structures
 
-## Hotfix Branches
-Used to fix urgent production errors.
+pages: main screens of the app
 
-Naming convention:
-hotfix/fix-short-description
+styles: CSS files
 
-Example:
-hotfix/fix-login-bug
+App.tsx: main routes
 
-## Commit Convention
-This project follows the commit style defined in the code of conduct.
+main.tsx: app entry point
 
-Format:
-type(scope): description
+## Current Status
 
-## Types
-- feat
-- fix
-- style
+Right now, the project includes:
 
-## Example commits
-fix(ui): resolve button alignment issue
-feat(ui): add dark mode toggle
-style(api): improve request formatting
+base structure
 
-## Suggested scopes
-- api
-- ui
-- db
+routing system
 
-## Workflow
-Step 1
-Create a new branch from main or dev depending on the agreed workflow.
+responsive navigation
 
-Example:
-feature/ui-login-page
+role-based page organization
 
-Step 2
-Develop and test the functionality inside that branch.
+The Player section is the most developed one at the moment.
 
-Step 3
-When everything works correctly, merge the branch into the integration branch and later into main after approval.
+## Notes
 
-Step 4
-If a production issue appears, create a hotfix branch, solve the issue, and merge it back.
+This project is still under development, so some views are currently scaffolds and will be improved in future phases.

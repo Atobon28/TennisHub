@@ -1,0 +1,247 @@
+:root {
+  --tennis-green: #bfe212;
+  --tennis-black: #0f0e0c;
+  --tennis-dark: #25292d;
+  --tennis-bg: #f7f3f2;
+  --tennis-white: #ffffff;
+  --tennis-border: #4a4a4a;
+  --tennis-input-placeholder: #888888;
+  --tennis-green-gradient: linear-gradient(180deg, #bce104 0%, #667f00 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.access-screen {
+  width: 100%;
+  height: 100vh;
+  min-height: 100vh;
+  background-color: var(--tennis-bg);
+  display: grid;
+  grid-template-columns: 1fr;
+  overflow: hidden;
+}
+
+.access-screen__left {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  background-color: var(--tennis-bg);
+  overflow: hidden;
+}
+
+.access-screen__content {
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.access-screen__title {
+  margin: 0;
+  color: #111111;
+  font-family: 'Baloo 2', Arial, sans-serif;
+  font-size: 3.3rem;
+  line-height: 0.95;
+  font-weight: 800;
+  text-align: center;
+}
+
+.access-screen__subtitle {
+  margin: 20px 0 36px;
+  color: var(--tennis-green);
+  font-size: 1.35rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.access-screen__buttons {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.access-screen__button-dark {
+  width: 100%;
+  min-height: 46px;
+  border: none;
+  border-radius: 6px;
+  background-color: var(--tennis-dark);
+  color: var(--tennis-white);
+  font-size: 0.98rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.access-screen__right {
+  display: none;
+}
+
+.access-screen__image {
+  width: 100%;
+  height: 100vh;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+/* desktop */
+@media (min-width: 1024px) {
+  .access-screen {
+    grid-template-columns: 37% 63%;
+  }
+
+  .access-screen__left {
+    padding: 60px 32px;
+  }
+
+  .access-screen__content {
+    max-width: 340px;
+  }
+
+  .access-screen__title {
+    font-size: 4rem;
+  }
+
+  .access-screen__subtitle {
+    font-size: 1.45rem;
+    margin: 20px 0 42px;
+  }
+
+  .access-screen__right {
+    display: block;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+  }
+}
+
+.access-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.access-form__group {
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.access-form__label {
+  display: block;
+  margin-bottom: 6px;
+  color: #111111;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.access-form__input {
+  width: 100%;
+  height: 42px;
+  border: 1.5px solid #5a5a5a;
+  border-radius: 6px;
+  background-color: transparent;
+  padding: 0 12px;
+  font-size: 0.82rem;
+  color: #111111;
+  font-family: inherit;
+  outline: none;
+}
+
+.access-form__input::placeholder {
+  color: var(--tennis-input-placeholder);
+}
+
+.access-form__button-primary {
+  width: 100%;
+  min-height: 46px;
+  border: none;
+  border-radius: 6px;
+  background: var(--tennis-green-gradient);
+  color: var(--tennis-white);
+  font-size: 0.98rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  margin-top: 10px;
+}
+
+.access-form__footer {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #222222;
+}
+
+.access-form__footer-link {
+  color: #8ca800;
+  text-decoration: none;
+  margin-left: 4px;
+}
+
+.access-form__footer-link:hover {
+  text-decoration: underline;
+}
+
+.access-form__footer-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.access-form__back-icon {
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.access-screen__content--form {
+  max-width: 330px;
+}
+
+.access-screen__subtitle--login {
+  margin-bottom: 26px;
+}
+
+@media (min-width: 1024px) {
+  .access-screen__content--form {
+    max-width: 330px;
+  }
+
+  .access-form__label {
+    font-size: 0.74rem;
+  }
+
+  .access-form__input {
+    height: 40px;
+    font-size: 0.78rem;
+  }
+
+  .access-form__footer {
+    font-size: 0.68rem;
+  }
+}
+
+.access-form__link {
+  color: #8ca800;
+  text-decoration: none;
+  margin-left: 4px;
+}
+
+.access-form__link:hover {
+  text-decoration: underline;
+}
