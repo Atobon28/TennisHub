@@ -29,6 +29,7 @@ import AdminCourtsPage from "./pages/admin/AdminCourtsPage";
 import AdminCourtViewPage from "./pages/admin/AdminCourtViewPage";
 import AdminTournamentsPage from "./pages/admin/AdminTournamentsPage";
 import AdminTournamentViewPage from "./pages/admin/AdminTournamentViewPage";
+import AdminProfilePage from "./pages/admin/AdminProfilePage";
 
 function App() {
   return (
@@ -73,6 +74,7 @@ function App() {
         <Route path="courts/view" element={<AdminCourtViewPage />} />
         <Route path="tournaments" element={<AdminTournamentsPage />} />
         <Route path="tournaments/view" element={<AdminTournamentViewPage />} />
+        <Route path="profile" element={<AdminProfilePage />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
