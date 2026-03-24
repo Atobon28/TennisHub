@@ -1,0 +1,295 @@
+.admin-profile {
+  width: 100%;
+}
+
+.admin-profile__grid {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 24px;
+  align-items: start;
+}
+
+.admin-profile__main {
+  background-color: var(--player-card-bg);
+  border-radius: 16px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* HEADER */
+.admin-profile__header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.admin-profile__avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.admin-profile__avatar {
+  width: 110px;
+  height: 110px;
+  border-radius: 999px;
+  object-fit: cover;
+  display: block;
+}
+
+.admin-profile__edit-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: var(--player-white);
+  border: none;
+  border-radius: 999px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-profile__user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-profile__name {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--player-black);
+  margin: 0;
+}
+
+.admin-profile__username {
+  font-size: 0.95rem;
+  color: #888;
+  margin: 0;
+}
+
+.admin-profile__links {
+  display: flex;
+  gap: 16px;
+}
+
+.admin-profile__link {
+  background: none;
+  border: none;
+  font-size: 0.88rem;
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: underline;
+  color: #555;
+  padding: 0;
+}
+
+.admin-profile__link--logout {
+  color: #e05252;
+}
+
+/* TABS */
+.admin-profile__tabs {
+  display: flex;
+  gap: 32px;
+  border-bottom: 2px solid #ddd;
+}
+
+.admin-profile__tab {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  color: #888;
+  padding: 0 0 12px 0;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+}
+
+.admin-profile__tab--active {
+  color: var(--player-black);
+  font-weight: 700;
+  border-bottom: 3px solid var(--player-green);
+}
+
+/* COURTS LIST */
+.admin-profile__list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.admin-profile__court-card {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  height: 110px;
+}
+
+.admin-profile__court-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.admin-profile__court-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, transparent 60%);
+  display: flex;
+  align-items: flex-end;
+  padding: 12px 16px;
+}
+
+.admin-profile__court-name {
+  color: var(--player-white);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+/* TOURNAMENTS LIST */
+.admin-profile__tournament-card {
+  background-color: var(--player-dark);
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.admin-profile__tournament-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background-color: var(--player-green);
+  color: var(--player-dark);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.admin-profile__tournament-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-profile__tournament-name {
+  color: var(--player-white);
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.admin-profile__tournament-detail {
+  color: #b0b0b0;
+  font-size: 0.82rem;
+  margin: 0;
+}
+
+/* MODAL */
+.admin-profile__modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.admin-profile__modal {
+  background: var(--player-white);
+  border-radius: 20px;
+  padding: 40px;
+  width: 100%;
+  max-width: 560px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.admin-profile__modal-close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  cursor: pointer;
+  color: #e05252;
+  font-weight: 700;
+}
+
+.admin-profile__modal-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--player-black);
+  margin: 0;
+  text-align: center;
+}
+
+.admin-profile__modal-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-profile__modal-subtitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--player-black);
+  margin: 0 0 4px 0;
+}
+
+.admin-profile__modal-label {
+  font-size: 0.9rem;
+  color: var(--player-black);
+}
+
+.admin-profile__modal-input {
+  background-color: #3a3a3a;
+  border: none;
+  border-radius: 8px;
+  padding: 14px 16px;
+  font-size: 0.95rem;
+  color: var(--player-white);
+  font-family: inherit;
+  width: 100%;
+}
+
+.admin-profile__modal-input::placeholder {
+  color: #aaa;
+}
+
+.admin-profile__modal-error {
+  font-size: 0.85rem;
+  color: #e05252;
+  margin: 0;
+}
+
+.admin-profile__modal-confirm {
+  background: var(--player-green-gradient);
+  color: var(--player-white);
+  border: none;
+  border-radius: 999px;
+  padding: 14px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  width: 60%;
+  align-self: center;
+}
