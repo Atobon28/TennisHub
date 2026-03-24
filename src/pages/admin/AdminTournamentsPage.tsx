@@ -149,11 +149,15 @@ function AdminTournamentsPage() {
               <input
                 type="number"
                 min="1"
-                max="10"
+                max="5"
                 className="admin-tournaments__modal-input"
                 placeholder="Level..."
                 value={newLevel}
-                onChange={(e) => setNewLevel(e.target.value)}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value);
+                  if (val >= 1 && val <= 5) setNewLevel(e.target.value);
+                  if (e.target.value === "") setNewLevel("");
+                }}
               />
             </div>
             <button
