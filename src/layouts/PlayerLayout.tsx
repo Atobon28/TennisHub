@@ -1,11 +1,24 @@
-import { Outlet } from 'react-router-dom'
-import SidebarPlayer from '../components/player/SidebarPlayer'
-import TopbarMobilePlayer from '../components/player/TopbarMobilePlayer'
-import BottomNavPlayer from '../components/player/BottomNavPlayer'
-import '../styles/player-layout.css'
-import logo from '../assets/Logo.png'
+import { useState, useEffect } from "react";
+import { Outlet } from "react-router-dom";
+import SidebarPlayer from "../components/player/SidebarPlayer";
+import TopbarMobilePlayer from "../components/player/TopbarMobilePlayer";
+import BottomNavPlayer from "../components/player/BottomNavPlayer";
+import "../styles/player-layout.css";
+import logo from "../assets/Logo.png";
 
 function PlayerLayout() {
+  const [level, setLevel] = useState<number>(() => {
+    return parseInt(localStorage.getItem("playerLevel") || "5");
+  });
+
+  useEffect(() => {
+    const handler = () => {
+      setLevel(parseInt(localStorage.getItem("playerLevel") || "5"));
+    };
+    window.addEventListener("player:levelUpdated", handler);
+    return () => window.removeEventListener("player:levelUpdated", handler);
+  }, []);
+
   return (
     <div className="player-layout">
       <aside className="player-layout__sidebar">
@@ -17,7 +30,6 @@ function PlayerLayout() {
               className="player-layout__sidebar-top-logo"
             />
           </div>
-
           <SidebarPlayer />
         </div>
       </aside>
@@ -26,8 +38,10 @@ function PlayerLayout() {
         <header className="player-layout__desktop-topbar">
           <div className="player-layout__desktop-topbar-right">
             <span className="player-layout__desktop-hello">¡Hey Juan!</span>
-            <span className="player-layout__desktop-level-text">Your Level:</span>
-            <span className="player-layout__desktop-level-badge">5</span>
+            <span className="player-layout__desktop-level-text">
+              Your Level:
+            </span>
+            <span className="player-layout__desktop-level-badge">{level}</span>
           </div>
         </header>
 
@@ -44,7 +58,7 @@ function PlayerLayout() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default PlayerLayout
+export default PlayerLayout;
