@@ -6,6 +6,7 @@ import coach1 from "../../assets/coach-1.jpg";
 function CoachHomePage() {
   const [availableDays, setAvailableDays] = useState<string[]>([]);
   const [price, setPrice] = useState<string>("$150.000");
+  const [avatar, setAvatar] = useState<string>(coach1);
 
   useEffect(() => {
     const savedDays = localStorage.getItem("coachDays");
@@ -24,6 +25,9 @@ function CoachHomePage() {
 
     const savedPrice = localStorage.getItem("coachPrice");
     if (savedPrice) setPrice(savedPrice);
+
+    const savedAvatar = localStorage.getItem("coachAvatar");
+    if (savedAvatar) setAvatar(savedAvatar);
   }, []);
 
   return (
@@ -49,7 +53,7 @@ function CoachHomePage() {
           <div className="coach-home__profile-card">
             <div className="coach-home__profile-top">
               <img
-                src={coach1}
+                src={avatar}
                 alt="Juan Ceballos"
                 className="coach-home__avatar"
               />
@@ -76,7 +80,7 @@ function CoachHomePage() {
           <div className="coach-home__schedule">
             {availableDays.map((day) => (
               <div key={day} className="coach-home__day-row">
-                <img src={coach1} alt="" className="coach-home__day-icon" />
+                <img src={avatar} alt="" className="coach-home__day-icon" />
                 <span className="coach-home__day-name">{day}</span>
                 <span className="coach-home__check-circle coach-home__check-circle--active">
                   ✓

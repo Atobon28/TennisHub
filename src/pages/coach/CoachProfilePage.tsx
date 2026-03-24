@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import "../../styles/coach-profile.css";
@@ -16,6 +16,11 @@ const allDays = [
 
 function CoachProfilePage() {
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [avatar, setAvatar] = useState<string>(() => {
+    return localStorage.getItem("coachAvatar") || coach1;
+  });
   const [selectedDays, setSelectedDays] = useState<string[]>(() => {
     const saved = localStorage.getItem("coachDays");
     return saved
@@ -32,6 +37,18 @@ function CoachProfilePage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordMsg, setPasswordMsg] = useState("");
   const [newPrice, setNewPrice] = useState("");
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      localStorage.setItem("coachAvatar", result);
+      setAvatar(result);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const toggleDay = (day: string) => {
     setSaved(false);
@@ -77,11 +94,23 @@ function CoachProfilePage() {
           <div className="coach-profile__header">
             <div className="coach-profile__avatar-wrap">
               <img
-                src={coach1}
+                src={avatar}
                 alt="Leo Cruz"
                 className="coach-profile__avatar"
               />
-              <button className="coach-profile__edit-btn">✏️</button>
+              <button
+                className="coach-profile__edit-btn"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                ✏️
+              </button>
+              <input
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                style={{ display: "none" }}
+                onChange={handleAvatarChange}
+              />
             </div>
             <div className="coach-profile__user-info">
               <h2 className="coach-profile__name">Leo Cruz</h2>
@@ -134,7 +163,7 @@ function CoachProfilePage() {
               return (
                 <div key={day} className="coach-profile__day-row">
                   <img
-                    src={coach1}
+                    src={avatar}
                     alt=""
                     className="coach-profile__day-icon"
                   />
