@@ -24,6 +24,7 @@ import PlayerLayout from "./layouts/PlayerLayout";
 import RegisterCoachPage from "./pages/RegisterCoachPage";
 import CoachLayout from "./layouts/CoachLayout";
 import CoachProfilePage from "./pages/coach/CoachProfilePage";
+import AdminLayout from "./layouts/AdminLayout";
 
 function App() {
   return (
@@ -61,7 +62,10 @@ function App() {
         <Route path="home" element={<CoachHomePage />} />
         <Route path="profile" element={<CoachProfilePage />} />
       </Route>
-      <Route path="/admin/home" element={<AdminHomePage />} />
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route index element={<Navigate to="home" replace />} />
+        <Route path="home" element={<AdminHomePage />} />
+      </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
