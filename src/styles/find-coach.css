@@ -1,0 +1,54 @@
+.find-coach {
+  width: 100%;
+}
+
+.find-coach__grid {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 24px;
+  align-items: start;
+}
+
+.find-coach__main {
+  background-color: var(--player-card-bg);
+  border-radius: 16px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.find-coach__section-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.find-coach__icon-gradient-wrap {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--player-green-gradient);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.find-coach__section-icon {
+  font-size: 1.2rem;
+  color: var(--player-white);
+}
+
+.find-coach__section-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--player-black);
+  margin: 0;
+}
+
+.find-coach__coaches-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
