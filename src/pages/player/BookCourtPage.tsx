@@ -3,8 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "../../styles/book-court.css";
 import court1 from "../../assets/court-1.jpg";
 import court2 from "../../assets/court-2.jpg";
-import bannerTournament from "../../assets/banner-tournament.jpg";
-import bannerBrand from "../../assets/banner-brand.jpg";
+import AdBanners from "../../components/player/AdBanners";
 
 const courts = [
   { id: 1, name: "Ciudad Jardín", image: court1 },
@@ -51,34 +50,7 @@ function BookCourtPage() {
             ))}
           </div>
         </section>
-
-        <aside className="book-court__aside">
-          <button className="book-court__aside-card">
-            <img
-              src={bannerTournament}
-              alt="Tournament banner"
-              className="book-court__aside-image"
-            />
-            <div className="book-court__aside-text">
-              <span className="book-court__aside-text-big">New</span>
-              <span className="book-court__aside-text-big">Tournaments</span>
-              <span className="book-court__aside-text-small">Sign Up Now</span>
-            </div>
-          </button>
-          <button className="book-court__aside-card">
-            <img
-              src={bannerBrand}
-              alt="Brand banner"
-              className="book-court__aside-image"
-            />
-            <div className="book-court__aside-text">
-              <span className="book-court__aside-brand">TennisHub</span>
-              <span className="book-court__aside-text-small book-court__aside-text-small--brand">
-                Plan less. Play more.
-              </span>
-            </div>
-          </button>
-        </aside>
+        <AdBanners />{" "}
       </div>
     </div>
   );
