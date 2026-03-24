@@ -1,0 +1,209 @@
+.coach-profile {
+  width: 100%;
+}
+
+.coach-profile__grid {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 24px;
+  align-items: start;
+}
+
+.coach-profile__main {
+  background-color: var(--player-card-bg);
+  border-radius: 16px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.coach-profile__header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.coach-profile__avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.coach-profile__avatar {
+  width: 110px;
+  height: 110px;
+  border-radius: 999px;
+  object-fit: cover;
+  display: block;
+}
+
+.coach-profile__edit-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: var(--player-white);
+  border: none;
+  border-radius: 999px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.coach-profile__user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.coach-profile__name {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--player-black);
+  margin: 0;
+}
+
+.coach-profile__username {
+  font-size: 0.95rem;
+  color: #888;
+  margin: 0;
+}
+
+.coach-profile__links {
+  display: flex;
+  gap: 16px;
+}
+
+.coach-profile__link {
+  background: none;
+  border: none;
+  font-size: 0.88rem;
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: underline;
+  color: #555;
+  padding: 0;
+}
+
+.coach-profile__link--logout {
+  color: #e05252;
+}
+
+.coach-profile__details {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.coach-profile__details p {
+  font-size: 0.95rem;
+  color: var(--player-black);
+  margin: 0;
+}
+
+.coach-profile__detail-label {
+  font-weight: 700;
+}
+
+.coach-profile__change-price {
+  background: none;
+  border: none;
+  font-size: 0.88rem;
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: underline;
+  color: #888;
+  padding: 0;
+  margin-top: 4px;
+}
+
+.coach-profile__availability-label {
+  font-size: 0.95rem;
+  color: var(--player-black);
+  margin: 0;
+  align-self: flex-start;
+}
+
+.coach-profile__schedule {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.coach-profile__day-row {
+  background-color: var(--player-white);
+  border-radius: 12px;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.coach-profile__day-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.coach-profile__day-name {
+  flex: 1;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--player-black);
+}
+
+.coach-profile__check-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background-color: #ddd;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--player-dark);
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.coach-profile__check-circle--active {
+  background-color: var(--player-green);
+}
+
+.coach-profile__save-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.coach-profile__saved-msg {
+  font-size: 0.9rem;
+  color: var(--player-green);
+  font-weight: 600;
+}
+
+.coach-profile__save-btn {
+  background: var(--player-green-gradient);
+  color: var(--player-white);
+  border: none;
+  border-radius: 999px;
+  padding: 12px 48px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
