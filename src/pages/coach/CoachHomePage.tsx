@@ -1,5 +1,59 @@
+import AdBanners from '../../components/player/AdBanners'
+import '../../styles/coach-home.css'
+import coach1 from '../../assets/coach-1.jpg'
+
+const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
 function CoachHomePage() {
-  return <h1>Coach Home Page</h1>
+  return (
+    <div className="coach-home">
+      <div className="coach-home__grid">
+        <section className="coach-home__main">
+          <h1 className="coach-home__welcome">
+            Welcome Back, <strong>Leo</strong>
+          </h1>
+          <p className="coach-home__subtitle">
+            Your profile is active and visible to players looking to improve their game.<br />
+            Keep your information updated to increase visibility and attract more students.
+          </p>
+
+          <p className="coach-home__profile-label">
+            <strong>Currently, players see your profile like this:</strong>
+          </p>
+
+          {/* Profile card */}
+          <div className="coach-home__profile-card">
+            <div className="coach-home__profile-top">
+              <img src={coach1} alt="Juan Ceballos" className="coach-home__avatar" />
+              <div>
+                <h2 className="coach-home__coach-name">Juan Ceballos</h2>
+                <p className="coach-home__coach-username">@Juanceballospro</p>
+              </div>
+            </div>
+            <div className="coach-home__profile-details">
+              <p><span className="coach-home__detail-label">Contact:</span> +57 3176480086</p>
+              <p><span className="coach-home__detail-label">Price per hour:</span> $150.000</p>
+            </div>
+          </div>
+
+          {/* Schedule */}
+          <div className="coach-home__schedule">
+            {days.map((day) => (
+              <div key={day} className="coach-home__day-row">
+                <img src={coach1} alt="" className="coach-home__day-icon" />
+                <span className="coach-home__day-name">{day}</span>
+                <span className="coach-home__day-check">
+                  <span className="coach-home__check-circle">✓</span>
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <AdBanners />
+      </div>
+    </div>
+  )
 }
 
 export default CoachHomePage
