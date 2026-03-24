@@ -1,0 +1,102 @@
+.tournaments-page {
+  width: 100%;
+}
+
+.tournaments-page__grid {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 24px;
+  align-items: start;
+}
+
+.tournaments-page__main {
+  background-color: var(--player-card-bg);
+  border-radius: 16px;
+  padding: 28px;
+}
+
+.tournaments-page__section-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.tournaments-page__icon-gradient-wrap {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--player-green-gradient);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tournaments-page__section-icon {
+  font-size: 1.2rem;
+  color: var(--player-white);
+}
+
+.tournaments-page__section-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--player-black);
+  margin: 0;
+}
+
+.tournaments-page__cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.tournaments-page__card {
+  background-color: var(--player-dark);
+  border-radius: 14px;
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.tournaments-page__level-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background-color: var(--player-green);
+  color: var(--player-dark);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.tournaments-page__card-name {
+  color: var(--player-white);
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.tournaments-page__card-info {
+  color: #b0b0b0;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.tournaments-page__view-btn {
+  background: var(--player-green-gradient);
+  color: var(--player-white);
+  border: none;
+  border-radius: 999px;
+  padding: 7px 28px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  margin-top: 4px;
+}
