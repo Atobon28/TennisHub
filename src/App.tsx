@@ -25,6 +25,7 @@ import RegisterCoachPage from "./pages/RegisterCoachPage";
 import CoachLayout from "./layouts/CoachLayout";
 import CoachProfilePage from "./pages/coach/CoachProfilePage";
 import AdminLayout from "./layouts/AdminLayout";
+import AdminCourtsPage from "./pages/admin/AdminCourtsPage";
 
 function App() {
   return (
@@ -65,6 +66,7 @@ function App() {
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<Navigate to="home" replace />} />
         <Route path="home" element={<AdminHomePage />} />
+        <Route path="courts" element={<AdminCourtsPage />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

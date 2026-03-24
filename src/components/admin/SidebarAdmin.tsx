@@ -1,7 +1,11 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 
 function SidebarAdmin() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isCourts = location.pathname.includes("/admin/courts");
+
   const menuItems = [
     { to: "/admin/home", label: "Home", icon: "solar:widget-2-outline" },
     {
@@ -35,6 +39,16 @@ function SidebarAdmin() {
           </NavLink>
         ))}
       </nav>
+      {isCourts && (
+        <div className="player-sidebar__actions">
+          <button
+            className="player-sidebar__button player-sidebar__button--primary"
+            onClick={() => navigate("/admin/courts/add")}
+          >
+            Add Court
+          </button>
+        </div>
+      )}
     </div>
   );
 }
