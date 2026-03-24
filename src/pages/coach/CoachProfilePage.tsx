@@ -23,6 +23,10 @@ function CoachProfilePage() {
       : ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   });
   const [saved, setSaved] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordMsg, setPasswordMsg] = useState("");
 
   const toggleDay = (day: string) => {
     setSaved(false);
@@ -34,6 +38,21 @@ function CoachProfilePage() {
   const handleSave = () => {
     localStorage.setItem("coachDays", JSON.stringify(selectedDays));
     setSaved(true);
+  };
+
+  const handleConfirmPassword = () => {
+    if (!newPassword || !confirmPassword) {
+      setPasswordMsg("Please fill in both fields.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordMsg("Passwords do not match.");
+      return;
+    }
+    setPasswordMsg("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setShowPasswordModal(false);
   };
 
   return (
@@ -54,7 +73,12 @@ function CoachProfilePage() {
               <h2 className="coach-profile__name">Leo Cruz</h2>
               <p className="coach-profile__username">@Leocruz_coach</p>
               <div className="coach-profile__links">
-                <button className="coach-profile__link">Change Password</button>
+                <button
+                  className="coach-profile__link"
+                  onClick={() => setShowPasswordModal(true)}
+                >
+                  Change Password
+                </button>
                 <button
                   className="coach-profile__link coach-profile__link--logout"
                   onClick={() => navigate("/")}
@@ -122,6 +146,58 @@ function CoachProfilePage() {
 
         <AdBanners />
       </div>
+
+      {/* Modal */}
+      {showPasswordModal && (
+        <div className="coach-profile__modal-overlay">
+          <div className="coach-profile__modal">
+            <button
+              className="coach-profile__modal-close"
+              onClick={() => {
+                setShowPasswordModal(false);
+                setPasswordMsg("");
+                setNewPassword("");
+                setConfirmPassword("");
+              }}
+            >
+              ✕
+            </button>
+            <h2 className="coach-profile__modal-title">Change Password</h2>
+            <div className="coach-profile__modal-section">
+              <h3 className="coach-profile__modal-subtitle">Password</h3>
+              <label className="coach-profile__modal-label">
+                New Password:
+              </label>
+              <input
+                type="password"
+                className="coach-profile__modal-input"
+                placeholder="New Password..."
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+              <label className="coach-profile__modal-label">
+                Confirm Password:
+              </label>
+              <input
+                type="password"
+                className="coach-profile__modal-input"
+                placeholder="Confirm Password..."
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+              {passwordMsg && (
+                <p className="coach-profile__modal-error">{passwordMsg}</p>
+              )}
+            </div>
+            <button
+              className="coach-profile__modal-confirm"
+              onClick={handleConfirmPassword}
+            >
+              Confirm
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
