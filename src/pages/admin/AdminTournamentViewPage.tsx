@@ -126,10 +126,14 @@ function AdminTournamentViewPage() {
               <input
                 type="number"
                 min="1"
-                max="10"
+                max="5"
                 className="admin-tournament-view__modal-input"
                 value={tempLevel}
-                onChange={(e) => setTempLevel(e.target.value)}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value);
+                  if (val >= 1 && val <= 5) setTempLevel(e.target.value);
+                  if (e.target.value === "") setTempLevel("");
+                }}
               />
             </div>
             <button
