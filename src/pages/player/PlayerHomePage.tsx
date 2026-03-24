@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { Icon } from "@iconify/react";
 import "../../styles/player-home.css";
 import coach1 from "../../assets/coach-1.jpg";
@@ -11,8 +12,25 @@ import court2 from "../../assets/court-2.jpg";
 import AdBanners from "../../components/player/AdBanners";
 import MatchCard from "../../components/player/MatchCard";
 import TournamentCard from "../../components/player/TournamentCard";
+import PersonCard from "../../components/player/PersonCard";
+import CourtCard from "../../components/player/CourtCard";
 
 function PlayerHomePage() {
+  const matchesScrollRef = useRef<HTMLDivElement | null>(null);
+  const tournamentsScrollRef = useRef<HTMLDivElement | null>(null);
+
+  const scroll = (
+    ref: React.RefObject<HTMLDivElement | null>,
+    direction: "left" | "right",
+  ) => {
+    if (ref.current) {
+      ref.current.scrollBy({
+        left: direction === "right" ? 300 : -300,
+        behavior: "smooth",
+      });
+    }
+  };
+
   const coaches = [
     { name: "Juan Ceballos", image: coach1 },
     { name: "Sebas López", image: coach2 },
@@ -115,22 +133,12 @@ function PlayerHomePage() {
               </div>
               <div className="player-home__small-cards">
                 {players.map((player) => (
-                  <article
+                  <PersonCard
                     key={player.name}
-                    className="player-home__person-card"
-                  >
-                    <img
-                      src={player.image}
-                      alt={player.name}
-                      className="player-home__person-image"
-                    />
-                    <div className="player-home__person-name">
-                      {player.name}
-                    </div>
-                    <div className="player-home__level-badge">
-                      {player.level}
-                    </div>
-                  </article>
+                    name={player.name}
+                    image={player.image}
+                    level={player.level}
+                  />
                 ))}
               </div>
             </div>
@@ -152,22 +160,17 @@ function PlayerHomePage() {
               </div>
               <div className="player-home__small-cards">
                 {coaches.map((coach) => (
-                  <article
+                  <PersonCard
                     key={coach.name}
-                    className="player-home__person-card"
-                  >
-                    <img
-                      src={coach.image}
-                      alt={coach.name}
-                      className="player-home__person-image"
-                    />
-                    <div className="player-home__person-name">{coach.name}</div>
-                  </article>
+                    name={coach.name}
+                    image={coach.image}
+                  />
                 ))}
               </div>
             </div>
           </div>
 
+          {/* Today's Matches */}
           <section className="player-home__section">
             <div className="player-home__section-header">
               <div className="player-home__section-title-wrap">
@@ -179,11 +182,30 @@ function PlayerHomePage() {
                 </span>
                 <h2 className="player-home__section-title">Today's Matches</h2>
               </div>
-              <button className="player-home__section-more-button">
-                Ver más...
-              </button>
+              <div className="player-home__section-right">
+                <button className="player-home__section-more-button">
+                  Ver más...
+                </button>
+                <div className="player-home__scroll-btns">
+                  <button
+                    className="player-home__scroll-btn"
+                    onClick={() => scroll(matchesScrollRef, "left")}
+                  >
+                    ‹
+                  </button>
+                  <button
+                    className="player-home__scroll-btn"
+                    onClick={() => scroll(matchesScrollRef, "right")}
+                  >
+                    ›
+                  </button>
+                </div>
+              </div>
             </div>
-            <div className="player-home__horizontal-scroll">
+            <div
+              className="player-home__horizontal-scroll"
+              ref={matchesScrollRef}
+            >
               {matches.map((match) => (
                 <MatchCard
                   key={match.id}
@@ -195,6 +217,7 @@ function PlayerHomePage() {
             </div>
           </section>
 
+          {/* Upcoming Tournaments */}
           <section className="player-home__section">
             <div className="player-home__section-header">
               <div className="player-home__section-title-wrap">
@@ -208,11 +231,30 @@ function PlayerHomePage() {
                   Upcoming Tournaments
                 </h2>
               </div>
-              <button className="player-home__section-more-button">
-                Ver más...
-              </button>
+              <div className="player-home__section-right">
+                <button className="player-home__section-more-button">
+                  Ver más...
+                </button>
+                <div className="player-home__scroll-btns">
+                  <button
+                    className="player-home__scroll-btn"
+                    onClick={() => scroll(tournamentsScrollRef, "left")}
+                  >
+                    ‹
+                  </button>
+                  <button
+                    className="player-home__scroll-btn"
+                    onClick={() => scroll(tournamentsScrollRef, "right")}
+                  >
+                    ›
+                  </button>
+                </div>
+              </div>
             </div>
-            <div className="player-home__horizontal-scroll">
+            <div
+              className="player-home__horizontal-scroll"
+              ref={tournamentsScrollRef}
+            >
               {tournaments.map((tournament) => (
                 <TournamentCard
                   key={tournament.id}
@@ -224,6 +266,7 @@ function PlayerHomePage() {
             </div>
           </section>
 
+          {/* Trending Courts */}
           <section className="player-home__section">
             <div className="player-home__section-header">
               <div className="player-home__section-title-wrap">
@@ -241,16 +284,12 @@ function PlayerHomePage() {
             </div>
             <div className="player-home__courts-grid">
               {courts.map((court) => (
-                <article
+                <CourtCard
                   key={court.name}
-                  className={`player-home__court-card ${court.className}`}
-                >
-                  <img
-                    src={court.image}
-                    alt={court.name}
-                    className="player-home__court-image"
-                  />
-                </article>
+                  name={court.name}
+                  image={court.image}
+                  className={court.className}
+                />
               ))}
             </div>
           </section>
