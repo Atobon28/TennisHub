@@ -27,6 +27,7 @@ import CoachProfilePage from "./pages/coach/CoachProfilePage";
 import AdminLayout from "./layouts/AdminLayout";
 import AdminCourtsPage from "./pages/admin/AdminCourtsPage";
 import AdminCourtViewPage from "./pages/admin/AdminCourtViewPage";
+import AdminTournamentsPage from "./pages/admin/AdminTournamentsPage";
 
 function App() {
   return (
@@ -69,6 +70,7 @@ function App() {
         <Route path="home" element={<AdminHomePage />} />
         <Route path="courts" element={<AdminCourtsPage />} />
         <Route path="courts/view" element={<AdminCourtViewPage />} />
+        <Route path="tournaments" element={<AdminTournamentsPage />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

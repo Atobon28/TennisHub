@@ -5,6 +5,7 @@ function SidebarAdmin() {
   const navigate = useNavigate();
   const location = useLocation();
   const isCourts = location.pathname.includes("/admin/courts");
+  const isTournaments = location.pathname.includes("/admin/tournaments");
 
   const menuItems = [
     { to: "/admin/home", label: "Home", icon: "solar:widget-2-outline" },
@@ -46,6 +47,18 @@ function SidebarAdmin() {
             onClick={() => window.dispatchEvent(new Event("admin:addCourt"))}
           >
             Add Court
+          </button>
+        </div>
+      )}
+      {isTournaments && (
+        <div className="player-sidebar__actions">
+          <button
+            className="player-sidebar__button player-sidebar__button--primary"
+            onClick={() =>
+              window.dispatchEvent(new Event("admin:addTournament"))
+            }
+          >
+            Create Tournament
           </button>
         </div>
       )}

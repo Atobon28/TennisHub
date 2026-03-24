@@ -1,11 +1,18 @@
 interface TournamentCardProps {
-  level: number
-  name: string
-  info: string
-  onView?: () => void
+  level: number;
+  name: string;
+  info: string;
+  onView?: () => void;
+  buttonLabel?: string;
 }
 
-function TournamentCard({ level, name, info, onView }: TournamentCardProps) {
+function TournamentCard({
+  level,
+  name,
+  info,
+  onView,
+  buttonLabel = "View",
+}: TournamentCardProps) {
   return (
     <article className="player-home__tournament-card player-home__tournament-card--scroll">
       <div className="player-home__tournament-badge">{level}</div>
@@ -15,10 +22,10 @@ function TournamentCard({ level, name, info, onView }: TournamentCardProps) {
         className="player-home__view-button player-home__view-button--small"
         onClick={onView}
       >
-        View
+        {buttonLabel}
       </button>
     </article>
-  )
+  );
 }
 
-export default TournamentCard
+export default TournamentCard;
