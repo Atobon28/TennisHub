@@ -1,14 +1,22 @@
-import { Link, useNavigate } from 'react-router-dom'
-import '../styles/access-pages.css'
-import loginImage from '../assets/login.jpg'
+import { Link, useNavigate } from "react-router-dom";
+import "../styles/access-pages.css";
+import loginImage from "../assets/login.jpg";
 
 function LoginPage() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const handleLogin = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    navigate('/player/home')
-  }
+    event.preventDefault();
+    const role = localStorage.getItem("role");
+
+    if (role === "coach") {
+      navigate("/coach/home");
+    } else if (role === "admin") {
+      navigate("/admin/home");
+    } else {
+      navigate("/player/home");
+    }
+  };
 
   return (
     <div className="access-screen">
@@ -69,7 +77,7 @@ function LoginPage() {
         />
       </section>
     </div>
-  )
+  );
 }
 
-export default LoginPage
+export default LoginPage;

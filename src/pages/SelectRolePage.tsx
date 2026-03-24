@@ -1,9 +1,14 @@
-import { useNavigate } from 'react-router-dom'
-import '../styles/access-pages.css'
-import selectRoleImage from '../assets/select-role.jpg'
+import { useNavigate } from "react-router-dom";
+import "../styles/access-pages.css";
+import selectRoleImage from "../assets/select-role.jpg";
 
 function SelectRolePage() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+
+  const handleRoleSelect = (role: string) => {
+    localStorage.setItem("role", role);
+    navigate("/login");
+  };
 
   return (
     <div className="access-screen">
@@ -15,21 +20,21 @@ function SelectRolePage() {
           <div className="access-screen__buttons">
             <button
               className="access-screen__button-dark"
-              onClick={() => navigate('/login')}
+              onClick={() => handleRoleSelect("player")}
             >
               Player
             </button>
 
             <button
               className="access-screen__button-dark"
-              onClick={() => navigate('/login')}
+              onClick={() => handleRoleSelect("admin")}
             >
               Admin
             </button>
 
             <button
               className="access-screen__button-dark"
-              onClick={() => navigate('/login')}
+              onClick={() => handleRoleSelect("coach")}
             >
               Coach
             </button>
@@ -45,7 +50,7 @@ function SelectRolePage() {
         />
       </section>
     </div>
-  )
+  );
 }
 
-export default SelectRolePage
+export default SelectRolePage;
