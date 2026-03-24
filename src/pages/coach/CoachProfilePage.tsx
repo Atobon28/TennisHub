@@ -22,11 +22,16 @@ function CoachProfilePage() {
       ? JSON.parse(saved)
       : ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   });
+  const [price, setPrice] = useState<string>(() => {
+    return localStorage.getItem("coachPrice") || "$150.000";
+  });
   const [saved, setSaved] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showPriceModal, setShowPriceModal] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordMsg, setPasswordMsg] = useState("");
+  const [newPrice, setNewPrice] = useState("");
 
   const toggleDay = (day: string) => {
     setSaved(false);
@@ -53,6 +58,15 @@ function CoachProfilePage() {
     setNewPassword("");
     setConfirmPassword("");
     setShowPasswordModal(false);
+  };
+
+  const handleConfirmPrice = () => {
+    if (!newPrice) return;
+    const formatted = newPrice.startsWith("$") ? newPrice : `$${newPrice}`;
+    localStorage.setItem("coachPrice", formatted);
+    setPrice(formatted);
+    setNewPrice("");
+    setShowPriceModal(false);
   };
 
   return (
@@ -99,9 +113,12 @@ function CoachProfilePage() {
               <span className="coach-profile__detail-label">
                 Price per hour:
               </span>{" "}
-              $150.000
+              {price}
             </p>
-            <button className="coach-profile__change-price">
+            <button
+              className="coach-profile__change-price"
+              onClick={() => setShowPriceModal(true)}
+            >
               Change Price
             </button>
           </div>
@@ -143,11 +160,10 @@ function CoachProfilePage() {
             </button>
           </div>
         </section>
-
         <AdBanners />
       </div>
 
-      {/* Modal */}
+      {/* Modal Change Password */}
       {showPasswordModal && (
         <div className="coach-profile__modal-overlay">
           <div className="coach-profile__modal">
@@ -192,6 +208,41 @@ function CoachProfilePage() {
             <button
               className="coach-profile__modal-confirm"
               onClick={handleConfirmPassword}
+            >
+              Confirm
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Change Price */}
+      {showPriceModal && (
+        <div className="coach-profile__modal-overlay">
+          <div className="coach-profile__modal">
+            <button
+              className="coach-profile__modal-close"
+              onClick={() => {
+                setShowPriceModal(false);
+                setNewPrice("");
+              }}
+            >
+              ✕
+            </button>
+            <h2 className="coach-profile__modal-title">Change Price</h2>
+            <div className="coach-profile__modal-section">
+              <h3 className="coach-profile__modal-subtitle">Price</h3>
+              <label className="coach-profile__modal-label">New Price</label>
+              <input
+                type="text"
+                className="coach-profile__modal-input"
+                placeholder="New price..."
+                value={newPrice}
+                onChange={(e) => setNewPrice(e.target.value)}
+              />
+            </div>
+            <button
+              className="coach-profile__modal-confirm"
+              onClick={handleConfirmPrice}
             >
               Confirm
             </button>

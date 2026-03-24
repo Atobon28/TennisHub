@@ -5,11 +5,12 @@ import coach1 from "../../assets/coach-1.jpg";
 
 function CoachHomePage() {
   const [availableDays, setAvailableDays] = useState<string[]>([]);
+  const [price, setPrice] = useState<string>("$150.000");
 
   useEffect(() => {
-    const saved = localStorage.getItem("coachDays");
-    if (saved) {
-      setAvailableDays(JSON.parse(saved));
+    const savedDays = localStorage.getItem("coachDays");
+    if (savedDays) {
+      setAvailableDays(JSON.parse(savedDays));
     } else {
       setAvailableDays([
         "Monday",
@@ -20,6 +21,9 @@ function CoachHomePage() {
         "Saturday",
       ]);
     }
+
+    const savedPrice = localStorage.getItem("coachPrice");
+    if (savedPrice) setPrice(savedPrice);
   }, []);
 
   return (
@@ -63,7 +67,7 @@ function CoachHomePage() {
                 <span className="coach-home__detail-label">
                   Price per hour:
                 </span>{" "}
-                $150.000
+                {price}
               </p>
             </div>
           </div>
