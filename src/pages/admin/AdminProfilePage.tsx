@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
+import TournamentCard from "../../components/player/TournamentCard";
 import "../../styles/admin-profile.css";
 import court1 from "../../assets/court-1.jpg";
 import court2 from "../../assets/court-2.jpg";
@@ -147,19 +148,14 @@ function AdminProfilePage() {
                   </div>
                 ))
               : tournaments.map((t) => (
-                  <div key={t.id} className="admin-profile__tournament-card">
-                    <div className="admin-profile__tournament-badge">
-                      {t.level}
-                    </div>
-                    <div className="admin-profile__tournament-info">
-                      <h3 className="admin-profile__tournament-name">
-                        {t.name}
-                      </h3>
-                      <p className="admin-profile__tournament-detail">
-                        {t.info}
-                      </p>
-                    </div>
-                  </div>
+                  <TournamentCard
+                    key={t.id}
+                    level={t.level}
+                    name={t.name}
+                    info={t.info}
+                    buttonLabel="Admin"
+                    onView={() => navigate("/admin/tournaments/view")}
+                  />
                 ))}
           </div>
         </section>

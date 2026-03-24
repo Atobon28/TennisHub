@@ -130,7 +130,7 @@
   position: relative;
   border-radius: 14px;
   overflow: hidden;
-  height: 110px;
+  aspect-ratio: 16 / 7;
 }
 
 .admin-profile__court-image {
