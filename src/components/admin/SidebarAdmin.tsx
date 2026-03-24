@@ -43,7 +43,7 @@ function SidebarAdmin() {
         <div className="player-sidebar__actions">
           <button
             className="player-sidebar__button player-sidebar__button--primary"
-            onClick={() => navigate("/admin/courts/add")}
+            onClick={() => window.dispatchEvent(new Event("admin:addCourt"))}
           >
             Add Court
           </button>

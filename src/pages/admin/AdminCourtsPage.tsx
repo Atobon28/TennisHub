@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import { Icon } from "@iconify/react";
@@ -5,13 +6,63 @@ import "../../styles/admin-courts.css";
 import court1 from "../../assets/court-1.jpg";
 import court2 from "../../assets/court-2.jpg";
 
-const courts = [
-  { id: 1, name: "Ciudad Jardín", image: court1 },
-  { id: 2, name: "Granada", image: court2 },
-];
+interface Court {
+  id: number;
+  name: string;
+  image: string;
+}
 
 function AdminCourtsPage() {
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [courts, setCourts] = useState<Court[]>([
+    { id: 1, name: "Ciudad Jardín", image: court1 },
+    { id: 2, name: "Granada", image: court2 },
+  ]);
+
+  const [showModal, setShowModal] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newContact, setNewContact] = useState("");
+  const [newAddress, setNewAddress] = useState("");
+  const [newImage, setNewImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handler = () => setShowModal(true);
+    window.addEventListener("admin:addCourt", handler);
+    return () => window.removeEventListener("admin:addCourt", handler);
+  }, []);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setNewImage(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleAdd = () => {
+    if (!newName) return;
+    const newCourt: Court = {
+      id: Date.now(),
+      name: newName,
+      image: newImage || court1,
+    };
+    setCourts((prev) => [...prev, newCourt]);
+    setNewName("");
+    setNewContact("");
+    setNewAddress("");
+    setNewImage(null);
+    setShowModal(false);
+  };
+
+  const handleClose = () => {
+    setShowModal(false);
+    setNewName("");
+    setNewContact("");
+    setNewAddress("");
+    setNewImage(null);
+  };
 
   return (
     <div className="admin-courts">
@@ -51,6 +102,73 @@ function AdminCourtsPage() {
 
         <AdBanners />
       </div>
+
+      {/* Modal Add Court */}
+      {showModal && (
+        <div className="admin-courts__modal-overlay">
+          <div className="admin-courts__modal">
+            <button className="admin-courts__modal-close" onClick={handleClose}>
+              ✕
+            </button>
+            <h2 className="admin-courts__modal-title">Add Court</h2>
+            <div className="admin-courts__modal-section">
+              <label className="admin-courts__modal-label">Name</label>
+              <input
+                type="text"
+                className="admin-courts__modal-input"
+                placeholder="Name..."
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+              />
+              <label className="admin-courts__modal-label">
+                Contact Phone:
+              </label>
+              <input
+                type="text"
+                className="admin-courts__modal-input"
+                placeholder="Contact Phone..."
+                value={newContact}
+                onChange={(e) => setNewContact(e.target.value)}
+              />
+              <label className="admin-courts__modal-label">Adress:</label>
+              <input
+                type="text"
+                className="admin-courts__modal-input"
+                placeholder="Adress..."
+                value={newAddress}
+                onChange={(e) => setNewAddress(e.target.value)}
+              />
+              <label className="admin-courts__modal-label">Photo:</label>
+              <div
+                className="admin-courts__modal-photo"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {newImage ? (
+                  <img
+                    src={newImage}
+                    alt="preview"
+                    className="admin-courts__modal-photo-preview"
+                  />
+                ) : (
+                  <span className="admin-courts__modal-photo-placeholder">
+                    Click to upload photo...
+                  </span>
+                )}
+              </div>
+              <input
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                style={{ display: "none" }}
+                onChange={handleImageChange}
+              />
+            </div>
+            <button className="admin-courts__modal-confirm" onClick={handleAdd}>
+              Add
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
