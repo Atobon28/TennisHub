@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
-import "../../styles/player-profile.css";
-import player1 from "../../assets/player-1.jpg";
 import MatchCard from "../../components/player/MatchCard";
 import TournamentCard from "../../components/player/TournamentCard";
+import "../../styles/player-profile.css";
+import player1 from "../../assets/player-1.jpg";
 
 const matches = [
   {
@@ -26,21 +26,21 @@ const matches = [
 const tournaments = [
   {
     id: 1,
-    time: "28/02/26 - 08:00 AM",
-    court: "Ciudad Jardín",
-    host: "Tournament of champions",
+    level: 5,
+    name: "Tournament of champions",
+    info: "28/02/26 - 08:00 AM - Court: Ciudad Jardín",
   },
   {
     id: 2,
-    time: "07/03/26 - 08:00 AM",
-    court: "Granada",
-    host: "Beginners Tournament",
+    level: 2,
+    name: "Beginners Tournament",
+    info: "07/03/26 - 08:00 AM - Court: Granada",
   },
   {
     id: 3,
-    time: "10/03/26 - 06:00 PM",
-    court: "Ingenio",
-    host: "Open Tournament Clash",
+    level: 4,
+    name: "Open Tournament Clash",
+    info: "10/03/26 - 06:00 PM - Court: Ingenio",
   },
 ];
 
@@ -49,8 +49,6 @@ function PlayerProfilePage() {
     "matches",
   );
   const navigate = useNavigate();
-
-  const items = activeTab === "matches" ? matches : tournaments;
 
   return (
     <div className="player-profile">
@@ -110,21 +108,25 @@ function PlayerProfilePage() {
             </button>
           </div>
 
-          {/* Items list */}
+          {/* Lista */}
           <div className="player-profile__list">
-            {items.map((item) => (
-              <article key={item.id} className="player-profile__match-card">
-                <div className="player-profile__match-left">
-                  <p>{item.time}</p>
-                  <p>Court: {item.court}</p>
-                  <p>Host: {item.host}</p>
-                </div>
-                <div className="player-profile__match-right">
-                  <span className="player-profile__brand">TennisHub</span>
-                  <span className="player-profile__brand-sub">Match</span>
-                </div>
-              </article>
-            ))}
+            {activeTab === "matches"
+              ? matches.map((match) => (
+                  <MatchCard
+                    key={match.id}
+                    time={match.time}
+                    court={match.court}
+                    host={match.host}
+                  />
+                ))
+              : tournaments.map((t) => (
+                  <TournamentCard
+                    key={t.id}
+                    level={t.level}
+                    name={t.name}
+                    info={t.info}
+                  />
+                ))}
           </div>
         </section>
 
