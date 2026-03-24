@@ -16,14 +16,12 @@ const allDays = [
 
 function CoachProfilePage() {
   const navigate = useNavigate();
-  const [selectedDays, setSelectedDays] = useState<string[]>([
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-  ]);
+  const [selectedDays, setSelectedDays] = useState<string[]>(() => {
+    const saved = localStorage.getItem("coachDays");
+    return saved
+      ? JSON.parse(saved)
+      : ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  });
   const [saved, setSaved] = useState(false);
 
   const toggleDay = (day: string) => {
@@ -34,6 +32,7 @@ function CoachProfilePage() {
   };
 
   const handleSave = () => {
+    localStorage.setItem("coachDays", JSON.stringify(selectedDays));
     setSaved(true);
   };
 

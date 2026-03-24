@@ -1,17 +1,27 @@
+import { useState, useEffect } from "react";
 import AdBanners from "../../components/player/AdBanners";
 import "../../styles/coach-home.css";
 import coach1 from "../../assets/coach-1.jpg";
 
-const availableDays = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-];
-
 function CoachHomePage() {
+  const [availableDays, setAvailableDays] = useState<string[]>([]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("coachDays");
+    if (saved) {
+      setAvailableDays(JSON.parse(saved));
+    } else {
+      setAvailableDays([
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+      ]);
+    }
+  }, []);
+
   return (
     <div className="coach-home">
       <div className="coach-home__grid">
