@@ -1,6 +1,5 @@
 import { Icon } from "@iconify/react";
 import "../../styles/player-home.css";
-
 import coach1 from "../../assets/coach-1.jpg";
 import coach2 from "../../assets/coach-2.jpg";
 import coach3 from "../../assets/coach-3.jpg";
@@ -10,6 +9,8 @@ import player3 from "../../assets/player-3.jpg";
 import court1 from "../../assets/court-1.jpg";
 import court2 from "../../assets/court-2.jpg";
 import AdBanners from "../../components/player/AdBanners";
+import MatchCard from "../../components/player/MatchCard";
+import TournamentCard from "../../components/player/TournamentCard";
 
 function PlayerHomePage() {
   const coaches = [
@@ -37,12 +38,7 @@ function PlayerHomePage() {
       court: "Ingenio",
       host: "Daniela Rojas",
     },
-    {
-      id: 3,
-      time: "Today - 09:00 PM",
-      court: "Granada",
-      host: "Sebas López",
-    },
+    { id: 3, time: "Today - 09:00 PM", court: "Granada", host: "Sebas López" },
   ];
 
   const tournaments = [
@@ -90,7 +86,6 @@ function PlayerHomePage() {
         <button className="player-home__action player-home__action--primary">
           Create Match
         </button>
-
         <button className="player-home__action player-home__action--secondary">
           <Icon
             icon="solar:magnifer-linear"
@@ -118,7 +113,6 @@ function PlayerHomePage() {
                   Ver más...
                 </button>
               </div>
-
               <div className="player-home__small-cards">
                 {players.map((player) => (
                   <article
@@ -156,7 +150,6 @@ function PlayerHomePage() {
                   Ver más...
                 </button>
               </div>
-
               <div className="player-home__small-cards">
                 {coaches.map((coach) => (
                   <article
@@ -190,29 +183,14 @@ function PlayerHomePage() {
                 Ver más...
               </button>
             </div>
-
             <div className="player-home__horizontal-scroll">
               {matches.map((match) => (
-                <article
+                <MatchCard
                   key={match.id}
-                  className="player-home__match-card player-home__match-card--scroll"
-                >
-                  <div className="player-home__match-left">
-                    <p>{match.time}</p>
-                    <p>Court: {match.court}</p>
-                    <p>Host: {match.host}</p>
-                  </div>
-
-                  <div className="player-home__match-right">
-                    <div className="player-home__match-brand">
-                      <span className="player-home__brand-baloo">
-                        TennisHub
-                      </span>
-                      <span>Match</span>
-                    </div>
-                    <button className="player-home__view-button">View</button>
-                  </div>
-                </article>
+                  time={match.time}
+                  court={match.court}
+                  host={match.host}
+                />
               ))}
             </div>
           </section>
@@ -234,26 +212,14 @@ function PlayerHomePage() {
                 Ver más...
               </button>
             </div>
-
             <div className="player-home__horizontal-scroll">
               {tournaments.map((tournament) => (
-                <article
+                <TournamentCard
                   key={tournament.id}
-                  className="player-home__tournament-card player-home__tournament-card--scroll"
-                >
-                  <div className="player-home__tournament-badge">
-                    {tournament.level}
-                  </div>
-                  <h3 className="player-home__tournament-name">
-                    {tournament.name}
-                  </h3>
-                  <p className="player-home__tournament-info">
-                    {tournament.info}
-                  </p>
-                  <button className="player-home__view-button player-home__view-button--small">
-                    View
-                  </button>
-                </article>
+                  level={tournament.level}
+                  name={tournament.name}
+                  info={tournament.info}
+                />
               ))}
             </div>
           </section>
@@ -273,7 +239,6 @@ function PlayerHomePage() {
                 Ver más...
               </button>
             </div>
-
             <div className="player-home__courts-grid">
               {courts.map((court) => (
                 <article

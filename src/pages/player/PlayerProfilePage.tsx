@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import "../../styles/player-profile.css";
 import player1 from "../../assets/player-1.jpg";
+import MatchCard from "../../components/player/MatchCard";
+import TournamentCard from "../../components/player/TournamentCard";
 
 const matches = [
   {
