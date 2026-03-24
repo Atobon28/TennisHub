@@ -1,38 +1,17 @@
-import { useState } from "react";
 import AdBanners from "../../components/player/AdBanners";
 import "../../styles/coach-home.css";
 import coach1 from "../../assets/coach-1.jpg";
 
-const allDays = [
+const availableDays = [
   "Monday",
   "Tuesday",
   "Wednesday",
   "Thursday",
   "Friday",
   "Saturday",
-  "Sunday",
 ];
 
 function CoachHomePage() {
-  const [selectedDays, setSelectedDays] = useState<string[]>([
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-  ]);
-  const [saved, setSaved] = useState(false);
-
-  const toggleDay = (day: string) => {
-    setSaved(false);
-    setSelectedDays((prev) =>
-      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day],
-    );
-  };
-
-  const handleSave = () => {
-    setSaved(true);
-  };
-
   return (
     <div className="coach-home">
       <div className="coach-home__grid">
@@ -79,33 +58,17 @@ function CoachHomePage() {
             </div>
           </div>
 
-          {/* Schedule */}
+          {/* Schedule - solo lectura */}
           <div className="coach-home__schedule">
-            {allDays.map((day) => {
-              const isSelected = selectedDays.includes(day);
-              return (
-                <div key={day} className="coach-home__day-row">
-                  <img src={coach1} alt="" className="coach-home__day-icon" />
-                  <span className="coach-home__day-name">{day}</span>
-                  <button
-                    className={`coach-home__check-circle ${isSelected ? "coach-home__check-circle--active" : ""}`}
-                    onClick={() => toggleDay(day)}
-                  >
-                    {isSelected ? "✓" : ""}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Save button */}
-          <div className="coach-home__save-wrap">
-            {saved && (
-              <span className="coach-home__saved-msg">✓ Schedule saved!</span>
-            )}
-            <button className="coach-home__save-btn" onClick={handleSave}>
-              Save
-            </button>
+            {availableDays.map((day) => (
+              <div key={day} className="coach-home__day-row">
+                <img src={coach1} alt="" className="coach-home__day-icon" />
+                <span className="coach-home__day-name">{day}</span>
+                <span className="coach-home__check-circle coach-home__check-circle--active">
+                  ✓
+                </span>
+              </div>
+            ))}
           </div>
         </section>
 

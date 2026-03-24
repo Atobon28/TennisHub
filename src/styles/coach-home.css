@@ -131,57 +131,16 @@
   width: 28px;
   height: 28px;
   border-radius: 999px;
-  background-color: var(--player-green);
-  color: var(--player-dark);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 0.85rem;
-}
-.coach-home__check-circle {
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
   background-color: #ddd;
-  border: none;
-  cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: 0.85rem;
   color: var(--player-dark);
-  transition: background-color 0.2s ease;
   flex-shrink: 0;
 }
 
 .coach-home__check-circle--active {
   background-color: var(--player-green);
-}
-
-.coach-home__save-wrap {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 16px;
-  margin-top: 8px;
-}
-
-.coach-home__saved-msg {
-  font-size: 0.9rem;
-  color: var(--player-green);
-  font-weight: 600;
-}
-
-.coach-home__save-btn {
-  background: var(--player-green-gradient);
-  color: var(--player-white);
-  border: none;
-  border-radius: 999px;
-  padding: 12px 48px;
-  font-size: 1rem;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: inherit;
 }
