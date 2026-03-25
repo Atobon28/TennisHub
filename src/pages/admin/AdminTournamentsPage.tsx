@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import TournamentCard from "../../components/player/TournamentCard";
 import { Icon } from "@iconify/react";
-import { getTournaments, addTournament } from "../../firebase/services";
+import { getAdminTournaments, addTournament } from "../../firebase/services";
 import "../../styles/admin-tournaments.css";
 
 interface Tournament {
@@ -39,7 +39,7 @@ function AdminTournamentsPage() {
 
   const fetchTournaments = async () => {
     try {
-      const data = await getTournaments();
+      const data = await getAdminTournaments("admin1");
       setTournaments(data as Tournament[]);
     } catch (error) {
       console.error("Error fetching tournaments:", error);
@@ -60,7 +60,7 @@ function AdminTournamentsPage() {
       court: newCourt,
     };
     try {
-      await addTournament(newTournament);
+      await addTournament("admin1", newTournament);
       await fetchTournaments();
       handleClose();
     } catch (error) {

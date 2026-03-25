@@ -34,8 +34,14 @@ export const getCourts = async () => {
   return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 };
 
-export const addCourt = async (court: object) => {
-  return await addDoc(collection(db, "courts"), court);
+export const getAdminCourts = async (adminId: string) => {
+  const q = query(collection(db, "courts"), where("adminId", "==", adminId));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+};
+
+export const addCourt = async (adminId: string, court: object) => {
+  return await addDoc(collection(db, "courts"), { adminId, ...court });
 };
 
 export const updateCourt = async (id: string, data: object) => {
@@ -52,8 +58,20 @@ export const getTournaments = async () => {
   return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 };
 
-export const addTournament = async (tournament: object) => {
-  return await addDoc(collection(db, "tournaments"), tournament);
+export const getAdminTournaments = async (adminId: string) => {
+  const q = query(
+    collection(db, "tournaments"),
+    where("adminId", "==", adminId),
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+};
+
+export const addTournament = async (adminId: string, tournament: object) => {
+  return await addDoc(collection(db, "tournaments"), {
+    adminId,
+    ...tournament,
+  });
 };
 
 export const updateTournament = async (id: string, data: object) => {

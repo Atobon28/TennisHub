@@ -1,29 +1,22 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import TournamentCard from "../../components/player/TournamentCard";
+import { getAdminTournaments } from "../../firebase/services";
 import "../../styles/admin-profile.css";
 import court1 from "../../assets/court-1.jpg";
 import court2 from "../../assets/court-2.jpg";
 
+interface Tournament {
+  id: string;
+  level: number;
+  name: string;
+  info: string;
+}
+
 const courts = [
   { id: 1, name: "Granada", image: court2 },
   { id: 2, name: "Ciudad Jardín", image: court1 },
-];
-
-const tournaments = [
-  {
-    id: 1,
-    level: 5,
-    name: "Tournament of champions",
-    info: "28/02/26 - 08:00 AM - Court: Ciudad Jardín",
-  },
-  {
-    id: 2,
-    level: 2,
-    name: "Beginners Tournament",
-    info: "07/03/26 - 08:00 AM - Court: Granada",
-  },
 ];
 
 function AdminProfilePage() {
@@ -36,10 +29,23 @@ function AdminProfilePage() {
   const [avatar, setAvatar] = useState<string>(() => {
     return localStorage.getItem("adminAvatar") || court1;
   });
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordMsg, setPasswordMsg] = useState("");
+
+  useEffect(() => {
+    const fetchTournaments = async () => {
+      try {
+        const data = await getAdminTournaments("admin1");
+        setTournaments(data as Tournament[]);
+      } catch (error) {
+        console.error("Error fetching tournaments:", error);
+      }
+    };
+    fetchTournaments();
+  }, []);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -132,34 +138,37 @@ function AdminProfilePage() {
 
           {/* Content */}
           <div className="admin-profile__list">
-            {activeTab === "courts"
-              ? courts.map((court) => (
-                  <div key={court.id} className="admin-profile__court-card">
-                    <img
-                      src={court.image}
-                      alt={court.name}
-                      className="admin-profile__court-image"
-                    />
-                    <div className="admin-profile__court-overlay">
-                      <span className="admin-profile__court-name">
-                        {court.name}
-                      </span>
-                    </div>
-                  </div>
-                ))
-              : tournaments.map((t) => (
-                  <TournamentCard
-                    key={t.id}
-                    level={t.level}
-                    name={t.name}
-                    info={t.info}
-                    buttonLabel="Admin"
-                    onView={() => navigate("/admin/tournaments/view")}
+            {activeTab === "courts" ? (
+              courts.map((court) => (
+                <div key={court.id} className="admin-profile__court-card">
+                  <img
+                    src={court.image}
+                    alt={court.name}
+                    className="admin-profile__court-image"
                   />
-                ))}
+                  <div className="admin-profile__court-overlay">
+                    <span className="admin-profile__court-name">
+                      {court.name}
+                    </span>
+                  </div>
+                </div>
+              ))
+            ) : tournaments.length === 0 ? (
+              <p className="admin-profile__empty">No tournaments yet.</p>
+            ) : (
+              tournaments.map((t) => (
+                <TournamentCard
+                  key={t.id}
+                  level={t.level}
+                  name={t.name}
+                  info={t.info}
+                  buttonLabel="Admin"
+                  onView={() => navigate("/admin/tournaments/view")}
+                />
+              ))
+            )}
           </div>
         </section>
-
         <AdBanners />
       </div>
 

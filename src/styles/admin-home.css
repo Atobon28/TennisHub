@@ -154,3 +154,9 @@
   cursor: pointer;
   font-family: inherit;
 }
+.admin-home__loading {
+  color: #888;
+  font-size: 0.95rem;
+  text-align: center;
+  padding: 20px 0;
+}

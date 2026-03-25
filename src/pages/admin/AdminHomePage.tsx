@@ -1,23 +1,17 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
+import { getAdminTournaments } from "../../firebase/services";
 import "../../styles/admin-home.css";
 import court1 from "../../assets/court-1.jpg";
 import court2 from "../../assets/court-2.jpg";
 
-const tournaments = [
-  {
-    id: 1,
-    level: 5,
-    name: "Tournament of champions",
-    info: "28/02/26 - 08:00 AM - Court: Ciudad Jardín",
-  },
-  {
-    id: 2,
-    level: 2,
-    name: "Beginners Tournament",
-    info: "07/03/26 - 08:00 AM - Court: Granada",
-  },
-];
+interface Tournament {
+  id: string;
+  level: number;
+  name: string;
+  info: string;
+}
 
 const courts = [
   { id: 1, name: "Ciudad Jardín", image: court1 },
@@ -26,6 +20,22 @@ const courts = [
 
 function AdminHomePage() {
   const navigate = useNavigate();
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTournaments = async () => {
+      try {
+        const data = await getAdminTournaments("admin1");
+        setTournaments(data as Tournament[]);
+      } catch (error) {
+        console.error("Error fetching tournaments:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTournaments();
+  }, []);
 
   return (
     <div className="admin-home">
@@ -44,21 +54,25 @@ function AdminHomePage() {
             <button className="admin-home__more-btn">Ver más...</button>
           </div>
 
-          <div className="admin-home__tournament-cards">
-            {tournaments.map((t) => (
-              <article key={t.id} className="admin-home__tournament-card">
-                <div className="admin-home__level-badge">{t.level}</div>
-                <h3 className="admin-home__card-name">{t.name}</h3>
-                <p className="admin-home__card-info">{t.info}</p>
-                <button
-                  className="admin-home__view-btn"
-                  onClick={() => navigate("/admin/tournaments/view")}
-                >
-                  View
-                </button>
-              </article>
-            ))}
-          </div>
+          {loading ? (
+            <p className="admin-home__loading">Loading tournaments...</p>
+          ) : (
+            <div className="admin-home__tournament-cards">
+              {tournaments.map((t) => (
+                <article key={t.id} className="admin-home__tournament-card">
+                  <div className="admin-home__level-badge">{t.level}</div>
+                  <h3 className="admin-home__card-name">{t.name}</h3>
+                  <p className="admin-home__card-info">{t.info}</p>
+                  <button
+                    className="admin-home__view-btn"
+                    onClick={() => navigate("/admin/tournaments/view")}
+                  >
+                    View
+                  </button>
+                </article>
+              ))}
+            </div>
+          )}
 
           {/* Courts */}
           <div className="admin-home__section-header">
@@ -92,7 +106,6 @@ function AdminHomePage() {
             ))}
           </div>
         </section>
-
         <AdBanners />
       </div>
     </div>
