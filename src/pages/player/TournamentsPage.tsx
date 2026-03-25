@@ -1,37 +1,36 @@
-import { Icon } from "@iconify/react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Icon } from "@iconify/react";
 import AdBanners from "../../components/player/AdBanners";
+import TournamentCard from "../../components/player/TournamentCard";
+import { getTournaments } from "../../firebase/services";
 import "../../styles/tournaments-page.css";
 
-const tournaments = [
-  {
-    id: 1,
-    level: 5,
-    name: "Tournament of champions",
-    info: "28/02/26 - 08:00 AM - Court: Ciudad Jardín",
-  },
-  {
-    id: 2,
-    level: 2,
-    name: "Beginners Tournament",
-    info: "07/03/26 - 08:00 AM - Court: Granada",
-  },
-  {
-    id: 3,
-    level: 3,
-    name: "Green Court Clash",
-    info: "28/02/26 - 08:00 AM - Court: Ingenio",
-  },
-  {
-    id: 4,
-    level: 4,
-    name: "Weekend Cup",
-    info: "07/03/26 - 08:00 AM - Court: Lago Calima",
-  },
-];
+interface Tournament {
+  id: string;
+  name: string;
+  info: string;
+  level: number;
+}
 
 function TournamentsPage() {
   const navigate = useNavigate();
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTournaments = async () => {
+      try {
+        const data = await getTournaments();
+        setTournaments(data as Tournament[]);
+      } catch (error) {
+        console.error("Error fetching tournaments:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTournaments();
+  }, []);
 
   return (
     <div className="tournaments-page">
@@ -49,21 +48,21 @@ function TournamentsPage() {
             </h2>
           </div>
 
-          <div className="tournaments-page__cards-grid">
-            {tournaments.map((t) => (
-              <article key={t.id} className="tournaments-page__card">
-                <div className="tournaments-page__level-badge">{t.level}</div>
-                <h3 className="tournaments-page__card-name">{t.name}</h3>
-                <p className="tournaments-page__card-info">{t.info}</p>
-                <button
-                  className="tournaments-page__view-btn"
-                  onClick={() => navigate("/player/tournaments/view")}
-                >
-                  View
-                </button>
-              </article>
-            ))}
-          </div>
+          {loading ? (
+            <p className="tournaments-page__loading">Loading tournaments...</p>
+          ) : (
+            <div className="tournaments-page__cards-grid">
+              {tournaments.map((t) => (
+                <TournamentCard
+                  key={t.id}
+                  level={t.level}
+                  name={t.name}
+                  info={t.info}
+                  onView={() => navigate("/player/tournaments/view")}
+                />
+              ))}
+            </div>
+          )}
         </section>
 
         <AdBanners />

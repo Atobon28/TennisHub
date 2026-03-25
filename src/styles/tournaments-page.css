@@ -100,3 +100,9 @@
   font-family: inherit;
   margin-top: 4px;
 }
+.tournaments-page__loading {
+  color: #888;
+  font-size: 0.95rem;
+  text-align: center;
+  padding: 20px 0;
+}

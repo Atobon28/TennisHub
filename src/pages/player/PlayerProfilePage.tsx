@@ -1,8 +1,9 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import MatchCard from "../../components/player/MatchCard";
 import TournamentCard from "../../components/player/TournamentCard";
+import { getPlayerTournaments } from "../../firebase/services";
 import "../../styles/player-profile.css";
 import player1 from "../../assets/player-1.jpg";
 
@@ -23,26 +24,12 @@ const matches = [
   },
 ];
 
-const tournaments = [
-  {
-    id: 1,
-    level: 5,
-    name: "Tournament of champions",
-    info: "28/02/26 - 08:00 AM - Court: Ciudad Jardín",
-  },
-  {
-    id: 2,
-    level: 2,
-    name: "Beginners Tournament",
-    info: "07/03/26 - 08:00 AM - Court: Granada",
-  },
-  {
-    id: 3,
-    level: 4,
-    name: "Open Tournament Clash",
-    info: "10/03/26 - 06:00 PM - Court: Ingenio",
-  },
-];
+interface Tournament {
+  id: string;
+  level: number;
+  name: string;
+  info: string;
+}
 
 function PlayerProfilePage() {
   const navigate = useNavigate();
@@ -57,12 +44,25 @@ function PlayerProfilePage() {
   const [level, setLevel] = useState<number>(() => {
     return parseInt(localStorage.getItem("playerLevel") || "5");
   });
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showLevelModal, setShowLevelModal] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordMsg, setPasswordMsg] = useState("");
   const [tempLevel, setTempLevel] = useState(String(level));
+
+  useEffect(() => {
+    const fetchTournaments = async () => {
+      try {
+        const data = await getPlayerTournaments("player1");
+        setTournaments(data as Tournament[]);
+      } catch (error) {
+        console.error("Error fetching player tournaments:", error);
+      }
+    };
+    fetchTournaments();
+  }, []);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -180,23 +180,29 @@ function PlayerProfilePage() {
 
           {/* Lista */}
           <div className="player-profile__list">
-            {activeTab === "matches"
-              ? matches.map((match) => (
-                  <MatchCard
-                    key={match.id}
-                    time={match.time}
-                    court={match.court}
-                    host={match.host}
-                  />
-                ))
-              : tournaments.map((t) => (
-                  <TournamentCard
-                    key={t.id}
-                    level={t.level}
-                    name={t.name}
-                    info={t.info}
-                  />
-                ))}
+            {activeTab === "matches" ? (
+              matches.map((match) => (
+                <MatchCard
+                  key={match.id}
+                  time={match.time}
+                  court={match.court}
+                  host={match.host}
+                />
+              ))
+            ) : tournaments.length === 0 ? (
+              <p className="player-profile__empty">
+                You haven't joined any tournaments yet.
+              </p>
+            ) : (
+              tournaments.map((t) => (
+                <TournamentCard
+                  key={t.id}
+                  level={t.level}
+                  name={t.name}
+                  info={t.info}
+                />
+              ))
+            )}
           </div>
         </section>
 

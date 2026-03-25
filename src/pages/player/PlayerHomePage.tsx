@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
 import "../../styles/player-home.css";
 import coach1 from "../../assets/coach-1.jpg";
@@ -14,10 +14,31 @@ import MatchCard from "../../components/player/MatchCard";
 import TournamentCard from "../../components/player/TournamentCard";
 import PersonCard from "../../components/player/PersonCard";
 import CourtCard from "../../components/player/CourtCard";
+import { getTournaments } from "../../firebase/services";
+
+interface Tournament {
+  id: string;
+  name: string;
+  info: string;
+  level: number;
+}
 
 function PlayerHomePage() {
   const matchesScrollRef = useRef<HTMLDivElement | null>(null);
   const tournamentsScrollRef = useRef<HTMLDivElement | null>(null);
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
+
+  useEffect(() => {
+    const fetchTournaments = async () => {
+      try {
+        const data = await getTournaments();
+        setTournaments(data as Tournament[]);
+      } catch (error) {
+        console.error("Error fetching tournaments:", error);
+      }
+    };
+    fetchTournaments();
+  }, []);
 
   const scroll = (
     ref: React.RefObject<HTMLDivElement | null>,
@@ -57,27 +78,6 @@ function PlayerHomePage() {
       host: "Daniela Rojas",
     },
     { id: 3, time: "Today - 09:00 PM", court: "Granada", host: "Sebas López" },
-  ];
-
-  const tournaments = [
-    {
-      id: 1,
-      name: "Tournament of champions",
-      info: "28/02/26 - 08:00 AM - Court: Ciudad Jardín",
-      level: 5,
-    },
-    {
-      id: 2,
-      name: "Beginners Tournament",
-      info: "07/03/26 - 08:00 AM - Court: Granada",
-      level: 2,
-    },
-    {
-      id: 3,
-      name: "Open Tournament Clash",
-      info: "10/03/26 - 06:00 PM - Court: Ingenio",
-      level: 4,
-    },
   ];
 
   const courts = [

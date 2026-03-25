@@ -92,3 +92,8 @@
   cursor: pointer;
   font-family: inherit;
 }
+.tournament-view__joined-msg {
+  color: var(--player-green);
+  font-size: 1rem;
+  font-weight: 700;
+}

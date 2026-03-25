@@ -305,3 +305,9 @@
   width: 60%;
   align-self: center;
 }
+.player-profile__empty {
+  color: #888;
+  font-size: 0.95rem;
+  text-align: center;
+  padding: 20px 0;
+}

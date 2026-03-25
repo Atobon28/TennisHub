@@ -6,12 +6,14 @@ import {
   updateDoc,
   deleteDoc,
   doc,
+  query,
+  where,
 } from "firebase/firestore";
 
 // ── USERS ──────────────────────────────────────────
 export const getUsers = async () => {
   const snapshot = await getDocs(collection(db, "users"));
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 };
 
 export const addUser = async (user: object) => {
@@ -29,7 +31,7 @@ export const deleteUser = async (id: string) => {
 // ── COURTS ─────────────────────────────────────────
 export const getCourts = async () => {
   const snapshot = await getDocs(collection(db, "courts"));
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 };
 
 export const addCourt = async (court: object) => {
@@ -47,7 +49,7 @@ export const deleteCourt = async (id: string) => {
 // ── TOURNAMENTS ────────────────────────────────────
 export const getTournaments = async () => {
   const snapshot = await getDocs(collection(db, "tournaments"));
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 };
 
 export const addTournament = async (tournament: object) => {
@@ -65,7 +67,7 @@ export const deleteTournament = async (id: string) => {
 // ── MATCHES ────────────────────────────────────────
 export const getMatches = async () => {
   const snapshot = await getDocs(collection(db, "matches"));
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 };
 
 export const addMatch = async (match: object) => {
@@ -78,4 +80,21 @@ export const updateMatch = async (id: string, data: object) => {
 
 export const deleteMatch = async (id: string) => {
   return await deleteDoc(doc(db, "matches", id));
+};
+
+// ── PLAYER TOURNAMENTS ─────────────────────────────
+export const getPlayerTournaments = async (playerId: string) => {
+  const q = query(
+    collection(db, "playerTournaments"),
+    where("playerId", "==", playerId),
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+};
+
+export const joinTournament = async (playerId: string, tournament: object) => {
+  return await addDoc(collection(db, "playerTournaments"), {
+    playerId,
+    ...tournament,
+  });
 };

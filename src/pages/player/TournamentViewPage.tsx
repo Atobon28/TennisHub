@@ -1,4 +1,7 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
+import { joinTournament } from "../../firebase/services";
 import "../../styles/tournament-view.css";
 import court1 from "../../assets/court-1.jpg";
 
@@ -12,6 +15,29 @@ const tournament = {
 };
 
 function TournamentViewPage() {
+  const navigate = useNavigate();
+  const [joined, setJoined] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleJoin = async () => {
+    setLoading(true);
+    try {
+      await joinTournament("player1", {
+        name: tournament.name,
+        court: tournament.court,
+        date: tournament.date,
+        hour: tournament.hour,
+        level: tournament.minLevel,
+        info: `${tournament.date} - ${tournament.hour} - Court: ${tournament.court}`,
+      });
+      setJoined(true);
+    } catch (error) {
+      console.error("Error joining tournament:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="tournament-view">
       <div className="tournament-view__grid">
@@ -47,7 +73,19 @@ function TournamentViewPage() {
                 </p>
               </div>
             </div>
-            <button className="tournament-view__join-btn">Join</button>
+            {joined ? (
+              <p className="tournament-view__joined-msg">
+                ✓ You have joined this tournament!
+              </p>
+            ) : (
+              <button
+                className="tournament-view__join-btn"
+                onClick={handleJoin}
+                disabled={loading}
+              >
+                {loading ? "Joining..." : "Join"}
+              </button>
+            )}
           </div>
         </section>
 

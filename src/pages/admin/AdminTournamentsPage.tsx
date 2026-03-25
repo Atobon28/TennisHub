@@ -3,33 +3,23 @@ import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import TournamentCard from "../../components/player/TournamentCard";
 import { Icon } from "@iconify/react";
+import { getTournaments, addTournament } from "../../firebase/services";
 import "../../styles/admin-tournaments.css";
 
 interface Tournament {
-  id: number;
+  id: string;
   level: number;
   name: string;
   info: string;
+  date: string;
+  hour: string;
+  court: string;
 }
 
 function AdminTournamentsPage() {
   const navigate = useNavigate();
-
-  const [tournaments, setTournaments] = useState<Tournament[]>([
-    {
-      id: 1,
-      level: 5,
-      name: "Tournament of champions",
-      info: "28/02/26 - 08:00 AM - Court: Ciudad Jardín",
-    },
-    {
-      id: 2,
-      level: 2,
-      name: "Beginners Tournament",
-      info: "07/03/26 - 08:00 AM - Court: Granada",
-    },
-  ]);
-
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [newName, setNewName] = useState("");
   const [newDate, setNewDate] = useState("");
@@ -38,21 +28,44 @@ function AdminTournamentsPage() {
   const [newLevel, setNewLevel] = useState("");
 
   useEffect(() => {
+    fetchTournaments();
+  }, []);
+
+  useEffect(() => {
     const handler = () => setShowModal(true);
     window.addEventListener("admin:addTournament", handler);
     return () => window.removeEventListener("admin:addTournament", handler);
   }, []);
 
-  const handleAdd = () => {
+  const fetchTournaments = async () => {
+    try {
+      const data = await getTournaments();
+      setTournaments(data as Tournament[]);
+    } catch (error) {
+      console.error("Error fetching tournaments:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAdd = async () => {
     if (!newName) return;
-    const newTournament: Tournament = {
-      id: Date.now(),
+    const info = `${newDate} - ${newHour} - Court: ${newCourt}`;
+    const newTournament = {
       level: parseInt(newLevel) || 1,
       name: newName,
-      info: `${newDate} - ${newHour} - Court: ${newCourt}`,
+      info,
+      date: newDate,
+      hour: newHour,
+      court: newCourt,
     };
-    setTournaments((prev) => [...prev, newTournament]);
-    handleClose();
+    try {
+      await addTournament(newTournament);
+      await fetchTournaments();
+      handleClose();
+    } catch (error) {
+      console.error("Error adding tournament:", error);
+    }
   };
 
   const handleClose = () => {
@@ -80,24 +93,27 @@ function AdminTournamentsPage() {
             </h2>
           </div>
 
-          <div className="admin-tournaments__cards-grid">
-            {tournaments.map((t) => (
-              <TournamentCard
-                key={t.id}
-                level={t.level}
-                name={t.name}
-                info={t.info}
-                buttonLabel="Admin"
-                onView={() => navigate("/admin/tournaments/view")}
-              />
-            ))}
-          </div>
+          {loading ? (
+            <p className="admin-tournaments__loading">Loading tournaments...</p>
+          ) : (
+            <div className="admin-tournaments__cards-grid">
+              {tournaments.map((t) => (
+                <TournamentCard
+                  key={t.id}
+                  level={t.level}
+                  name={t.name}
+                  info={t.info}
+                  buttonLabel="Admin"
+                  onView={() => navigate("/admin/tournaments/view")}
+                />
+              ))}
+            </div>
+          )}
         </section>
 
         <AdBanners />
       </div>
 
-      {/* Modal Create Tournament */}
       {showModal && (
         <div className="admin-tournaments__modal-overlay">
           <div className="admin-tournaments__modal">
