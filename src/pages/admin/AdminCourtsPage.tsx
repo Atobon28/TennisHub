@@ -2,25 +2,24 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import { Icon } from "@iconify/react";
+import { getAdminCourts, addCourt } from "../../firebase/services";
 import "../../styles/admin-courts.css";
 import court1 from "../../assets/court-1.jpg";
-import court2 from "../../assets/court-2.jpg";
 
 interface Court {
-  id: number;
+  id: string;
   name: string;
   image: string;
+  contact?: string;
+  address?: string;
 }
 
 function AdminCourtsPage() {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [courts, setCourts] = useState<Court[]>([
-    { id: 1, name: "Ciudad Jardín", image: court1 },
-    { id: 2, name: "Granada", image: court2 },
-  ]);
-
+  const [courts, setCourts] = useState<Court[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [newName, setNewName] = useState("");
   const [newContact, setNewContact] = useState("");
@@ -28,10 +27,25 @@ function AdminCourtsPage() {
   const [newImage, setNewImage] = useState<string | null>(null);
 
   useEffect(() => {
+    fetchCourts();
+  }, []);
+
+  useEffect(() => {
     const handler = () => setShowModal(true);
     window.addEventListener("admin:addCourt", handler);
     return () => window.removeEventListener("admin:addCourt", handler);
   }, []);
+
+  const fetchCourts = async () => {
+    try {
+      const data = await getAdminCourts("admin1");
+      setCourts(data as Court[]);
+    } catch (error) {
+      console.error("Error fetching courts:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -41,19 +55,20 @@ function AdminCourtsPage() {
     reader.readAsDataURL(file);
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!newName) return;
-    const newCourt: Court = {
-      id: Date.now(),
-      name: newName,
-      image: newImage || court1,
-    };
-    setCourts((prev) => [...prev, newCourt]);
-    setNewName("");
-    setNewContact("");
-    setNewAddress("");
-    setNewImage(null);
-    setShowModal(false);
+    try {
+      await addCourt("admin1", {
+        name: newName,
+        contact: newContact,
+        address: newAddress,
+        image: newImage || court1,
+      });
+      await fetchCourts();
+      handleClose();
+    } catch (error) {
+      console.error("Error adding court:", error);
+    }
   };
 
   const handleClose = () => {
@@ -78,32 +93,37 @@ function AdminCourtsPage() {
             <h2 className="admin-courts__section-title">My Courts</h2>
           </div>
 
-          <div className="admin-courts__courts-grid">
-            {courts.map((court) => (
-              <article key={court.id} className="admin-courts__court-card">
-                <img
-                  src={court.image}
-                  alt={court.name}
-                  className="admin-courts__court-image"
-                />
-                <div className="admin-courts__court-overlay">
-                  <span className="admin-courts__court-name">{court.name}</span>
-                  <button
-                    className="admin-courts__see-more-btn"
-                    onClick={() => navigate("/admin/courts/view")}
-                  >
-                    See more
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
+          {loading ? (
+            <p className="admin-courts__loading">Loading courts...</p>
+          ) : (
+            <div className="admin-courts__courts-grid">
+              {courts.map((court) => (
+                <article key={court.id} className="admin-courts__court-card">
+                  <img
+                    src={court.image}
+                    alt={court.name}
+                    className="admin-courts__court-image"
+                  />
+                  <div className="admin-courts__court-overlay">
+                    <span className="admin-courts__court-name">
+                      {court.name}
+                    </span>
+                    <button
+                      className="admin-courts__see-more-btn"
+                      onClick={() => navigate("/admin/courts/view")}
+                    >
+                      See more
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
         </section>
 
         <AdBanners />
       </div>
 
-      {/* Modal Add Court */}
       {showModal && (
         <div className="admin-courts__modal-overlay">
           <div className="admin-courts__modal">

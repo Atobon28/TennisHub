@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
-import { getAdminTournaments } from "../../firebase/services";
+import { getAdminTournaments, getAdminCourts } from "../../firebase/services";
 import "../../styles/admin-home.css";
 import court1 from "../../assets/court-1.jpg";
-import court2 from "../../assets/court-2.jpg";
 
 interface Tournament {
   id: string;
@@ -13,15 +12,18 @@ interface Tournament {
   info: string;
 }
 
-const courts = [
-  { id: 1, name: "Ciudad Jardín", image: court1 },
-  { id: 2, name: "Granada", image: court2 },
-];
+interface Court {
+  id: string;
+  name: string;
+  image: string;
+}
 
 function AdminHomePage() {
   const navigate = useNavigate();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [courts, setCourts] = useState<Court[]>([]);
+  const [loadingTournaments, setLoadingTournaments] = useState(true);
+  const [loadingCourts, setLoadingCourts] = useState(true);
 
   useEffect(() => {
     const fetchTournaments = async () => {
@@ -31,10 +33,23 @@ function AdminHomePage() {
       } catch (error) {
         console.error("Error fetching tournaments:", error);
       } finally {
-        setLoading(false);
+        setLoadingTournaments(false);
       }
     };
+
+    const fetchCourts = async () => {
+      try {
+        const data = await getAdminCourts("admin1");
+        setCourts(data as Court[]);
+      } catch (error) {
+        console.error("Error fetching courts:", error);
+      } finally {
+        setLoadingCourts(false);
+      }
+    };
+
     fetchTournaments();
+    fetchCourts();
   }, []);
 
   return (
@@ -54,7 +69,7 @@ function AdminHomePage() {
             <button className="admin-home__more-btn">Ver más...</button>
           </div>
 
-          {loading ? (
+          {loadingTournaments ? (
             <p className="admin-home__loading">Loading tournaments...</p>
           ) : (
             <div className="admin-home__tournament-cards">
@@ -85,26 +100,30 @@ function AdminHomePage() {
             <button className="admin-home__more-btn">Ver más...</button>
           </div>
 
-          <div className="admin-home__courts-grid">
-            {courts.map((court) => (
-              <article key={court.id} className="admin-home__court-card">
-                <img
-                  src={court.image}
-                  alt={court.name}
-                  className="admin-home__court-image"
-                />
-                <div className="admin-home__court-overlay">
-                  <span className="admin-home__court-name">{court.name}</span>
-                  <button
-                    className="admin-home__see-more-btn"
-                    onClick={() => navigate("/admin/courts/view")}
-                  >
-                    See more
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
+          {loadingCourts ? (
+            <p className="admin-home__loading">Loading courts...</p>
+          ) : (
+            <div className="admin-home__courts-grid">
+              {courts.map((court) => (
+                <article key={court.id} className="admin-home__court-card">
+                  <img
+                    src={court.image || court1}
+                    alt={court.name}
+                    className="admin-home__court-image"
+                  />
+                  <div className="admin-home__court-overlay">
+                    <span className="admin-home__court-name">{court.name}</span>
+                    <button
+                      className="admin-home__see-more-btn"
+                      onClick={() => navigate("/admin/courts/view")}
+                    >
+                      See more
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
         </section>
         <AdBanners />
       </div>

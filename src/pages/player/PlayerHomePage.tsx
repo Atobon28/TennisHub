@@ -8,13 +8,12 @@ import player1 from "../../assets/player-1.jpg";
 import player2 from "../../assets/player-2.jpg";
 import player3 from "../../assets/player-3.jpg";
 import court1 from "../../assets/court-1.jpg";
-import court2 from "../../assets/court-2.jpg";
 import AdBanners from "../../components/player/AdBanners";
 import MatchCard from "../../components/player/MatchCard";
 import TournamentCard from "../../components/player/TournamentCard";
 import PersonCard from "../../components/player/PersonCard";
 import CourtCard from "../../components/player/CourtCard";
-import { getTournaments } from "../../firebase/services";
+import { getTournaments, getCourts } from "../../firebase/services";
 
 interface Tournament {
   id: string;
@@ -23,10 +22,23 @@ interface Tournament {
   level: number;
 }
 
+interface Court {
+  id: string;
+  name: string;
+  image: string;
+}
+
+const classNames = [
+  "player-home__court-card--large",
+  "player-home__court-card--small-top",
+  "player-home__court-card--small-bottom",
+];
+
 function PlayerHomePage() {
   const matchesScrollRef = useRef<HTMLDivElement | null>(null);
   const tournamentsScrollRef = useRef<HTMLDivElement | null>(null);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [courts, setCourts] = useState<Court[]>([]);
 
   useEffect(() => {
     const fetchTournaments = async () => {
@@ -37,7 +49,18 @@ function PlayerHomePage() {
         console.error("Error fetching tournaments:", error);
       }
     };
+
+    const fetchCourts = async () => {
+      try {
+        const data = await getCourts();
+        setCourts(data as Court[]);
+      } catch (error) {
+        console.error("Error fetching courts:", error);
+      }
+    };
+
     fetchTournaments();
+    fetchCourts();
   }, []);
 
   const scroll = (
@@ -78,24 +101,6 @@ function PlayerHomePage() {
       host: "Daniela Rojas",
     },
     { id: 3, time: "Today - 09:00 PM", court: "Granada", host: "Sebas López" },
-  ];
-
-  const courts = [
-    {
-      name: "Ciudad Jardín",
-      image: court1,
-      className: "player-home__court-card--large",
-    },
-    {
-      name: "Granada",
-      image: court2,
-      className: "player-home__court-card--small-top",
-    },
-    {
-      name: "Lago Calima",
-      image: court2,
-      className: "player-home__court-card--small-bottom",
-    },
   ];
 
   return (
@@ -283,12 +288,12 @@ function PlayerHomePage() {
               </button>
             </div>
             <div className="player-home__courts-grid">
-              {courts.map((court) => (
+              {courts.slice(0, 3).map((court, index) => (
                 <CourtCard
-                  key={court.name}
+                  key={court.id}
                   name={court.name}
-                  image={court.image}
-                  className={court.className}
+                  image={court.image || court1}
+                  className={classNames[index]}
                 />
               ))}
             </div>

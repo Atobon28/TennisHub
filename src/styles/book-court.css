@@ -154,3 +154,10 @@
 .book-court__aside-text-small--brand {
   font-size: 0.85rem;
 }
+.admin-courts__loading,
+.book-court__loading {
+  color: #888;
+  font-size: 0.95rem;
+  text-align: center;
+  padding: 20px 0;
+}

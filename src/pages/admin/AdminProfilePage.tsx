@@ -2,10 +2,9 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import TournamentCard from "../../components/player/TournamentCard";
-import { getAdminTournaments } from "../../firebase/services";
+import { getAdminTournaments, getAdminCourts } from "../../firebase/services";
 import "../../styles/admin-profile.css";
 import court1 from "../../assets/court-1.jpg";
-import court2 from "../../assets/court-2.jpg";
 
 interface Tournament {
   id: string;
@@ -14,10 +13,11 @@ interface Tournament {
   info: string;
 }
 
-const courts = [
-  { id: 1, name: "Granada", image: court2 },
-  { id: 2, name: "Ciudad Jardín", image: court1 },
-];
+interface Court {
+  id: string;
+  name: string;
+  image: string;
+}
 
 function AdminProfilePage() {
   const navigate = useNavigate();
@@ -30,6 +30,7 @@ function AdminProfilePage() {
     return localStorage.getItem("adminAvatar") || court1;
   });
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [courts, setCourts] = useState<Court[]>([]);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -44,7 +45,18 @@ function AdminProfilePage() {
         console.error("Error fetching tournaments:", error);
       }
     };
+
+    const fetchCourts = async () => {
+      try {
+        const data = await getAdminCourts("admin1");
+        setCourts(data as Court[]);
+      } catch (error) {
+        console.error("Error fetching courts:", error);
+      }
+    };
+
     fetchTournaments();
+    fetchCourts();
   }, []);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -139,20 +151,24 @@ function AdminProfilePage() {
           {/* Content */}
           <div className="admin-profile__list">
             {activeTab === "courts" ? (
-              courts.map((court) => (
-                <div key={court.id} className="admin-profile__court-card">
-                  <img
-                    src={court.image}
-                    alt={court.name}
-                    className="admin-profile__court-image"
-                  />
-                  <div className="admin-profile__court-overlay">
-                    <span className="admin-profile__court-name">
-                      {court.name}
-                    </span>
+              courts.length === 0 ? (
+                <p className="admin-profile__empty">No courts yet.</p>
+              ) : (
+                courts.map((court) => (
+                  <div key={court.id} className="admin-profile__court-card">
+                    <img
+                      src={court.image || court1}
+                      alt={court.name}
+                      className="admin-profile__court-image"
+                    />
+                    <div className="admin-profile__court-overlay">
+                      <span className="admin-profile__court-name">
+                        {court.name}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))
+                ))
+              )
             ) : tournaments.length === 0 ? (
               <p className="admin-profile__empty">No tournaments yet.</p>
             ) : (
