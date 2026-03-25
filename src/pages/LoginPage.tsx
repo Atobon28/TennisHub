@@ -5,10 +5,16 @@ import loginImage from "../assets/login.jpg";
 function LoginPage() {
   const navigate = useNavigate();
 
+  const role = localStorage.getItem("role");
+  const registerLink =
+    role === "coach"
+      ? "/register-coach"
+      : role === "admin"
+        ? "/register-admin"
+        : "/register";
+
   const handleLogin = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const role = localStorage.getItem("role");
-
     if (role === "coach") {
       navigate("/coach/home");
     } else if (role === "admin") {
@@ -60,7 +66,7 @@ function LoginPage() {
               <span className="access-form__footer-line">
                 <span className="access-form__back-icon">‹</span>
                 <span>No account yet?</span>
-                <Link to="/register" className="access-form__footer-link">
+                <Link to={registerLink} className="access-form__footer-link">
                   Sign up
                 </Link>
               </span>

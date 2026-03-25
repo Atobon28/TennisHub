@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import "../styles/access-pages.css";
 import registerImage from "../assets/register.jpg";
 
-function RegisterPage() {
+function RegisterAdminPage() {
   const navigate = useNavigate();
 
   const handleRegister = (event: React.FormEvent<HTMLFormElement>) => {
@@ -56,25 +56,6 @@ function RegisterPage() {
               />
             </div>
 
-            <div className="access-form__group">
-              <label className="access-form__label" htmlFor="level">
-                Level (1-5)
-              </label>
-              <input
-                id="level"
-                type="number"
-                min="1"
-                max="5"
-                className="access-form__input"
-                placeholder="Enter your level..."
-                onChange={(e) => {
-                  const val = parseInt(e.target.value);
-                  if (val > 5) e.target.value = "5";
-                  if (val < 1) e.target.value = "1";
-                }}
-              />
-            </div>
-
             <button type="submit" className="access-form__button-primary">
               Register
             </button>
@@ -95,7 +76,7 @@ function RegisterPage() {
       <section className="access-screen__right">
         <img
           src={registerImage}
-          alt="TennisHub register"
+          alt="TennisHub register admin"
           className="access-screen__image"
         />
       </section>
@@ -103,4 +84,4 @@ function RegisterPage() {
   );
 }
 
-export default RegisterPage;
+export default RegisterAdminPage;
