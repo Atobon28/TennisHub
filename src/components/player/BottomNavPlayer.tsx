@@ -1,34 +1,17 @@
-import { NavLink } from 'react-router-dom'
-import { Icon } from '@iconify/react'
+import { NavLink } from "react-router-dom";
+import { Icon } from "@iconify/react";
 
 function BottomNavPlayer() {
   const menuItems = [
+    { to: "/player/home", label: "Home", icon: "solar:widget-2-outline" },
     {
-      to: '/player/home',
-      label: 'Home',
-      icon: 'solar:widget-2-outline',
+      to: "/player/tournaments",
+      label: "Tournaments",
+      icon: "solar:ticket-linear",
     },
-    {
-      to: '/player/tournaments',
-      label: 'Tournaments',
-      icon: 'solar:ticket-linear',
-    },
-    {
-      to: '/player/courts',
-      label: 'Courts',
-      icon: 'mdi:tennis-ball-outline',
-    },
-    {
-      to: '/player/notifications',
-      label: 'Notifications',
-      icon: 'solar:bell-linear',
-    },
-    {
-      to: '/player/profile',
-      label: 'Profile',
-      icon: 'solar:user-linear',
-    },
-  ]
+    { to: "/player/courts", label: "Courts", icon: "mdi:tennis-ball-outline" },
+    { to: "/player/profile", label: "Profile", icon: "solar:user-linear" },
+  ];
 
   return (
     <nav className="player-bottomnav">
@@ -38,8 +21,8 @@ function BottomNavPlayer() {
           to={item.to}
           className={({ isActive }) =>
             isActive
-              ? 'player-bottomnav__link player-bottomnav__link--active'
-              : 'player-bottomnav__link'
+              ? "player-bottomnav__link player-bottomnav__link--active"
+              : "player-bottomnav__link"
           }
           aria-label={item.label}
         >
@@ -47,7 +30,7 @@ function BottomNavPlayer() {
         </NavLink>
       ))}
     </nav>
-  )
+  );
 }
 
-export default BottomNavPlayer
+export default BottomNavPlayer;
