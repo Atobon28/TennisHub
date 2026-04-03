@@ -1,4 +1,4 @@
-import { db } from "./firebase";
+import { db, auth } from "./firebase";
 import {
   collection,
   getDocs,
@@ -9,6 +9,11 @@ import {
   query,
   where,
 } from "firebase/firestore";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+} from "firebase/auth";
 
 // ── USERS ──────────────────────────────────────────
 export const getUsers = async () => {
@@ -116,12 +121,6 @@ export const joinTournament = async (playerId: string, tournament: object) => {
     ...tournament,
   });
 };
-import { auth } from "./firebase";
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-} from "firebase/auth";
 
 // ── AUTH ───────────────────────────────────────────
 export const registerUser = async (email: string, password: string) => {
@@ -134,4 +133,11 @@ export const loginUser = async (email: string, password: string) => {
 
 export const logoutUser = async () => {
   return await signOut(auth);
+};
+
+export const getUserByUid = async (uid: string) => {
+  const q = query(collection(db, "users"), where("uid", "==", uid));
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return null;
+  return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
 };

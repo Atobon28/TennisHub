@@ -1,10 +1,11 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../styles/access-pages.css";
 import loginImage from "../assets/login.jpg";
+import { loginUser, getUserByUid } from "../firebase/services";
 
 function LoginPage() {
   const navigate = useNavigate();
-
   const role = localStorage.getItem("role");
   const registerLink =
     role === "coach"
@@ -13,14 +14,31 @@ function LoginPage() {
         ? "/register-admin"
         : "/register";
 
-  const handleLogin = (event: React.FormEvent<HTMLFormElement>) => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (role === "coach") {
-      navigate("/coach/home");
-    } else if (role === "admin") {
-      navigate("/admin/home");
-    } else {
-      navigate("/player/home");
+    setError("");
+    setLoading(true);
+    try {
+      const userCredential = await loginUser(email, password);
+      const userData = (await getUserByUid(userCredential.user.uid)) as any;
+      if (!userData) throw new Error("User not found");
+      localStorage.setItem("role", userData.role);
+      if (userData.role === "coach") {
+        navigate("/coach/home");
+      } else if (userData.role === "admin") {
+        navigate("/admin/home");
+      } else {
+        navigate("/player/home");
+      }
+    } catch (err: any) {
+      setError("Invalid email or password. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -35,14 +53,16 @@ function LoginPage() {
 
           <form className="access-form" onSubmit={handleLogin}>
             <div className="access-form__group">
-              <label className="access-form__label" htmlFor="username">
-                Username
+              <label className="access-form__label" htmlFor="email">
+                Email
               </label>
               <input
-                id="username"
-                type="text"
+                id="email"
+                type="email"
                 className="access-form__input"
-                placeholder="Enter your username..."
+                placeholder="Enter your email..."
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
 
@@ -55,11 +75,19 @@ function LoginPage() {
                 type="password"
                 className="access-form__input"
                 placeholder="Enter your password..."
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
               />
             </div>
 
-            <button type="submit" className="access-form__button-primary">
-              Login
+            {error && <p className="access-form__error">{error}</p>}
+
+            <button
+              type="submit"
+              className="access-form__button-primary"
+              disabled={loading}
+            >
+              {loading ? "Logging in..." : "Login"}
             </button>
 
             <div className="access-form__footer">

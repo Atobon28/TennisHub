@@ -1,13 +1,41 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../styles/access-pages.css";
 import registerImage from "../assets/register.jpg";
+import { registerUser, addUser } from "../firebase/services";
 
 function RegisterAdminPage() {
   const navigate = useNavigate();
 
-  const handleRegister = (event: React.FormEvent<HTMLFormElement>) => {
+  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleRegister = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    navigate("/login");
+    setError("");
+    setLoading(true);
+    try {
+      const userCredential = await registerUser(email, password);
+      await addUser({
+        uid: userCredential.user.uid,
+        email,
+        username,
+        role: "admin",
+      });
+      if (password.length < 6) {
+        setError("Password must be at least 6 characters.");
+        setLoading(false);
+        return;
+      }
+      navigate("/login");
+    } catch (err: any) {
+      setError("Error creating account. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -29,6 +57,8 @@ function RegisterAdminPage() {
                 type="email"
                 className="access-form__input"
                 placeholder="Enter your email..."
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
 
@@ -41,6 +71,8 @@ function RegisterAdminPage() {
                 type="text"
                 className="access-form__input"
                 placeholder="Enter your username..."
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
               />
             </div>
 
@@ -53,11 +85,19 @@ function RegisterAdminPage() {
                 type="password"
                 className="access-form__input"
                 placeholder="Enter your password..."
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
               />
             </div>
 
-            <button type="submit" className="access-form__button-primary">
-              Register
+            {error && <p className="access-form__error">{error}</p>}
+
+            <button
+              type="submit"
+              className="access-form__button-primary"
+              disabled={loading}
+            >
+              {loading ? "Registering..." : "Register"}
             </button>
 
             <div className="access-form__footer">

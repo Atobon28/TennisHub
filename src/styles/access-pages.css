@@ -52,7 +52,7 @@ body,
 .access-screen__title {
   margin: 0;
   color: #111111;
-  font-family: 'Baloo 2', Arial, sans-serif;
+  font-family: "Baloo 2", Arial, sans-serif;
   font-size: 3.3rem;
   line-height: 0.95;
   font-weight: 800;
@@ -244,4 +244,11 @@ body,
 
 .access-form__link:hover {
   text-decoration: underline;
+}
+
+.access-form__error {
+  color: #e05252;
+  font-size: 0.88rem;
+  margin: 0;
+  text-align: center;
 }

@@ -1,14 +1,46 @@
-import { Link, useNavigate } from 'react-router-dom'
-import '../styles/access-pages.css'
-import registerCoachImage from '../assets/register-coach.jpg'
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import "../styles/access-pages.css";
+import registerCoachImage from "../assets/register-coach.jpg";
+import { registerUser, addUser } from "../firebase/services";
 
 function RegisterCoachPage() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
-  const handleRegisterCoach = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    navigate('/login')
-  }
+  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [pricePerHour, setPricePerHour] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleRegisterCoach = async (
+    event: React.FormEvent<HTMLFormElement>,
+  ) => {
+    event.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const userCredential = await registerUser(email, password);
+      await addUser({
+        uid: userCredential.user.uid,
+        email,
+        username,
+        pricePerHour,
+        role: "coach",
+      });
+      if (password.length < 6) {
+        setError("Password must be at least 6 characters.");
+        setLoading(false);
+        return;
+      }
+      navigate("/login");
+    } catch (err: any) {
+      setError("Error creating account. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="access-screen">
@@ -29,6 +61,8 @@ function RegisterCoachPage() {
                 type="email"
                 className="access-form__input"
                 placeholder="Enter your email..."
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
 
@@ -41,6 +75,8 @@ function RegisterCoachPage() {
                 type="text"
                 className="access-form__input"
                 placeholder="Enter your username..."
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
               />
             </div>
 
@@ -53,6 +89,8 @@ function RegisterCoachPage() {
                 type="password"
                 className="access-form__input"
                 placeholder="Enter your password..."
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
               />
             </div>
 
@@ -65,11 +103,19 @@ function RegisterCoachPage() {
                 type="text"
                 className="access-form__input"
                 placeholder="Enter your price..."
+                value={pricePerHour}
+                onChange={(e) => setPricePerHour(e.target.value)}
               />
             </div>
 
-            <button type="submit" className="access-form__button-primary">
-              Register
+            {error && <p className="access-form__error">{error}</p>}
+
+            <button
+              type="submit"
+              className="access-form__button-primary"
+              disabled={loading}
+            >
+              {loading ? "Registering..." : "Register"}
             </button>
 
             <div className="access-form__footer">
@@ -93,7 +139,7 @@ function RegisterCoachPage() {
         />
       </section>
     </div>
-  )
+  );
 }
 
-export default RegisterCoachPage
+export default RegisterCoachPage;
