@@ -4,29 +4,30 @@
 
 .court-view__grid {
   display: grid;
-  grid-template-columns: 1fr 300px;
-  gap: 24px;
+  grid-template-columns: 1fr;
+  gap: 16px;
   align-items: start;
 }
 
 .court-view__main {
   background-color: var(--player-card-bg);
   border-radius: 16px;
-  padding: 40px 32px;
+  padding: 16px;
 }
 
 .court-view__card {
   background-color: var(--player-white);
   border-radius: 16px;
-  padding: 24px;
+  padding: 16px;
   display: flex;
-  gap: 40px;
+  flex-direction: column;
+  gap: 16px;
   align-items: center;
 }
 
 .court-view__image {
-  width: 220px;
-  height: 260px;
+  width: 100%;
+  height: 200px;
   object-fit: cover;
   border-radius: 12px;
   flex-shrink: 0;
@@ -35,18 +36,21 @@
 .court-view__info {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+  width: 100%;
+  align-items: center;
+  text-align: center;
 }
 
 .court-view__name {
-  font-size: 1.6rem;
+  font-size: 1.4rem;
   font-weight: 700;
   color: var(--player-black);
   margin: 0;
 }
 
 .court-view__detail {
-  font-size: 1rem;
+  font-size: 0.95rem;
   color: var(--player-black);
   margin: 0;
 }
@@ -56,7 +60,7 @@
 }
 
 .court-view__whatsapp-btn {
-  align-self: flex-start;
+  align-self: center;
   background: var(--player-green-gradient);
   color: var(--player-white);
   border: none;
@@ -67,4 +71,47 @@
   cursor: pointer;
   font-family: inherit;
   margin-top: 4px;
+  width: 100%;
+}
+
+/* ── DESKTOP ── */
+@media (min-width: 1024px) {
+  .court-view__grid {
+    grid-template-columns: 1fr 300px;
+    gap: 24px;
+  }
+
+  .court-view__main {
+    padding: 40px 32px;
+  }
+
+  .court-view__card {
+    flex-direction: row;
+    gap: 40px;
+    align-items: center;
+    padding: 24px;
+  }
+
+  .court-view__image {
+    width: 220px;
+    height: 260px;
+  }
+
+  .court-view__info {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .court-view__name {
+    font-size: 1.6rem;
+  }
+
+  .court-view__detail {
+    font-size: 1rem;
+  }
+
+  .court-view__whatsapp-btn {
+    width: auto;
+    align-self: flex-start;
+  }
 }
