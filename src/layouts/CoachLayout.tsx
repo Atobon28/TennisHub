@@ -1,5 +1,7 @@
 import { Outlet } from "react-router-dom";
 import SidebarCoach from "../components/coach/SidebarCoach";
+import TopbarMobileCoach from "../components/coach/TopbarMobileCoach";
+import BottomNavCoach from "../components/coach/BottomNavCoach";
 import { useAuth } from "../context/AuthContext";
 import "../styles/player-layout.css";
 import logo from "../assets/Logo.png";
@@ -32,9 +34,17 @@ function CoachLayout() {
           </div>
         </header>
 
+        <div className="player-layout__mobile-topbar">
+          <TopbarMobileCoach />
+        </div>
+
         <main className="player-layout__content">
           <Outlet />
         </main>
+
+        <div className="player-layout__mobile-bottomnav">
+          <BottomNavCoach />
+        </div>
       </div>
     </div>
   );

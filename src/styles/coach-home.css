@@ -4,22 +4,22 @@
 
 .coach-home__grid {
   display: grid;
-  grid-template-columns: 1fr 300px;
-  gap: 24px;
+  grid-template-columns: 1fr;
+  gap: 16px;
   align-items: start;
 }
 
 .coach-home__main {
   background-color: var(--player-card-bg);
   border-radius: 16px;
-  padding: 32px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 .coach-home__welcome {
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 400;
   color: var(--player-black);
   margin: 0;
@@ -30,14 +30,14 @@
 }
 
 .coach-home__subtitle {
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   color: #555;
   margin: 0;
   line-height: 1.6;
 }
 
 .coach-home__profile-label {
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   color: var(--player-black);
   margin: 0;
 }
@@ -46,35 +46,37 @@
 .coach-home__profile-card {
   background-color: var(--player-white);
   border-radius: 16px;
-  padding: 32px;
+  padding: 20px 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
 }
 
 .coach-home__profile-top {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
+  width: 100%;
 }
 
 .coach-home__avatar {
-  width: 90px;
-  height: 90px;
+  width: 80px;
+  height: 80px;
   border-radius: 999px;
   object-fit: cover;
+  flex-shrink: 0;
 }
 
 .coach-home__coach-name {
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: var(--player-black);
   margin: 0;
 }
 
 .coach-home__coach-username {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: #888;
   margin: 0;
 }
@@ -84,6 +86,7 @@
   flex-direction: column;
   align-items: center;
   gap: 6px;
+  width: 100%;
 }
 
 .coach-home__profile-details p {
@@ -100,21 +103,22 @@
 .coach-home__schedule {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+  width: 100%;
 }
 
 .coach-home__day-row {
   background-color: var(--player-white);
   border-radius: 12px;
-  padding: 14px 20px;
+  padding: 12px 16px;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
 }
 
 .coach-home__day-icon {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 999px;
   object-fit: cover;
   flex-shrink: 0;
@@ -122,25 +126,77 @@
 
 .coach-home__day-name {
   flex: 1;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
   color: var(--player-black);
 }
 
 .coach-home__check-circle {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 999px;
   background-color: #ddd;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: var(--player-dark);
   flex-shrink: 0;
 }
 
 .coach-home__check-circle--active {
   background-color: var(--player-green);
+}
+
+/* ── DESKTOP ── */
+@media (min-width: 1024px) {
+  .coach-home__grid {
+    grid-template-columns: 1fr 300px;
+    gap: 24px;
+  }
+
+  .coach-home__main {
+    padding: 32px;
+    gap: 20px;
+  }
+
+  .coach-home__welcome {
+    font-size: 2rem;
+  }
+
+  .coach-home__subtitle {
+    font-size: 0.95rem;
+  }
+
+  .coach-home__profile-label {
+    font-size: 0.95rem;
+  }
+
+  .coach-home__profile-card {
+    padding: 32px;
+    gap: 20px;
+  }
+
+  .coach-home__avatar {
+    width: 90px;
+    height: 90px;
+  }
+
+  .coach-home__coach-name {
+    font-size: 1.4rem;
+  }
+
+  .coach-home__day-row {
+    padding: 14px 20px;
+  }
+
+  .coach-home__day-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .coach-home__day-name {
+    font-size: 1rem;
+  }
 }
