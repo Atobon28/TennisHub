@@ -4,29 +4,29 @@
 
 .tournament-view__grid {
   display: grid;
-  grid-template-columns: 1fr 300px;
-  gap: 24px;
+  grid-template-columns: 1fr;
+  gap: 16px;
   align-items: start;
 }
 
 .tournament-view__main {
   background-color: var(--player-card-bg);
   border-radius: 16px;
-  padding: 40px 32px;
+  padding: 16px;
 }
 
 .tournament-view__card {
   background-color: var(--player-white);
   border-radius: 16px;
-  padding: 32px;
+  padding: 20px 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 28px;
+  gap: 16px;
 }
 
 .tournament-view__title {
-  font-size: 1.6rem;
+  font-size: 1.3rem;
   font-weight: 800;
   color: var(--player-black);
   margin: 0;
@@ -35,15 +35,15 @@
 
 .tournament-view__body {
   display: flex;
-  gap: 40px;
+  flex-direction: column;
+  gap: 16px;
   align-items: center;
   width: 100%;
-  justify-content: center;
 }
 
 .tournament-view__image {
-  width: 260px;
-  height: 160px;
+  width: 100%;
+  height: 200px;
   object-fit: cover;
   border-radius: 12px;
   flex-shrink: 0;
@@ -52,11 +52,14 @@
 .tournament-view__info {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
+  width: 100%;
+  align-items: center;
+  text-align: center;
 }
 
 .tournament-view__detail {
-  font-size: 1rem;
+  font-size: 0.95rem;
   color: var(--player-black);
   margin: 0;
   display: flex;
@@ -86,14 +89,62 @@
   color: var(--player-white);
   border: none;
   border-radius: 999px;
-  padding: 12px 80px;
+  padding: 12px 0;
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
   font-family: inherit;
+  width: 100%;
 }
+
 .tournament-view__joined-msg {
   color: var(--player-green);
   font-size: 1rem;
   font-weight: 700;
+}
+
+/* ── DESKTOP ── */
+@media (min-width: 1024px) {
+  .tournament-view__grid {
+    grid-template-columns: 1fr 300px;
+    gap: 24px;
+  }
+
+  .tournament-view__main {
+    padding: 40px 32px;
+  }
+
+  .tournament-view__card {
+    padding: 32px;
+    gap: 28px;
+  }
+
+  .tournament-view__title {
+    font-size: 1.6rem;
+  }
+
+  .tournament-view__body {
+    flex-direction: row;
+    gap: 40px;
+    justify-content: center;
+  }
+
+  .tournament-view__image {
+    width: 260px;
+    height: 160px;
+  }
+
+  .tournament-view__info {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .tournament-view__detail {
+    font-size: 1rem;
+  }
+
+  .tournament-view__join-btn {
+    width: auto;
+    padding: 12px 80px;
+  }
 }
