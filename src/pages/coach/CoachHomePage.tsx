@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import AdBanners from "../../components/player/AdBanners";
+import { useAuth } from "../../context/AuthContext";
 import "../../styles/coach-home.css";
 import coach1 from "../../assets/coach-1.jpg";
 
 function CoachHomePage() {
+  const { userData } = useAuth();
   const [availableDays, setAvailableDays] = useState<string[]>([]);
   const [price, setPrice] = useState<string>("$150.000");
   const [avatar, setAvatar] = useState<string>(coach1);
@@ -23,19 +25,29 @@ function CoachHomePage() {
       ]);
     }
 
-    const savedPrice = localStorage.getItem("coachPrice");
-    if (savedPrice) setPrice(savedPrice);
+    if (userData?.pricePerHour) {
+      setPrice(
+        userData.pricePerHour.startsWith("$")
+          ? userData.pricePerHour
+          : `$${userData.pricePerHour}`,
+      );
+    }
 
     const savedAvatar = localStorage.getItem("coachAvatar");
     if (savedAvatar) setAvatar(savedAvatar);
-  }, []);
+  }, [userData]);
+
+  const name = userData?.username || "Leo";
+  const username = userData?.username
+    ? `@${userData.username}`
+    : "@Juanceballospro";
 
   return (
     <div className="coach-home">
       <div className="coach-home__grid">
         <section className="coach-home__main">
           <h1 className="coach-home__welcome">
-            Welcome Back, <strong>Leo</strong>
+            Welcome Back, <strong>{name}</strong>
           </h1>
           <p className="coach-home__subtitle">
             Your profile is active and visible to players looking to improve
@@ -52,14 +64,10 @@ function CoachHomePage() {
           {/* Profile card */}
           <div className="coach-home__profile-card">
             <div className="coach-home__profile-top">
-              <img
-                src={avatar}
-                alt="Juan Ceballos"
-                className="coach-home__avatar"
-              />
+              <img src={avatar} alt={name} className="coach-home__avatar" />
               <div>
-                <h2 className="coach-home__coach-name">Juan Ceballos</h2>
-                <p className="coach-home__coach-username">@Juanceballospro</p>
+                <h2 className="coach-home__coach-name">{name}</h2>
+                <p className="coach-home__coach-username">{username}</p>
               </div>
             </div>
             <div className="coach-home__profile-details">

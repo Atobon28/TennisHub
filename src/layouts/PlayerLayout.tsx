@@ -3,10 +3,12 @@ import { Outlet } from "react-router-dom";
 import SidebarPlayer from "../components/player/SidebarPlayer";
 import TopbarMobilePlayer from "../components/player/TopbarMobilePlayer";
 import BottomNavPlayer from "../components/player/BottomNavPlayer";
+import { useAuth } from "../context/AuthContext";
 import "../styles/player-layout.css";
 import logo from "../assets/Logo.png";
 
 function PlayerLayout() {
+  const { userData } = useAuth();
   const [level, setLevel] = useState<number>(() => {
     return parseInt(localStorage.getItem("playerLevel") || "5");
   });
@@ -18,6 +20,8 @@ function PlayerLayout() {
     window.addEventListener("player:levelUpdated", handler);
     return () => window.removeEventListener("player:levelUpdated", handler);
   }, []);
+
+  const username = userData?.username || "Juan";
 
   return (
     <div className="player-layout">
@@ -37,7 +41,9 @@ function PlayerLayout() {
       <div className="player-layout__main-area">
         <header className="player-layout__desktop-topbar">
           <div className="player-layout__desktop-topbar-right">
-            <span className="player-layout__desktop-hello">¡Hey Juan!</span>
+            <span className="player-layout__desktop-hello">
+              ¡Hey {username}!
+            </span>
             <span className="player-layout__desktop-level-text">
               Your Level:
             </span>

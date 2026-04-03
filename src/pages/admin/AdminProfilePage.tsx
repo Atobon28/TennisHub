@@ -2,7 +2,12 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import TournamentCard from "../../components/player/TournamentCard";
-import { getAdminTournaments, getAdminCourts } from "../../firebase/services";
+import {
+  getAdminTournaments,
+  getAdminCourts,
+  logoutUser,
+} from "../../firebase/services";
+import { useAuth } from "../../context/AuthContext";
 import "../../styles/admin-profile.css";
 import court1 from "../../assets/court-1.jpg";
 
@@ -21,6 +26,7 @@ interface Court {
 
 function AdminProfilePage() {
   const navigate = useNavigate();
+  const { userData } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [activeTab, setActiveTab] = useState<"courts" | "tournaments">(
@@ -39,7 +45,7 @@ function AdminProfilePage() {
   useEffect(() => {
     const fetchTournaments = async () => {
       try {
-        const data = await getAdminTournaments("admin1");
+        const data = await getAdminTournaments(userData?.uid || "admin1");
         setTournaments(data as Tournament[]);
       } catch (error) {
         console.error("Error fetching tournaments:", error);
@@ -48,7 +54,7 @@ function AdminProfilePage() {
 
     const fetchCourts = async () => {
       try {
-        const data = await getAdminCourts("admin1");
+        const data = await getAdminCourts(userData?.uid || "admin1");
         setCourts(data as Court[]);
       } catch (error) {
         console.error("Error fetching courts:", error);
@@ -57,7 +63,7 @@ function AdminProfilePage() {
 
     fetchTournaments();
     fetchCourts();
-  }, []);
+  }, [userData]);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -86,6 +92,14 @@ function AdminProfilePage() {
     setShowPasswordModal(false);
   };
 
+  const handleLogout = async () => {
+    await logoutUser();
+    navigate("/");
+  };
+
+  const name = userData?.username || "Admin";
+  const username = userData?.username ? `@${userData.username}` : "@Admin1";
+
   return (
     <div className="admin-profile">
       <div className="admin-profile__grid">
@@ -93,11 +107,7 @@ function AdminProfilePage() {
           {/* Header */}
           <div className="admin-profile__header">
             <div className="admin-profile__avatar-wrap">
-              <img
-                src={avatar}
-                alt="Admin 1"
-                className="admin-profile__avatar"
-              />
+              <img src={avatar} alt={name} className="admin-profile__avatar" />
               <button
                 className="admin-profile__edit-btn"
                 onClick={() => fileInputRef.current?.click()}
@@ -113,8 +123,8 @@ function AdminProfilePage() {
               />
             </div>
             <div className="admin-profile__user-info">
-              <h2 className="admin-profile__name">Admin 1</h2>
-              <p className="admin-profile__username">@Admin1</p>
+              <h2 className="admin-profile__name">{name}</h2>
+              <p className="admin-profile__username">{username}</p>
               <div className="admin-profile__links">
                 <button
                   className="admin-profile__link"
@@ -124,7 +134,7 @@ function AdminProfilePage() {
                 </button>
                 <button
                   className="admin-profile__link admin-profile__link--logout"
-                  onClick={() => navigate("/")}
+                  onClick={handleLogout}
                 >
                   Log out
                 </button>

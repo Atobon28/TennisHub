@@ -1,9 +1,13 @@
 import { Outlet } from "react-router-dom";
 import SidebarCoach from "../components/coach/SidebarCoach";
+import { useAuth } from "../context/AuthContext";
 import "../styles/player-layout.css";
 import logo from "../assets/Logo.png";
 
 function CoachLayout() {
+  const { userData } = useAuth();
+  const username = userData?.username || "Leo";
+
   return (
     <div className="player-layout">
       <aside className="player-layout__sidebar">
@@ -22,7 +26,9 @@ function CoachLayout() {
       <div className="player-layout__main-area">
         <header className="player-layout__desktop-topbar">
           <div className="player-layout__desktop-topbar-right">
-            <span className="player-layout__desktop-hello">¡Hey Leo!</span>
+            <span className="player-layout__desktop-hello">
+              ¡Hey {username}!
+            </span>
           </div>
         </header>
 

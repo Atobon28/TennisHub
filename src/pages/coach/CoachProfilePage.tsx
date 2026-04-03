@@ -1,6 +1,8 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
+import { useAuth } from "../../context/AuthContext";
+import { logoutUser, updateUser } from "../../firebase/services";
 import "../../styles/coach-profile.css";
 import coach1 from "../../assets/coach-1.jpg";
 
@@ -16,6 +18,7 @@ const allDays = [
 
 function CoachProfilePage() {
   const navigate = useNavigate();
+  const { userData } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [avatar, setAvatar] = useState<string>(() => {
@@ -27,9 +30,7 @@ function CoachProfilePage() {
       ? JSON.parse(saved)
       : ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   });
-  const [price, setPrice] = useState<string>(() => {
-    return localStorage.getItem("coachPrice") || "$150.000";
-  });
+  const [price, setPrice] = useState<string>("$150.000");
   const [saved, setSaved] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showPriceModal, setShowPriceModal] = useState(false);
@@ -37,6 +38,16 @@ function CoachProfilePage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordMsg, setPasswordMsg] = useState("");
   const [newPrice, setNewPrice] = useState("");
+
+  useEffect(() => {
+    if (userData?.pricePerHour) {
+      setPrice(
+        userData.pricePerHour.startsWith("$")
+          ? userData.pricePerHour
+          : `$${userData.pricePerHour}`,
+      );
+    }
+  }, [userData]);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -77,14 +88,30 @@ function CoachProfilePage() {
     setShowPasswordModal(false);
   };
 
-  const handleConfirmPrice = () => {
+  const handleConfirmPrice = async () => {
     if (!newPrice) return;
     const formatted = newPrice.startsWith("$") ? newPrice : `$${newPrice}`;
-    localStorage.setItem("coachPrice", formatted);
-    setPrice(formatted);
-    setNewPrice("");
-    setShowPriceModal(false);
+    try {
+      if (userData?.id) {
+        await updateUser(userData.id, { pricePerHour: formatted });
+      }
+      setPrice(formatted);
+      setNewPrice("");
+      setShowPriceModal(false);
+    } catch (error) {
+      console.error("Error updating price:", error);
+    }
   };
+
+  const handleLogout = async () => {
+    await logoutUser();
+    navigate("/");
+  };
+
+  const name = userData?.username || "Leo Cruz";
+  const username = userData?.username
+    ? `@${userData.username}`
+    : "@Leocruz_coach";
 
   return (
     <div className="coach-profile">
@@ -93,11 +120,7 @@ function CoachProfilePage() {
           {/* Header */}
           <div className="coach-profile__header">
             <div className="coach-profile__avatar-wrap">
-              <img
-                src={avatar}
-                alt="Leo Cruz"
-                className="coach-profile__avatar"
-              />
+              <img src={avatar} alt={name} className="coach-profile__avatar" />
               <button
                 className="coach-profile__edit-btn"
                 onClick={() => fileInputRef.current?.click()}
@@ -113,8 +136,8 @@ function CoachProfilePage() {
               />
             </div>
             <div className="coach-profile__user-info">
-              <h2 className="coach-profile__name">Leo Cruz</h2>
-              <p className="coach-profile__username">@Leocruz_coach</p>
+              <h2 className="coach-profile__name">{name}</h2>
+              <p className="coach-profile__username">{username}</p>
               <div className="coach-profile__links">
                 <button
                   className="coach-profile__link"
@@ -124,7 +147,7 @@ function CoachProfilePage() {
                 </button>
                 <button
                   className="coach-profile__link coach-profile__link--logout"
-                  onClick={() => navigate("/")}
+                  onClick={handleLogout}
                 >
                   Log out
                 </button>

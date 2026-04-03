@@ -33,6 +33,7 @@ export const deleteUser = async (id: string) => {
   return await deleteDoc(doc(db, "users", id));
 };
 
+
 // ── COURTS ─────────────────────────────────────────
 export const getCourts = async () => {
   const snapshot = await getDocs(collection(db, "courts"));

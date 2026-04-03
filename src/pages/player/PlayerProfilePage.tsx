@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import MatchCard from "../../components/player/MatchCard";
 import TournamentCard from "../../components/player/TournamentCard";
-import { getPlayerTournaments } from "../../firebase/services";
+import { getPlayerTournaments, logoutUser } from "../../firebase/services";
+import { useAuth } from "../../context/AuthContext";
 import "../../styles/player-profile.css";
 import player1 from "../../assets/player-1.jpg";
 
@@ -33,6 +34,7 @@ interface Tournament {
 
 function PlayerProfilePage() {
   const navigate = useNavigate();
+  const { userData } = useAuth();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [activeTab, setActiveTab] = useState<"matches" | "tournaments">(
@@ -42,7 +44,9 @@ function PlayerProfilePage() {
     return localStorage.getItem("playerAvatar") || player1;
   });
   const [level, setLevel] = useState<number>(() => {
-    return parseInt(localStorage.getItem("playerLevel") || "5");
+    return parseInt(
+      localStorage.getItem("playerLevel") || String(userData?.level || 1),
+    );
   });
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -53,16 +57,17 @@ function PlayerProfilePage() {
   const [tempLevel, setTempLevel] = useState(String(level));
 
   useEffect(() => {
+    if (!userData?.uid) return;
     const fetchTournaments = async () => {
       try {
-        const data = await getPlayerTournaments("player1");
+        const data = await getPlayerTournaments(userData.uid);
         setTournaments(data as Tournament[]);
       } catch (error) {
         console.error("Error fetching player tournaments:", error);
       }
     };
     fetchTournaments();
-  }, []);
+  }, [userData]);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -100,6 +105,16 @@ function PlayerProfilePage() {
     setShowLevelModal(false);
   };
 
+  const handleLogout = async () => {
+    await logoutUser();
+    navigate("/");
+  };
+
+  const name = userData?.username || "Juan Castro";
+  const username = userData?.username
+    ? `@${userData.username}`
+    : "@Juancastrog10";
+
   return (
     <div className="player-profile">
       <div className="player-profile__grid">
@@ -107,11 +122,7 @@ function PlayerProfilePage() {
           {/* Header */}
           <div className="player-profile__header">
             <div className="player-profile__avatar-wrap">
-              <img
-                src={avatar}
-                alt="Juan Castro"
-                className="player-profile__avatar"
-              />
+              <img src={avatar} alt={name} className="player-profile__avatar" />
               <button
                 className="player-profile__edit-btn"
                 onClick={() => fileInputRef.current?.click()}
@@ -128,7 +139,7 @@ function PlayerProfilePage() {
             </div>
             <div className="player-profile__user-info">
               <div className="player-profile__name-row">
-                <h2 className="player-profile__name">Juan Castro</h2>
+                <h2 className="player-profile__name">{name}</h2>
                 <div className="player-profile__level-wrap">
                   <span className="player-profile__level-text">
                     Your Level:
@@ -144,7 +155,7 @@ function PlayerProfilePage() {
                   </span>
                 </div>
               </div>
-              <p className="player-profile__username">@Juancastrog10</p>
+              <p className="player-profile__username">{username}</p>
               <div className="player-profile__links">
                 <button
                   className="player-profile__link"
@@ -154,7 +165,7 @@ function PlayerProfilePage() {
                 </button>
                 <button
                   className="player-profile__link player-profile__link--logout"
-                  onClick={() => navigate("/")}
+                  onClick={handleLogout}
                 >
                   Log out
                 </button>
@@ -205,7 +216,6 @@ function PlayerProfilePage() {
             )}
           </div>
         </section>
-
         <AdBanners />
       </div>
 
