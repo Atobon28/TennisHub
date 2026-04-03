@@ -3,12 +3,12 @@ import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAa3ZnkmWSG4JVtD-RvABoEI-w3YvoGcZo",
-  authDomain: "tennishub-50942.firebaseapp.com",
-  projectId: "tennishub-50942",
-  storageBucket: "tennishub-50942.firebasestorage.app",
-  messagingSenderId: "1005756638024",
-  appId: "1:1005756638024:web:7f74103242f531047dc97d",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 const app = initializeApp(firebaseConfig);
