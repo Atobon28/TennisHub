@@ -1,5 +1,7 @@
 import { Outlet } from "react-router-dom";
 import SidebarAdmin from "../components/admin/SidebarAdmin";
+import TopbarMobileAdmin from "../components/admin/TopbarMobileAdmin";
+import BottomNavAdmin from "../components/admin/BottomNavAdmin";
 import { useAuth } from "../context/AuthContext";
 import "../styles/player-layout.css";
 import logo from "../assets/Logo.png";
@@ -32,9 +34,17 @@ function AdminLayout() {
           </div>
         </header>
 
+        <div className="player-layout__mobile-topbar">
+          <TopbarMobileAdmin />
+        </div>
+
         <main className="player-layout__content">
           <Outlet />
         </main>
+
+        <div className="player-layout__mobile-bottomnav">
+          <BottomNavAdmin />
+        </div>
       </div>
     </div>
   );

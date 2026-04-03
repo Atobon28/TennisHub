@@ -4,18 +4,18 @@
 
 .admin-home__grid {
   display: grid;
-  grid-template-columns: 1fr 300px;
-  gap: 24px;
+  grid-template-columns: 1fr;
+  gap: 16px;
   align-items: start;
 }
 
 .admin-home__main {
   background-color: var(--player-card-bg);
   border-radius: 16px;
-  padding: 28px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 .admin-home__section-header {
@@ -31,7 +31,7 @@
 }
 
 .admin-home__section-title {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--player-black);
   margin: 0;
@@ -40,33 +40,32 @@
 .admin-home__more-btn {
   background: none;
   border: none;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   color: #888;
   cursor: pointer;
   font-family: inherit;
 }
 
-/* TOURNAMENT CARDS */
 .admin-home__tournament-cards {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  grid-template-columns: 1fr;
+  gap: 12px;
 }
 
 .admin-home__tournament-card {
   background-color: var(--player-dark);
   border-radius: 14px;
-  padding: 24px 20px;
+  padding: 20px 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   text-align: center;
 }
 
 .admin-home__level-badge {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border-radius: 999px;
   background-color: var(--player-green);
   color: var(--player-dark);
@@ -74,19 +73,19 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.88rem;
 }
 
 .admin-home__card-name {
   color: var(--player-white);
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   margin: 0;
 }
 
 .admin-home__card-info {
   color: #b0b0b0;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   margin: 0;
 }
 
@@ -96,25 +95,24 @@
   border: none;
   border-radius: 999px;
   padding: 7px 28px;
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
   margin-top: 4px;
 }
 
-/* COURTS */
 .admin-home__courts-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  grid-template-columns: 1fr;
+  gap: 12px;
 }
 
 .admin-home__court-card {
   position: relative;
   border-radius: 14px;
   overflow: hidden;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 16 / 9;
   cursor: pointer;
 }
 
@@ -138,7 +136,7 @@
 
 .admin-home__court-name {
   color: var(--player-white);
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 700;
 }
 
@@ -154,9 +152,45 @@
   cursor: pointer;
   font-family: inherit;
 }
+
 .admin-home__loading {
   color: #888;
   font-size: 0.95rem;
   text-align: center;
   padding: 20px 0;
+}
+
+@media (min-width: 1024px) {
+  .admin-home__grid {
+    grid-template-columns: 1fr 300px;
+    gap: 24px;
+  }
+
+  .admin-home__main {
+    padding: 28px;
+    gap: 20px;
+  }
+
+  .admin-home__section-title {
+    font-size: 1.1rem;
+  }
+
+  .admin-home__tournament-cards {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .admin-home__tournament-card {
+    padding: 24px 20px;
+    gap: 10px;
+  }
+
+  .admin-home__courts-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .admin-home__court-card {
+    aspect-ratio: 16 / 10;
+  }
 }
