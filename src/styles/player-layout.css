@@ -7,28 +7,32 @@
   --player-input: #888888;
   --player-white: #ffffff;
   --player-border: rgba(255, 255, 255, 0.1);
-
   --player-green-gradient: linear-gradient(180deg, #bce104 0%, #667f00 100%);
   --player-orange-gradient: linear-gradient(180deg, #ff8d3c 0%, #eb6464 100%);
 }
 
 * {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 html,
 body,
 #root {
-  margin: 0;
+  width: 100%;
   min-height: 100%;
+  overflow-x: hidden;
 }
 
 body {
   background-color: var(--player-bg);
-  font-family: 'SF Pro Display', 'SF Pro Text', Arial, sans-serif;
+  font-family: "SF Pro Display", "SF Pro Text", Arial, sans-serif;
 }
 
+/* ── LAYOUT ── */
 .player-layout {
+  width: 100%;
   min-height: 100vh;
   background-color: var(--player-bg);
 }
@@ -38,6 +42,7 @@ body {
 }
 
 .player-layout__main-area {
+  width: 100%;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -52,29 +57,35 @@ body {
   position: sticky;
   top: 0;
   z-index: 20;
+  width: 100%;
 }
 
 .player-layout__content {
   flex: 1;
-  padding: 20px 16px 92px;
+  padding: 16px 16px 90px;
+  width: 100%;
 }
 
 .player-layout__mobile-bottomnav {
   display: block;
-  position: sticky;
+  position: fixed;
   bottom: 0;
+  left: 0;
+  right: 0;
   z-index: 20;
+  width: 100%;
 }
 
-/* MOBILE TOPBAR */
+/* ── MOBILE TOPBAR ── */
 .player-mobile-topbar {
-  height: 72px;
+  width: 100%;
+  height: 60px;
   background-color: var(--player-dark);
   border-bottom: 3px solid var(--player-green);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 14px;
+  padding: 0 16px;
   gap: 10px;
 }
 
@@ -85,7 +96,7 @@ body {
 }
 
 .player-mobile-topbar__logo {
-  width: 98px;
+  width: 90px;
   height: auto;
   display: block;
 }
@@ -96,17 +107,16 @@ body {
   gap: 6px;
   color: var(--player-white);
   flex-wrap: nowrap;
-  justify-content: flex-end;
 }
 
 .player-mobile-topbar__hello {
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-weight: 700;
   white-space: nowrap;
 }
 
 .player-mobile-topbar__level-text {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: #d6d6d6;
   white-space: nowrap;
 }
@@ -125,15 +135,16 @@ body {
   flex-shrink: 0;
 }
 
-/* MOBILE BOTTOM NAV */
+/* ── MOBILE BOTTOM NAV ── */
 .player-bottomnav {
-  height: 74px;
+  width: 100%;
+  height: 64px;
   background-color: var(--player-dark);
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   align-items: center;
-  padding: 0 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  padding: 0;
+  border-top: 2px solid var(--player-green);
 }
 
 .player-bottomnav__link {
@@ -151,14 +162,10 @@ body {
 }
 
 .player-bottomnav__icon {
-  font-size: 1.75rem;
+  font-size: 1.6rem;
 }
 
-/* DESKTOP SIDEBAR AREA */
-.player-layout__sidebar {
-  background-color: var(--player-bg);
-}
-
+/* ── DESKTOP SIDEBAR ── */
 .player-layout__sidebar-inner {
   display: flex;
   flex-direction: column;
@@ -182,7 +189,6 @@ body {
   display: block;
 }
 
-/* SIDEBAR CARD */
 .player-sidebar {
   width: 100%;
   background-color: var(--player-dark);
@@ -267,7 +273,20 @@ body {
   border: 1.5px solid rgba(37, 41, 45, 0.2);
 }
 
-/* DESKTOP */
+.player-layout__main-area {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.player-layout__content {
+  flex: 1;
+  padding: 16px 16px 90px;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* ── DESKTOP ── */
 @media (min-width: 1024px) {
   .player-layout {
     display: grid;
@@ -275,30 +294,30 @@ body {
     min-height: 100vh;
   }
 
-.player-layout__sidebar {
-  display: block;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  z-index: 60;
-}
+  .player-layout__sidebar {
+    display: block;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    z-index: 60;
+  }
 
   .player-layout__main-area {
     min-height: 100vh;
   }
 
-.player-layout__desktop-topbar {
-  height: 112px;
-  background-color: var(--player-dark);
-  border-bottom: 3px solid var(--player-green);
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 0 34px;
-  position: sticky;
-  top: 0;
-  z-index: 50;
-}
+  .player-layout__desktop-topbar {
+    height: 112px;
+    background-color: var(--player-dark);
+    border-bottom: 3px solid var(--player-green);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 34px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
 
   .player-layout__desktop-topbar-right {
     display: flex;
