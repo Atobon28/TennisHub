@@ -1,8 +1,7 @@
-import { NavLink, useNavigate, useLocation } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 
 function SidebarAdmin() {
-  const navigate = useNavigate();
   const location = useLocation();
   const isCourts = location.pathname.includes("/admin/courts");
   const isTournaments = location.pathname.includes("/admin/tournaments");

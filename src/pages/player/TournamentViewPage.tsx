@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import { joinTournament } from "../../firebase/services";
 import "../../styles/tournament-view.css";
@@ -15,7 +14,6 @@ const tournament = {
 };
 
 function TournamentViewPage() {
-  const navigate = useNavigate();
   const [joined, setJoined] = useState(false);
   const [loading, setLoading] = useState(false);
 

@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import "../../styles/court-view.css";
 import court2 from "../../assets/court-2.jpg";
@@ -12,8 +11,6 @@ const court = {
 };
 
 function CourtViewPage() {
-  const navigate = useNavigate();
-
   const handleWhatsApp = () => {
     window.open(`https://wa.me/${court.whatsapp}`, "_blank");
   };
