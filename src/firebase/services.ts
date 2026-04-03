@@ -116,3 +116,22 @@ export const joinTournament = async (playerId: string, tournament: object) => {
     ...tournament,
   });
 };
+import { auth } from "./firebase";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+} from "firebase/auth";
+
+// ── AUTH ───────────────────────────────────────────
+export const registerUser = async (email: string, password: string) => {
+  return await createUserWithEmailAndPassword(auth, email, password);
+};
+
+export const loginUser = async (email: string, password: string) => {
+  return await signInWithEmailAndPassword(auth, email, password);
+};
+
+export const logoutUser = async () => {
+  return await signOut(auth);
+};
