@@ -5,7 +5,6 @@ import RegisterPage from "./pages/RegisterPage";
 import RegisterCoachPage from "./pages/RegisterCoachPage";
 import RegisterAdminPage from "./pages/RegisterAdminPage";
 import PlayerHomePage from "./pages/player/PlayerHomePage";
-import FindMatchesPage from "./pages/player/FindMatchesPage";
 import BookCourtPage from "./pages/player/BookCourtPage";
 import TournamentsPage from "./pages/player/TournamentsPage";
 import PlayerProfilePage from "./pages/player/PlayerProfilePage";
@@ -15,8 +14,6 @@ import PlayersPage from "./pages/player/PlayersPage";
 import PlayerViewPage from "./pages/player/PlayerViewPage";
 import FindCoachPage from "./pages/player/FindCoachPage";
 import CoachViewPage from "./pages/player/CoachViewPage";
-import ProfileTournamentsPage from "./pages/player/ProfileTournamentsPage";
-import ProfileChangePasswordPage from "./pages/player/ProfileChangePasswordPage";
 import CreateMatchPage from "./pages/player/CreateMatchPage";
 import CoachHomePage from "./pages/coach/CoachHomePage";
 import CoachProfilePage from "./pages/coach/CoachProfilePage";
@@ -44,24 +41,15 @@ function App() {
         <Route index element={<Navigate to="home" replace />} />
         <Route path="home" element={<PlayerHomePage />} />
         <Route path="tournaments" element={<TournamentsPage />} />
-        <Route path="tournaments/view" element={<TournamentViewPage />} />
+        <Route path="tournaments/view/:id" element={<TournamentViewPage />} />
         <Route path="courts" element={<BookCourtPage />} />
-        <Route path="courts/view" element={<CourtViewPage />} />
+        <Route path="courts/view/:id" element={<CourtViewPage />} />
         <Route path="profile" element={<PlayerProfilePage />} />
-        <Route
-          path="profile/tournaments"
-          element={<ProfileTournamentsPage />}
-        />
-        <Route
-          path="profile/change-password"
-          element={<ProfileChangePasswordPage />}
-        />
         <Route path="players" element={<PlayersPage />} />
-        <Route path="players/view" element={<PlayerViewPage />} />
+        <Route path="players/view/:uid" element={<PlayerViewPage />} />
         <Route path="coaches" element={<FindCoachPage />} />
-        <Route path="coaches/view" element={<CoachViewPage />} />
+        <Route path="coaches/view/:uid" element={<CoachViewPage />} />
         <Route path="create-match" element={<CreateMatchPage />} />
-        <Route path="matches" element={<FindMatchesPage />} />
       </Route>
 
       <Route path="/coach" element={<CoachLayout />}>
@@ -74,9 +62,12 @@ function App() {
         <Route index element={<Navigate to="home" replace />} />
         <Route path="home" element={<AdminHomePage />} />
         <Route path="courts" element={<AdminCourtsPage />} />
-        <Route path="courts/view" element={<AdminCourtViewPage />} />
+        <Route path="courts/view/:id" element={<AdminCourtViewPage />} />
         <Route path="tournaments" element={<AdminTournamentsPage />} />
-        <Route path="tournaments/view" element={<AdminTournamentViewPage />} />
+        <Route
+          path="tournaments/view/:id"
+          element={<AdminTournamentViewPage />}
+        />
         <Route path="profile" element={<AdminProfilePage />} />
       </Route>
 

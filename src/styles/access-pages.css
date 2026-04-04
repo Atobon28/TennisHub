@@ -252,3 +252,34 @@ body,
   margin: 0;
   text-align: center;
 }
+/* ── MOBILE FIXES ── */
+@media (max-width: 1023px) {
+  .access-screen {
+    height: auto;
+    min-height: 100vh;
+    overflow-y: auto;
+  }
+
+  .access-screen__left {
+    height: auto;
+    min-height: 100vh;
+    padding: 40px 24px 60px;
+  }
+
+  .access-screen__content {
+    max-width: 100%;
+  }
+
+  .access-screen__content--form {
+    max-width: 100%;
+  }
+
+  .access-screen__title {
+    font-size: 2.8rem;
+  }
+
+  .access-screen__subtitle {
+    font-size: 1.2rem;
+    margin: 16px 0 28px;
+  }
+}

@@ -33,7 +33,6 @@ export const deleteUser = async (id: string) => {
   return await deleteDoc(doc(db, "users", id));
 };
 
-
 // ── COURTS ─────────────────────────────────────────
 export const getCourts = async () => {
   const snapshot = await getDocs(collection(db, "courts"));
@@ -141,4 +140,16 @@ export const getUserByUid = async (uid: string) => {
   const snapshot = await getDocs(q);
   if (snapshot.empty) return null;
   return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+};
+// ── COACHES & PLAYERS ──────────────────────────────
+export const getCoaches = async () => {
+  const q = query(collection(db, "users"), where("role", "==", "coach"));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+};
+
+export const getPlayers = async () => {
+  const q = query(collection(db, "users"), where("role", "==", "player"));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 };
