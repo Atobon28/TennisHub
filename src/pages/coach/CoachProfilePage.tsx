@@ -18,18 +18,13 @@ const allDays = [
 
 function CoachProfilePage() {
   const navigate = useNavigate();
-  const { userData } = useAuth();
+  const { userData, refreshUserData } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [avatar, setAvatar] = useState<string>(() => {
     return localStorage.getItem("coachAvatar") || coach1;
   });
-  const [selectedDays, setSelectedDays] = useState<string[]>(() => {
-    const saved = localStorage.getItem("coachDays");
-    return saved
-      ? JSON.parse(saved)
-      : ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  });
+  const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [price, setPrice] = useState<string>("$150.000");
   const [saved, setSaved] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -46,6 +41,18 @@ function CoachProfilePage() {
           ? userData.pricePerHour
           : `$${userData.pricePerHour}`,
       );
+    }
+    if (userData?.availableDays) {
+      setSelectedDays(userData.availableDays);
+    } else {
+      setSelectedDays([
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+      ]);
     }
   }, [userData]);
 
@@ -68,9 +75,16 @@ function CoachProfilePage() {
     );
   };
 
-  const handleSave = () => {
-    localStorage.setItem("coachDays", JSON.stringify(selectedDays));
-    setSaved(true);
+  const handleSave = async () => {
+    try {
+      if (userData?.id) {
+        await updateUser(userData.id, { availableDays: selectedDays });
+        await refreshUserData();
+      }
+      setSaved(true);
+    } catch (error) {
+      console.error("Error saving days:", error);
+    }
   };
 
   const handleConfirmPassword = () => {
@@ -94,6 +108,7 @@ function CoachProfilePage() {
     try {
       if (userData?.id) {
         await updateUser(userData.id, { pricePerHour: formatted });
+        await refreshUserData();
       }
       setPrice(formatted);
       setNewPrice("");

@@ -12,29 +12,13 @@ interface Coach {
   email: string;
   pricePerHour?: string;
   uid: string;
+  availableDays?: string[];
 }
-
-const allDays = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-];
 
 function CoachViewPage() {
   const { uid } = useParams();
   const [coach, setCoach] = useState<Coach | null>(null);
   const [loading, setLoading] = useState(true);
-  const [availableDays] = useState<string[]>([
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-  ]);
 
   useEffect(() => {
     const fetchCoach = async () => {
@@ -54,6 +38,8 @@ function CoachViewPage() {
   if (loading) return <p style={{ padding: 20, color: "#888" }}>Loading...</p>;
   if (!coach)
     return <p style={{ padding: 20, color: "#888" }}>Coach not found.</p>;
+
+  const availableDays = coach.availableDays || [];
 
   return (
     <div className="find-coach">
@@ -77,7 +63,6 @@ function CoachViewPage() {
               gap: 16,
             }}
           >
-            {/* Avatar + info */}
             <div
               style={{
                 display: "flex",
@@ -106,7 +91,6 @@ function CoachViewPage() {
               </div>
             </div>
 
-            {/* Details */}
             <div
               style={{
                 display: "flex",
@@ -125,7 +109,6 @@ function CoachViewPage() {
               </p>
             </div>
 
-            {/* WhatsApp button */}
             <button
               style={{
                 background: "var(--player-green-gradient)",
@@ -143,70 +126,70 @@ function CoachViewPage() {
               Contact via WhatsApp
             </button>
 
-            {/* Available days */}
-            <h3
-              style={{
-                margin: "8px 0 0",
-                alignSelf: "flex-start",
-                fontSize: "1rem",
-              }}
-            >
-              Available Days
-            </h3>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 8,
-                width: "100%",
-              }}
-            >
-              {allDays
-                .filter((d) => availableDays.includes(d))
-                .map((day) => (
-                  <div
-                    key={day}
-                    style={{
-                      background: "var(--player-bg)",
-                      borderRadius: 12,
-                      padding: "12px 16px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 14,
-                    }}
-                  >
-                    <img
-                      src={coach1}
-                      alt=""
+            {availableDays.length > 0 && (
+              <>
+                <h3
+                  style={{
+                    margin: "8px 0 0",
+                    alignSelf: "flex-start",
+                    fontSize: "1rem",
+                  }}
+                >
+                  Available Days
+                </h3>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 8,
+                    width: "100%",
+                  }}
+                >
+                  {availableDays.map((day) => (
+                    <div
+                      key={day}
                       style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: "999px",
-                        objectFit: "cover",
-                      }}
-                    />
-                    <span style={{ flex: 1, fontWeight: 600 }}>{day}</span>
-                    <span
-                      style={{
-                        width: 26,
-                        height: 26,
-                        borderRadius: "999px",
-                        background: "var(--player-green)",
-                        display: "inline-flex",
+                        background: "var(--player-bg)",
+                        borderRadius: 12,
+                        padding: "12px 16px",
+                        display: "flex",
                         alignItems: "center",
-                        justifyContent: "center",
-                        fontWeight: 700,
-                        fontSize: "0.82rem",
+                        gap: 14,
                       }}
                     >
-                      ✓
-                    </span>
-                  </div>
-                ))}
-            </div>
+                      <img
+                        src={coach1}
+                        alt=""
+                        style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: "999px",
+                          objectFit: "cover",
+                        }}
+                      />
+                      <span style={{ flex: 1, fontWeight: 600 }}>{day}</span>
+                      <span
+                        style={{
+                          width: 26,
+                          height: 26,
+                          borderRadius: "999px",
+                          background: "var(--player-green)",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontWeight: 700,
+                          fontSize: "0.82rem",
+                        }}
+                      >
+                        ✓
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </section>
-
         <AdBanners />
       </div>
     </div>

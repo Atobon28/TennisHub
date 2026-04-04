@@ -11,9 +11,8 @@ function CoachHomePage() {
   const [avatar, setAvatar] = useState<string>(coach1);
 
   useEffect(() => {
-    const savedDays = localStorage.getItem("coachDays");
-    if (savedDays) {
-      setAvailableDays(JSON.parse(savedDays));
+    if (userData?.availableDays) {
+      setAvailableDays(userData.availableDays);
     } else {
       setAvailableDays([
         "Monday",
@@ -24,7 +23,6 @@ function CoachHomePage() {
         "Saturday",
       ]);
     }
-
     if (userData?.pricePerHour) {
       setPrice(
         userData.pricePerHour.startsWith("$")
@@ -32,7 +30,6 @@ function CoachHomePage() {
           : `$${userData.pricePerHour}`,
       );
     }
-
     const savedAvatar = localStorage.getItem("coachAvatar");
     if (savedAvatar) setAvatar(savedAvatar);
   }, [userData]);
@@ -56,12 +53,10 @@ function CoachHomePage() {
             Keep your information updated to increase visibility and attract
             more students.
           </p>
-
           <p className="coach-home__profile-label">
             <strong>Currently, players see your profile like this:</strong>
           </p>
 
-          {/* Profile card */}
           <div className="coach-home__profile-card">
             <div className="coach-home__profile-top">
               <img src={avatar} alt={name} className="coach-home__avatar" />
@@ -84,7 +79,6 @@ function CoachHomePage() {
             </div>
           </div>
 
-          {/* Schedule - solo lectura */}
           <div className="coach-home__schedule">
             {availableDays.map((day) => (
               <div key={day} className="coach-home__day-row">
@@ -97,7 +91,6 @@ function CoachHomePage() {
             ))}
           </div>
         </section>
-
         <AdBanners />
       </div>
     </div>
