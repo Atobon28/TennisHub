@@ -8,6 +8,8 @@ import {
   doc,
   query,
   where,
+  arrayUnion,
+  arrayRemove,
 } from "firebase/firestore";
 import {
   createUserWithEmailAndPassword,
@@ -93,12 +95,39 @@ export const getMatches = async () => {
   return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 };
 
-export const addMatch = async (match: object) => {
+export const createMatch = async (match: object) => {
   return await addDoc(collection(db, "matches"), match);
 };
 
-export const updateMatch = async (id: string, data: object) => {
-  return await updateDoc(doc(db, "matches", id), data);
+export const getPlayerMatches = async (playerId: string) => {
+  const q = query(
+    collection(db, "matches"),
+    where("playerIds", "array-contains", playerId),
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+};
+
+export const joinMatch = async (
+  matchId: string,
+  playerId: string,
+  playerUsername: string,
+) => {
+  return await updateDoc(doc(db, "matches", matchId), {
+    players: arrayUnion({ uid: playerId, username: playerUsername }),
+    playerIds: arrayUnion(playerId),
+  });
+};
+
+export const leaveMatch = async (
+  matchId: string,
+  playerId: string,
+  playerUsername: string,
+) => {
+  return await updateDoc(doc(db, "matches", matchId), {
+    players: arrayRemove({ uid: playerId, username: playerUsername }),
+    playerIds: arrayRemove(playerId),
+  });
 };
 
 export const deleteMatch = async (id: string) => {
@@ -141,6 +170,7 @@ export const getUserByUid = async (uid: string) => {
   if (snapshot.empty) return null;
   return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
 };
+
 // ── COACHES & PLAYERS ──────────────────────────────
 export const getCoaches = async () => {
   const q = query(collection(db, "users"), where("role", "==", "coach"));

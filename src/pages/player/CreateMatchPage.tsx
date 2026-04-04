@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
+import { useAuth } from "../../context/AuthContext";
+import { createMatch, getCourts } from "../../firebase/services";
 import "../../styles/create-match.css";
-
-const courts = ["Ciudad Jardín", "Granada", "Ingenio", "Lago Calima"];
 
 const timeOptions = [
   "06:00",
@@ -23,16 +24,67 @@ const timeOptions = [
   "21:00",
 ];
 
+interface Court {
+  id: string;
+  name: string;
+}
+
 function CreateMatchPage() {
+  const navigate = useNavigate();
+  const { userData } = useAuth();
+  const [courts, setCourts] = useState<Court[]>([]);
   const [court, setCourt] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
+  const [loading, setLoading] = useState(false);
   const [created, setCreated] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleCreate = () => {
-    if (!court || !date || !time) return;
-    setCreated(true);
-    setTimeout(() => setCreated(false), 3000);
+  useEffect(() => {
+    const fetchCourts = async () => {
+      try {
+        const data = await getCourts();
+        setCourts(data as Court[]);
+      } catch (error) {
+        console.error("Error fetching courts:", error);
+      }
+    };
+    fetchCourts();
+  }, []);
+
+  const handleCreate = async () => {
+    if (!court || !date || !time) {
+      setError("Please fill in all fields.");
+      return;
+    }
+    setError("");
+    setLoading(true);
+    try {
+      await createMatch({
+        court,
+        date,
+        time,
+        hostId: userData?.uid,
+        hostUsername: userData?.username,
+        players: [{ uid: userData?.uid, username: userData?.username }],
+        playerIds: [userData?.uid],
+        maxPlayers: 4,
+        createdAt: new Date().toISOString(),
+      });
+      setCreated(true);
+      setCourt("");
+      setDate("");
+      setTime("");
+      setTimeout(() => {
+        setCreated(false);
+        navigate("/player/matches");
+      }, 2000);
+    } catch (err) {
+      console.error("Error creating match:", err);
+      setError("Error creating match. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -53,8 +105,8 @@ function CreateMatchPage() {
                 >
                   <option value="">Select the court</option>
                   {courts.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
+                    <option key={c.id} value={c.name}>
+                      {c.name}
                     </option>
                   ))}
                 </select>
@@ -92,19 +144,23 @@ function CreateMatchPage() {
                     </select>
                   </div>
                 </div>
-                <button className="create-match__btn" onClick={handleCreate}>
-                  Create Match
+                <button
+                  className="create-match__btn"
+                  onClick={handleCreate}
+                  disabled={loading}
+                >
+                  {loading ? "Creating..." : "Create Match"}
                 </button>
               </div>
               {created && (
                 <p className="create-match__success">
-                  ✓ Match created successfully!
+                  ✓ Match created! Redirecting...
                 </p>
               )}
+              {error && <p className="create-match__error">{error}</p>}
             </div>
           </div>
         </section>
-
         <AdBanners />
       </div>
     </div>

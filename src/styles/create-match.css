@@ -4,28 +4,28 @@
 
 .create-match__grid {
   display: grid;
-  grid-template-columns: 1fr 300px;
-  gap: 24px;
+  grid-template-columns: 1fr;
+  gap: 16px;
   align-items: start;
 }
 
 .create-match__main {
   background-color: var(--player-card-bg);
   border-radius: 16px;
-  padding: 40px 32px;
+  padding: 16px;
 }
 
 .create-match__card {
   background-color: var(--player-white);
   border-radius: 16px;
-  padding: 40px;
+  padding: 20px 16px;
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 20px;
 }
 
 .create-match__title {
-  font-size: 1.8rem;
+  font-size: 1.3rem;
   font-weight: 800;
   color: var(--player-black);
   margin: 0;
@@ -39,14 +39,14 @@
 }
 
 .create-match__section-title {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--player-black);
   margin: 0;
 }
 
 .create-match__label {
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   color: var(--player-black);
 }
 
@@ -59,7 +59,7 @@
   background-color: #3a3a3a;
   border: none;
   border-radius: 8px;
-  padding: 14px 40px 14px 16px;
+  padding: 14px 16px;
   font-size: 0.95rem;
   color: var(--player-white);
   font-family: inherit;
@@ -78,15 +78,14 @@
 
 .create-match__date-row {
   display: flex;
-  align-items: flex-end;
-  gap: 16px;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .create-match__field {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  flex: 1;
 }
 
 .create-match__btn {
@@ -99,8 +98,7 @@
   font-weight: 700;
   cursor: pointer;
   font-family: inherit;
-  white-space: nowrap;
-  align-self: flex-end;
+  width: 100%;
 }
 
 .create-match__success {
@@ -108,4 +106,51 @@
   color: var(--player-green);
   font-weight: 600;
   margin: 0;
+}
+
+.create-match__error {
+  font-size: 0.9rem;
+  color: #e05252;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* ── DESKTOP ── */
+@media (min-width: 1024px) {
+  .create-match__grid {
+    grid-template-columns: 1fr 300px;
+    gap: 24px;
+  }
+
+  .create-match__main {
+    padding: 40px 32px;
+  }
+
+  .create-match__card {
+    padding: 40px;
+    gap: 28px;
+  }
+
+  .create-match__title {
+    font-size: 1.8rem;
+  }
+
+  .create-match__section-title {
+    font-size: 1.1rem;
+  }
+
+  .create-match__date-row {
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 16px;
+  }
+
+  .create-match__field {
+    flex: 1;
+  }
+
+  .create-match__btn {
+    width: auto;
+    align-self: flex-end;
+  }
 }
