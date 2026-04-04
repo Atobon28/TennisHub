@@ -3,7 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import { Icon } from "@iconify/react";
 import {
-  getUserByUid,
   joinMatch,
   leaveMatch,
   deleteMatch,
