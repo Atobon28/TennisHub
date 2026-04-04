@@ -3,7 +3,11 @@ import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import MatchCard from "../../components/player/MatchCard";
 import TournamentCard from "../../components/player/TournamentCard";
-import { getPlayerTournaments, logoutUser } from "../../firebase/services";
+import {
+  getPlayerTournaments,
+  logoutUser,
+  updateUser,
+} from "../../firebase/services";
 import { useAuth } from "../../context/AuthContext";
 import "../../styles/player-profile.css";
 import player1 from "../../assets/player-1.jpg";
@@ -34,7 +38,7 @@ interface Tournament {
 
 function PlayerProfilePage() {
   const navigate = useNavigate();
-  const { userData } = useAuth();
+  const { userData, refreshUserData } = useAuth();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [activeTab, setActiveTab] = useState<"matches" | "tournaments">(
@@ -43,18 +47,18 @@ function PlayerProfilePage() {
   const [avatar, setAvatar] = useState<string>(() => {
     return localStorage.getItem("playerAvatar") || player1;
   });
-  const [level, setLevel] = useState<number>(() => {
-    return parseInt(
-      localStorage.getItem("playerLevel") || String(userData?.level || 1),
-    );
-  });
+  const [level, setLevel] = useState<number>(userData?.level || 1);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showLevelModal, setShowLevelModal] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordMsg, setPasswordMsg] = useState("");
-  const [tempLevel, setTempLevel] = useState(String(level));
+  const [tempLevel, setTempLevel] = useState(String(userData?.level || 1));
+
+  useEffect(() => {
+    if (userData?.level) setLevel(userData.level);
+  }, [userData]);
 
   useEffect(() => {
     if (!userData?.uid) return;
@@ -96,13 +100,19 @@ function PlayerProfilePage() {
     setShowPasswordModal(false);
   };
 
-  const handleConfirmLevel = () => {
+  const handleConfirmLevel = async () => {
     const val = parseInt(tempLevel);
     if (!val || val < 1 || val > 5) return;
-    localStorage.setItem("playerLevel", String(val));
-    setLevel(val);
-    window.dispatchEvent(new Event("player:levelUpdated"));
-    setShowLevelModal(false);
+    try {
+      if (userData?.id) {
+        await updateUser(userData.id, { level: val });
+        await refreshUserData();
+      }
+      setLevel(val);
+      setShowLevelModal(false);
+    } catch (error) {
+      console.error("Error updating level:", error);
+    }
   };
 
   const handleLogout = async () => {

@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import SidebarPlayer from "../components/player/SidebarPlayer";
 import TopbarMobilePlayer from "../components/player/TopbarMobilePlayer";
@@ -9,19 +8,8 @@ import logo from "../assets/Logo.png";
 
 function PlayerLayout() {
   const { userData } = useAuth();
-  const [level, setLevel] = useState<number>(() => {
-    return parseInt(localStorage.getItem("playerLevel") || "5");
-  });
-
-  useEffect(() => {
-    const handler = () => {
-      setLevel(parseInt(localStorage.getItem("playerLevel") || "5"));
-    };
-    window.addEventListener("player:levelUpdated", handler);
-    return () => window.removeEventListener("player:levelUpdated", handler);
-  }, []);
-
   const username = userData?.username || "Juan";
+  const level = userData?.level || 1;
 
   return (
     <div className="player-layout">
