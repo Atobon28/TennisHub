@@ -60,7 +60,9 @@ function BookCourtPage() {
                     <span className="book-court__court-name">{court.name}</span>
                     <button
                       className="book-court__see-more-btn"
-                      onClick={() => navigate("/player/courts/view")}
+                      onClick={() =>
+                        navigate(`/player/courts/view/${court.id}`)
+                      }
                     >
                       See more
                     </button>

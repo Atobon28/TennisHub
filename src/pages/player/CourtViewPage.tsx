@@ -1,19 +1,41 @@
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
+import { getCourts } from "../../firebase/services";
 import "../../styles/court-view.css";
-import court2 from "../../assets/court-2.jpg";
+import court1 from "../../assets/court-1.jpg";
 
-const court = {
-  name: "Granada",
-  contact: "+57 3122588794",
-  address: "Av. 4ta N # 6-80",
-  whatsapp: "573122588794",
-  image: court2,
-};
+interface Court {
+  id: string;
+  name: string;
+  contact?: string;
+  address?: string;
+  image?: string;
+}
 
 function CourtViewPage() {
-  const handleWhatsApp = () => {
-    window.open(`https://wa.me/${court.whatsapp}`, "_blank");
-  };
+  const { id } = useParams();
+  const [court, setCourt] = useState<Court | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCourt = async () => {
+      try {
+        const data = await getCourts();
+        const found = (data as Court[]).find((c) => c.id === id);
+        setCourt(found || null);
+      } catch (error) {
+        console.error("Error fetching court:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCourt();
+  }, [id]);
+
+  if (loading) return <p style={{ padding: 20, color: "#888" }}>Loading...</p>;
+  if (!court)
+    return <p style={{ padding: 20, color: "#888" }}>Court not found.</p>;
 
   return (
     <div className="court-view">
@@ -21,7 +43,7 @@ function CourtViewPage() {
         <section className="court-view__main">
           <div className="court-view__card">
             <img
-              src={court.image}
+              src={court.image || court1}
               alt={court.name}
               className="court-view__image"
             />
@@ -29,15 +51,20 @@ function CourtViewPage() {
               <h2 className="court-view__name">{court.name}</h2>
               <p className="court-view__detail">
                 <span className="court-view__label">Contact: </span>
-                {court.contact}
+                {court.contact || "Not specified"}
               </p>
               <p className="court-view__detail">
                 <span className="court-view__label">Address: </span>
-                {court.address}
+                {court.address || "Not specified"}
               </p>
               <button
                 className="court-view__whatsapp-btn"
-                onClick={handleWhatsApp}
+                onClick={() =>
+                  window.open(
+                    `https://wa.me/${court.contact?.replace(/\D/g, "")}`,
+                    "_blank",
+                  )
+                }
               >
                 Contact via WhatsApp
               </button>

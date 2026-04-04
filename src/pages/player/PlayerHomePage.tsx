@@ -353,6 +353,7 @@ function PlayerHomePage() {
                   name={court.name}
                   image={court.image || court1}
                   className={classNames[index]}
+                  onSeeMore={() => navigate(`/player/courts/view/${court.id}`)}
                 />
               ))}
             </div>
