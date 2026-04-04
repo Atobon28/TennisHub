@@ -16,6 +16,7 @@ import FindCoachPage from "./pages/player/FindCoachPage";
 import CoachViewPage from "./pages/player/CoachViewPage";
 import CreateMatchPage from "./pages/player/CreateMatchPage";
 import FindMatchesPage from "./pages/player/FindMatchesPage";
+import MatchViewPage from "./pages/player/MatchViewPage";
 import CoachHomePage from "./pages/coach/CoachHomePage";
 import CoachProfilePage from "./pages/coach/CoachProfilePage";
 import AdminHomePage from "./pages/admin/AdminHomePage";
@@ -52,6 +53,7 @@ function App() {
         <Route path="coaches/view/:uid" element={<CoachViewPage />} />
         <Route path="create-match" element={<CreateMatchPage />} />
         <Route path="matches" element={<FindMatchesPage />} />
+        <Route path="matches/view/:id" element={<MatchViewPage />} />
       </Route>
 
       <Route path="/coach" element={<CoachLayout />}>

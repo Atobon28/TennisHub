@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
-import MatchCard from "../../components/player/MatchCard";
 import TournamentCard from "../../components/player/TournamentCard";
 import {
   getPlayerTournaments,
+  getPlayerMatches,
+  leaveMatch,
+  deleteMatch,
   logoutUser,
   updateUser,
 } from "../../firebase/services";
@@ -12,28 +14,28 @@ import { useAuth } from "../../context/AuthContext";
 import "../../styles/player-profile.css";
 import player1 from "../../assets/player-1.jpg";
 
-const matches = [
-  {
-    id: 1,
-    time: "Today - 05:00 PM",
-    court: "Ciudad Jardín",
-    host: "Juan Carlos Salazar",
-  },
-  { id: 2, time: "Tomorrow - 07:00 AM", court: "Ciudad Jardín", host: "You" },
-  { id: 3, time: "29/02/26 - 02:00 PM", court: "Ingenio", host: "Laura Vélez" },
-  {
-    id: 4,
-    time: "31/02/26 - 05:00 PM",
-    court: "Ciudad Jardín",
-    host: "Juan Carlos Salazar",
-  },
-];
-
 interface Tournament {
   id: string;
   level: number;
   name: string;
   info: string;
+}
+
+interface MatchPlayer {
+  uid: string;
+  username: string;
+}
+
+interface Match {
+  id: string;
+  court: string;
+  date: string;
+  time: string;
+  hostId: string;
+  hostUsername: string;
+  players: MatchPlayer[];
+  playerIds: string[];
+  maxPlayers: number;
 }
 
 function PlayerProfilePage() {
@@ -49,6 +51,7 @@ function PlayerProfilePage() {
   });
   const [level, setLevel] = useState<number>(userData?.level || 1);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [matches, setMatches] = useState<Match[]>([]);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showLevelModal, setShowLevelModal] = useState(false);
   const [newPassword, setNewPassword] = useState("");
@@ -62,15 +65,37 @@ function PlayerProfilePage() {
 
   useEffect(() => {
     if (!userData?.uid) return;
+
     const fetchTournaments = async () => {
       try {
         const data = await getPlayerTournaments(userData.uid);
         setTournaments(data as Tournament[]);
       } catch (error) {
-        console.error("Error fetching player tournaments:", error);
+        console.error("Error fetching tournaments:", error);
       }
     };
+
+    const fetchMatches = async () => {
+      try {
+        const data = await getPlayerMatches(userData.uid);
+        const now = new Date();
+        const filtered = (data as Match[]).filter((m) => {
+          const matchDate = new Date(`${m.date}T${m.time}`);
+          return matchDate >= now;
+        });
+        filtered.sort(
+          (a, b) =>
+            new Date(`${a.date}T${a.time}`).getTime() -
+            new Date(`${b.date}T${b.time}`).getTime(),
+        );
+        setMatches(filtered);
+      } catch (error) {
+        console.error("Error fetching matches:", error);
+      }
+    };
+
     fetchTournaments();
+    fetchMatches();
   }, [userData]);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,9 +140,32 @@ function PlayerProfilePage() {
     }
   };
 
+  const handleCancelMatch = async (match: Match) => {
+    if (!userData?.uid || !userData?.username) return;
+    try {
+      if (match.hostId === userData.uid) {
+        await deleteMatch(match.id);
+      } else {
+        await leaveMatch(match.id, userData.uid, userData.username);
+      }
+      setMatches((prev) => prev.filter((m) => m.id !== match.id));
+    } catch (error) {
+      console.error("Error cancelling match:", error);
+    }
+  };
+
   const handleLogout = async () => {
     await logoutUser();
     navigate("/");
+  };
+
+  const formatDate = (date: string) => {
+    const d = new Date(date + "T00:00:00");
+    return d.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
   };
 
   const name = userData?.username || "Juan Castro";
@@ -202,14 +250,82 @@ function PlayerProfilePage() {
           {/* Lista */}
           <div className="player-profile__list">
             {activeTab === "matches" ? (
-              matches.map((match) => (
-                <MatchCard
-                  key={match.id}
-                  time={match.time}
-                  court={match.court}
-                  host={match.host}
-                />
-              ))
+              matches.length === 0 ? (
+                <p className="player-profile__empty">
+                  You haven't joined any matches yet.
+                </p>
+              ) : (
+                matches.map((match) => {
+                  const isHost = match.hostId === userData?.uid;
+                  return (
+                    <div key={match.id} className="player-profile__match-card">
+                      <div className="player-profile__match-left">
+                        <p>
+                          <strong>{match.court}</strong>
+                        </p>
+                        <p>
+                          {formatDate(match.date)} — {match.time}
+                        </p>
+                        <p>Host: {match.hostUsername}</p>
+                        {/* Players clickeables */}
+                        <div
+                          style={{
+                            display: "flex",
+                            flexWrap: "wrap",
+                            gap: 6,
+                            marginTop: 6,
+                          }}
+                        >
+                          {match.players?.map((player) => (
+                            <span
+                              key={player.uid}
+                              onClick={() =>
+                                navigate(`/player/players/view/${player.uid}`)
+                              }
+                              style={{
+                                background: "rgba(0,0,0,0.2)",
+                                borderRadius: "999px",
+                                padding: "2px 10px",
+                                fontSize: "0.75rem",
+                                cursor: "pointer",
+                                fontWeight: 600,
+                              }}
+                            >
+                              {player.username}
+                              {player.uid === match.hostId ? " 👑" : ""}
+                            </span>
+                          ))}
+                        </div>
+                        <p style={{ marginTop: 4, fontSize: "0.78rem" }}>
+                          {match.players?.length || 0}/{match.maxPlayers}{" "}
+                          players
+                        </p>
+                      </div>
+                      <div className="player-profile__match-right">
+                        <span className="player-profile__brand">TennisHub</span>
+                        <span className="player-profile__brand-sub">Match</span>
+                        <button
+                          onClick={() => handleCancelMatch(match)}
+                          style={{
+                            marginTop: 8,
+                            background: "#e05252",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "999px",
+                            padding: "6px 14px",
+                            fontSize: "0.75rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            fontFamily: "inherit",
+                          }}
+                        >
+                          {isHost ? "Cancel" : "Leave"}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )
             ) : tournaments.length === 0 ? (
               <p className="player-profile__empty">
                 You haven't joined any tournaments yet.

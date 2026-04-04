@@ -13,6 +13,7 @@ import {
   getCourts,
   getPlayers,
   getCoaches,
+  getMatches,
 } from "../../firebase/services";
 
 interface Tournament {
@@ -41,21 +42,21 @@ interface Coach {
   username: string;
 }
 
+interface Match {
+  id: string;
+  court: string;
+  date: string;
+  time: string;
+  hostUsername: string;
+  players: { uid: string; username: string }[];
+  playerIds: string[];
+  maxPlayers: number;
+}
+
 const classNames = [
   "player-home__court-card--large",
   "player-home__court-card--small-top",
   "player-home__court-card--small-bottom",
-];
-
-const matches = [
-  {
-    id: 1,
-    time: "Today - 05:00 PM",
-    court: "Ciudad Jardín",
-    host: "Juan Carlos Salazar",
-  },
-  { id: 2, time: "Today - 08:00 PM", court: "Ingenio", host: "Daniela Rojas" },
-  { id: 3, time: "Today - 09:00 PM", court: "Granada", host: "Sebas López" },
 ];
 
 function PlayerHomePage() {
@@ -66,21 +67,35 @@ function PlayerHomePage() {
   const [courts, setCourts] = useState<Court[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
   const [coaches, setCoaches] = useState<Coach[]>([]);
+  const [todayMatches, setTodayMatches] = useState<Match[]>([]);
 
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        const [tournamentsData, courtsData, playersData, coachesData] =
-          await Promise.all([
-            getTournaments(),
-            getCourts(),
-            getPlayers(),
-            getCoaches(),
-          ]);
+        const [
+          tournamentsData,
+          courtsData,
+          playersData,
+          coachesData,
+          matchesData,
+        ] = await Promise.all([
+          getTournaments(),
+          getCourts(),
+          getPlayers(),
+          getCoaches(),
+          getMatches(),
+        ]);
         setTournaments(tournamentsData as Tournament[]);
         setCourts(courtsData as Court[]);
         setPlayers(playersData as Player[]);
         setCoaches(coachesData as Coach[]);
+
+        // filtrar solo los partidos de hoy
+        const today = new Date().toISOString().split("T")[0];
+        const filtered = (matchesData as Match[]).filter(
+          (m) => m.date === today,
+        );
+        setTodayMatches(filtered);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -210,7 +225,10 @@ function PlayerHomePage() {
                 <h2 className="player-home__section-title">Today's Matches</h2>
               </div>
               <div className="player-home__section-right">
-                <button className="player-home__section-more-button">
+                <button
+                  className="player-home__section-more-button"
+                  onClick={() => navigate("/player/matches")}
+                >
                   Ver más...
                 </button>
                 <div className="player-home__scroll-btns">
@@ -233,14 +251,27 @@ function PlayerHomePage() {
               className="player-home__horizontal-scroll"
               ref={matchesScrollRef}
             >
-              {matches.map((match) => (
-                <MatchCard
-                  key={match.id}
-                  time={match.time}
-                  court={match.court}
-                  host={match.host}
-                />
-              ))}
+              {todayMatches.length === 0 ? (
+                <p
+                  style={{
+                    color: "#888",
+                    fontSize: "0.9rem",
+                    padding: "8px 0",
+                  }}
+                >
+                  No matches today.
+                </p>
+              ) : (
+                todayMatches.map((match) => (
+                  <MatchCard
+                    key={match.id}
+                    time={match.time}
+                    court={match.court}
+                    host={match.hostUsername}
+                    onClick={() => navigate(`/player/matches/view/${match.id}`)}
+                  />
+                ))
+              )}
             </div>
           </section>
 

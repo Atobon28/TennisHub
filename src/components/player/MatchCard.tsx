@@ -1,12 +1,17 @@
 interface MatchCardProps {
-  time: string
-  court: string
-  host: string
+  time: string;
+  court: string;
+  host: string;
+  onClick?: () => void;
 }
 
-function MatchCard({ time, court, host }: MatchCardProps) {
+function MatchCard({ time, court, host, onClick }: MatchCardProps) {
   return (
-    <article className="player-home__match-card player-home__match-card--scroll">
+    <article
+      className="player-home__match-card player-home__match-card--scroll"
+      onClick={onClick}
+      style={{ cursor: onClick ? "pointer" : "default" }}
+    >
       <div className="player-home__match-left">
         <p>{time}</p>
         <p>Court: {court}</p>
@@ -19,7 +24,7 @@ function MatchCard({ time, court, host }: MatchCardProps) {
         </div>
       </div>
     </article>
-  )
+  );
 }
 
-export default MatchCard
+export default MatchCard;

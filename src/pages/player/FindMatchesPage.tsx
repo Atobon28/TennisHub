@@ -60,7 +60,8 @@ function FindMatchesPage() {
     }
   };
 
-  const handleJoin = async (match: Match) => {
+  const handleJoin = async (e: React.MouseEvent, match: Match) => {
+    e.stopPropagation();
     if (!userData?.uid || !userData?.username) return;
     try {
       await joinMatch(match.id, userData.uid, userData.username);
@@ -70,7 +71,8 @@ function FindMatchesPage() {
     }
   };
 
-  const handleLeave = async (match: Match) => {
+  const handleLeave = async (e: React.MouseEvent, match: Match) => {
+    e.stopPropagation();
     if (!userData?.uid || !userData?.username) return;
     try {
       if (match.hostId === userData.uid) {
@@ -129,6 +131,8 @@ function FindMatchesPage() {
                   <div
                     key={match.id}
                     className={`find-matches__card ${full ? "find-matches__card--full" : ""}`}
+                    onClick={() => navigate(`/player/matches/view/${match.id}`)}
+                    style={{ cursor: "pointer" }}
                   >
                     {/* Header */}
                     <div className="find-matches__card-header">
@@ -167,9 +171,10 @@ function FindMatchesPage() {
                           <span
                             key={player.uid}
                             className="find-matches__player-chip"
-                            onClick={() =>
-                              navigate(`/player/players/view/${player.uid}`)
-                            }
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/player/players/view/${player.uid}`);
+                            }}
                           >
                             {player.username}
                             {player.uid === match.hostId && " 👑"}
@@ -183,14 +188,14 @@ function FindMatchesPage() {
                       {inMatch ? (
                         <button
                           className="find-matches__btn find-matches__btn--leave"
-                          onClick={() => handleLeave(match)}
+                          onClick={(e) => handleLeave(e, match)}
                         >
                           {isHost ? "Cancel Match" : "Leave Match"}
                         </button>
                       ) : !full ? (
                         <button
                           className="find-matches__btn find-matches__btn--join"
-                          onClick={() => handleJoin(match)}
+                          onClick={(e) => handleJoin(e, match)}
                         >
                           Join
                         </button>
