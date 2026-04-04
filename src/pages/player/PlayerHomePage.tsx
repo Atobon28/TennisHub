@@ -1,19 +1,19 @@
 import { useRef, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import "../../styles/player-home.css";
-import coach1 from "../../assets/coach-1.jpg";
-import coach2 from "../../assets/coach-2.jpg";
-import coach3 from "../../assets/coach-3.jpg";
-import player1 from "../../assets/player-1.jpg";
-import player2 from "../../assets/player-2.jpg";
-import player3 from "../../assets/player-3.jpg";
 import court1 from "../../assets/court-1.jpg";
 import AdBanners from "../../components/player/AdBanners";
 import MatchCard from "../../components/player/MatchCard";
 import TournamentCard from "../../components/player/TournamentCard";
 import PersonCard from "../../components/player/PersonCard";
 import CourtCard from "../../components/player/CourtCard";
-import { getTournaments, getCourts } from "../../firebase/services";
+import {
+  getTournaments,
+  getCourts,
+  getPlayers,
+  getCoaches,
+} from "../../firebase/services";
 
 interface Tournament {
   id: string;
@@ -28,39 +28,64 @@ interface Court {
   image: string;
 }
 
+interface Player {
+  id: string;
+  uid: string;
+  username: string;
+  level?: number;
+}
+
+interface Coach {
+  id: string;
+  uid: string;
+  username: string;
+}
+
 const classNames = [
   "player-home__court-card--large",
   "player-home__court-card--small-top",
   "player-home__court-card--small-bottom",
 ];
 
+const matches = [
+  {
+    id: 1,
+    time: "Today - 05:00 PM",
+    court: "Ciudad Jardín",
+    host: "Juan Carlos Salazar",
+  },
+  { id: 2, time: "Today - 08:00 PM", court: "Ingenio", host: "Daniela Rojas" },
+  { id: 3, time: "Today - 09:00 PM", court: "Granada", host: "Sebas López" },
+];
+
 function PlayerHomePage() {
+  const navigate = useNavigate();
   const matchesScrollRef = useRef<HTMLDivElement | null>(null);
   const tournamentsScrollRef = useRef<HTMLDivElement | null>(null);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [courts, setCourts] = useState<Court[]>([]);
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [coaches, setCoaches] = useState<Coach[]>([]);
 
   useEffect(() => {
-    const fetchTournaments = async () => {
+    const fetchAll = async () => {
       try {
-        const data = await getTournaments();
-        setTournaments(data as Tournament[]);
+        const [tournamentsData, courtsData, playersData, coachesData] =
+          await Promise.all([
+            getTournaments(),
+            getCourts(),
+            getPlayers(),
+            getCoaches(),
+          ]);
+        setTournaments(tournamentsData as Tournament[]);
+        setCourts(courtsData as Court[]);
+        setPlayers(playersData as Player[]);
+        setCoaches(coachesData as Coach[]);
       } catch (error) {
-        console.error("Error fetching tournaments:", error);
+        console.error("Error fetching data:", error);
       }
     };
-
-    const fetchCourts = async () => {
-      try {
-        const data = await getCourts();
-        setCourts(data as Court[]);
-      } catch (error) {
-        console.error("Error fetching courts:", error);
-      }
-    };
-
-    fetchTournaments();
-    fetchCourts();
+    fetchAll();
   }, []);
 
   const scroll = (
@@ -75,41 +100,19 @@ function PlayerHomePage() {
     }
   };
 
-  const coaches = [
-    { name: "Juan Ceballos", image: coach1 },
-    { name: "Sebas López", image: coach2 },
-    { name: "Santi Pérez", image: coach3 },
-  ];
-
-  const players = [
-    { name: "Daniela Salazar", image: player1, level: 3 },
-    { name: "Juan Sarmiento", image: player2, level: 2 },
-    { name: "Tony Hernández", image: player3, level: 5 },
-  ];
-
-  const matches = [
-    {
-      id: 1,
-      time: "Today - 05:00 PM",
-      court: "Ciudad Jardín",
-      host: "Juan Carlos Salazar",
-    },
-    {
-      id: 2,
-      time: "Today - 08:00 PM",
-      court: "Ingenio",
-      host: "Daniela Rojas",
-    },
-    { id: 3, time: "Today - 09:00 PM", court: "Granada", host: "Sebas López" },
-  ];
-
   return (
     <div className="player-home">
       <div className="player-home__mobile-actions">
-        <button className="player-home__action player-home__action--primary">
+        <button
+          className="player-home__action player-home__action--primary"
+          onClick={() => navigate("/player/create-match")}
+        >
           Create Match
         </button>
-        <button className="player-home__action player-home__action--secondary">
+        <button
+          className="player-home__action player-home__action--secondary"
+          onClick={() => navigate("/player/coaches")}
+        >
           <Icon
             icon="solar:magnifer-linear"
             className="player-home__action-icon"
@@ -121,6 +124,7 @@ function PlayerHomePage() {
       <div className="player-home__grid">
         <section className="player-home__main">
           <div className="player-home__top-cards">
+            {/* Players Nearby */}
             <div className="player-home__mini-section">
               <div className="player-home__section-header">
                 <div className="player-home__section-title-wrap">
@@ -132,22 +136,33 @@ function PlayerHomePage() {
                   </span>
                   <h2 className="player-home__section-title">Players Nearby</h2>
                 </div>
-                <button className="player-home__section-more-button">
+                <button
+                  className="player-home__section-more-button"
+                  onClick={() => navigate("/player/players")}
+                >
                   Ver más...
                 </button>
               </div>
               <div className="player-home__small-cards">
-                {players.map((player) => (
-                  <PersonCard
-                    key={player.name}
-                    name={player.name}
-                    image={player.image}
-                    level={player.level}
-                  />
+                {players.slice(0, 3).map((player) => (
+                  <div
+                    key={player.id}
+                    onClick={() =>
+                      navigate(`/player/players/view/${player.uid}`)
+                    }
+                    style={{ cursor: "pointer" }}
+                  >
+                    <PersonCard
+                      name={player.username}
+                      image={court1}
+                      level={player.level}
+                    />
+                  </div>
                 ))}
               </div>
             </div>
 
+            {/* Coaches */}
             <div className="player-home__mini-section">
               <div className="player-home__section-header">
                 <div className="player-home__section-title-wrap">
@@ -159,17 +174,24 @@ function PlayerHomePage() {
                   </span>
                   <h2 className="player-home__section-title">Coaches</h2>
                 </div>
-                <button className="player-home__section-more-button">
+                <button
+                  className="player-home__section-more-button"
+                  onClick={() => navigate("/player/coaches")}
+                >
                   Ver más...
                 </button>
               </div>
               <div className="player-home__small-cards">
-                {coaches.map((coach) => (
-                  <PersonCard
-                    key={coach.name}
-                    name={coach.name}
-                    image={coach.image}
-                  />
+                {coaches.slice(0, 3).map((coach) => (
+                  <div
+                    key={coach.id}
+                    onClick={() =>
+                      navigate(`/player/coaches/view/${coach.uid}`)
+                    }
+                    style={{ cursor: "pointer" }}
+                  >
+                    <PersonCard name={coach.username} image={court1} />
+                  </div>
                 ))}
               </div>
             </div>
@@ -237,7 +259,10 @@ function PlayerHomePage() {
                 </h2>
               </div>
               <div className="player-home__section-right">
-                <button className="player-home__section-more-button">
+                <button
+                  className="player-home__section-more-button"
+                  onClick={() => navigate("/player/tournaments")}
+                >
                   Ver más...
                 </button>
                 <div className="player-home__scroll-btns">
@@ -283,7 +308,10 @@ function PlayerHomePage() {
                 </span>
                 <h2 className="player-home__section-title">Trending Courts</h2>
               </div>
-              <button className="player-home__section-more-button">
+              <button
+                className="player-home__section-more-button"
+                onClick={() => navigate("/player/courts")}
+              >
                 Ver más...
               </button>
             </div>
