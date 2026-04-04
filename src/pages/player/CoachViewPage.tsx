@@ -13,7 +13,15 @@ interface Coach {
   pricePerHour?: string;
   uid: string;
   availableDays?: string[];
+  phone?: string;
 }
+
+const formatPhone = (phone: string) => {
+  const cleaned = phone.replace(/\D/g, "");
+  if (cleaned.startsWith("57")) return cleaned;
+  if (cleaned.startsWith("3")) return `57${cleaned}`;
+  return cleaned;
+};
 
 function CoachViewPage() {
   const { uid } = useParams();
@@ -63,11 +71,13 @@ function CoachViewPage() {
               gap: 16,
             }}
           >
+            {/* Avatar + info */}
             <div
               style={{
                 display: "flex",
+                flexDirection: "column",
                 alignItems: "center",
-                gap: 20,
+                gap: 12,
                 width: "100%",
               }}
             >
@@ -81,7 +91,7 @@ function CoachViewPage() {
                   objectFit: "cover",
                 }}
               />
-              <div>
+              <div style={{ textAlign: "center" }}>
                 <h2 style={{ margin: 0, fontSize: "1.4rem", fontWeight: 800 }}>
                   {coach.username}
                 </h2>
@@ -91,6 +101,7 @@ function CoachViewPage() {
               </div>
             </div>
 
+            {/* Details */}
             <div
               style={{
                 display: "flex",
@@ -101,7 +112,7 @@ function CoachViewPage() {
               }}
             >
               <p style={{ margin: 0, fontSize: "0.95rem" }}>
-                <strong>Contact:</strong> {coach.email}
+                <strong>Contact:</strong> {coach.phone || coach.email}
               </p>
               <p style={{ margin: 0, fontSize: "0.95rem" }}>
                 <strong>Price per hour:</strong>{" "}
@@ -109,7 +120,16 @@ function CoachViewPage() {
               </p>
             </div>
 
+            {/* WhatsApp button */}
             <button
+              onClick={() =>
+                coach.phone
+                  ? window.open(
+                      `https://wa.me/${formatPhone(coach.phone)}?text=Hi! I found you on TennisHub and would like to connect.`,
+                      "_blank",
+                    )
+                  : alert("This coach has no phone number registered.")
+              }
               style={{
                 background: "var(--player-green-gradient)",
                 color: "white",
@@ -126,6 +146,7 @@ function CoachViewPage() {
               Contact via WhatsApp
             </button>
 
+            {/* Available days */}
             {availableDays.length > 0 && (
               <>
                 <h3

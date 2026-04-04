@@ -11,6 +11,7 @@ function RegisterPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [level, setLevel] = useState("");
+  const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -29,6 +30,7 @@ function RegisterPage() {
         uid: userCredential.user.uid,
         email,
         username,
+        phone,
         level: parseInt(level) || 1,
         role: "player",
       });
@@ -75,6 +77,20 @@ function RegisterPage() {
                 placeholder="Enter your username..."
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+              />
+            </div>
+
+            <div className="access-form__group">
+              <label className="access-form__label" htmlFor="phone">
+                Phone (WhatsApp)
+              </label>
+              <input
+                id="phone"
+                type="tel"
+                className="access-form__input"
+                placeholder="e.g. 3122588794..."
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
               />
             </div>
 

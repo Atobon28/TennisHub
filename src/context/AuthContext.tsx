@@ -12,6 +12,7 @@ interface UserData {
   level?: number;
   pricePerHour?: string;
   availableDays?: string[];
+  phone?: string;
 }
 
 interface AuthContextType {

@@ -12,7 +12,15 @@ interface Player {
   email: string;
   level?: number;
   uid: string;
+  phone?: string;
 }
+
+const formatPhone = (phone: string) => {
+  const cleaned = phone.replace(/\D/g, "");
+  if (cleaned.startsWith("57")) return cleaned;
+  if (cleaned.startsWith("3")) return `57${cleaned}`;
+  return cleaned;
+};
 
 function PlayerViewPage() {
   const { uid } = useParams();
@@ -64,8 +72,9 @@ function PlayerViewPage() {
             <div
               style={{
                 display: "flex",
+                flexDirection: "column",
                 alignItems: "center",
-                gap: 20,
+                gap: 12,
                 width: "100%",
               }}
             >
@@ -79,7 +88,7 @@ function PlayerViewPage() {
                   objectFit: "cover",
                 }}
               />
-              <div>
+              <div style={{ textAlign: "center" }}>
                 <h2 style={{ margin: 0, fontSize: "1.4rem", fontWeight: 800 }}>
                   {player.username}
                 </h2>
@@ -100,7 +109,7 @@ function PlayerViewPage() {
               }}
             >
               <p style={{ margin: 0, fontSize: "0.95rem" }}>
-                <strong>Contact:</strong> {player.email}
+                <strong>Contact:</strong> {player.phone || player.email}
               </p>
               <p
                 style={{
@@ -132,6 +141,14 @@ function PlayerViewPage() {
 
             {/* WhatsApp button */}
             <button
+              onClick={() =>
+                player.phone
+                  ? window.open(
+                      `https://wa.me/${formatPhone(player.phone)}?text=Hi! I found you on TennisHub and would like to connect.`,
+                      "_blank",
+                    )
+                  : alert("This player has no phone number registered.")
+              }
               style={{
                 background: "var(--player-green-gradient)",
                 color: "white",

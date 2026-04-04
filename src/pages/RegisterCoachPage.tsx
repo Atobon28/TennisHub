@@ -11,6 +11,7 @@ function RegisterCoachPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [pricePerHour, setPricePerHour] = useState("");
+  const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -20,20 +21,21 @@ function RegisterCoachPage() {
     event.preventDefault();
     setError("");
     setLoading(true);
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      setLoading(false);
+      return;
+    }
     try {
       const userCredential = await registerUser(email, password);
       await addUser({
         uid: userCredential.user.uid,
         email,
         username,
+        phone,
         pricePerHour,
         role: "coach",
       });
-      if (password.length < 6) {
-        setError("Password must be at least 6 characters.");
-        setLoading(false);
-        return;
-      }
       navigate("/login");
     } catch (err: any) {
       setError("Error creating account. Please try again.");
@@ -77,6 +79,20 @@ function RegisterCoachPage() {
                 placeholder="Enter your username..."
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+              />
+            </div>
+
+            <div className="access-form__group">
+              <label className="access-form__label" htmlFor="phone">
+                Phone (WhatsApp)
+              </label>
+              <input
+                id="phone"
+                type="tel"
+                className="access-form__input"
+                placeholder="e.g. 573122588794..."
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
               />
             </div>
 
