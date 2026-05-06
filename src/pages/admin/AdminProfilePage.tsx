@@ -7,7 +7,7 @@ import {
   getAdminCourts,
   logoutUser,
 } from "../../firebase/services";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/useAuth";
 import "../../styles/admin-profile.css";
 import court1 from "../../assets/court-1.jpg";
 
@@ -28,6 +28,7 @@ interface Court {
   image: string;
   contact?: string;
   address?: string;
+  courtType?: string;
 }
 
 function AdminProfilePage() {
@@ -208,10 +209,28 @@ function AdminProfilePage() {
                         {court.name}
                       </span>
 
+                      {court.courtType && (
+                        <span
+                          style={{
+                            backgroundColor: "rgba(255,255,255,0.9)",
+                            color: "#111",
+                            padding: "0.25rem 0.7rem",
+                            borderRadius: "999px",
+                            fontSize: "0.75rem",
+                            fontWeight: 700,
+                            marginTop: "0.4rem",
+                          }}
+                        >
+                          {court.courtType}
+                        </span>
+                      )}
+
                       <button
                         type="button"
                         className="admin-profile__link"
-                        onClick={() => navigate(`/admin/courts/view/${court.id}`)}
+                        onClick={() =>
+                          navigate(`/admin/courts/view/${court.id}`)
+                        }
                         style={{
                           backgroundColor: "white",
                           borderRadius: "999px",
