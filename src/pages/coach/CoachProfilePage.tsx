@@ -58,7 +58,7 @@ function CoachProfilePage() {
       setPrice(formatCurrency(userData.pricePerHour));
     }
 
-    if (userData?.availableDays) {
+    if (Array.isArray(userData?.availableDays)) {
       setSelectedDays(userData.availableDays);
     } else {
       setSelectedDays([
@@ -99,7 +99,10 @@ function CoachProfilePage() {
   const handleSave = async () => {
     try {
       if (userData?.id) {
-        await updateUser(userData.id, { availableDays: selectedDays });
+        await updateUser(userData.id, {
+          availableDays: selectedDays,
+        });
+
         await refreshUserData();
       }
 

@@ -1,17 +1,32 @@
 import { useState, useEffect } from "react";
 import AdBanners from "../../components/player/AdBanners";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/useAuth";
 import "../../styles/coach-home.css";
 import coach1 from "../../assets/coach-1.jpg";
 
 function CoachHomePage() {
   const { userData } = useAuth();
+
   const [availableDays, setAvailableDays] = useState<string[]>([]);
-  const [price, setPrice] = useState<string>("$150.000");
+  const [price, setPrice] = useState<string>("$150.000 COP");
   const [avatar, setAvatar] = useState<string>(coach1);
 
+  const formatCurrency = (value: string | number) => {
+    const onlyNumbers = String(value).replace(/\D/g, "");
+
+    if (!onlyNumbers) return "$0 COP";
+
+    const numberValue = Number(onlyNumbers);
+
+    return new Intl.NumberFormat("es-CO", {
+      style: "currency",
+      currency: "COP",
+      maximumFractionDigits: 0,
+    }).format(numberValue);
+  };
+
   useEffect(() => {
-    if (userData?.availableDays) {
+    if (Array.isArray(userData?.availableDays)) {
       setAvailableDays(userData.availableDays);
     } else {
       setAvailableDays([
@@ -23,21 +38,20 @@ function CoachHomePage() {
         "Saturday",
       ]);
     }
+
     if (userData?.pricePerHour) {
-      setPrice(
-        userData.pricePerHour.startsWith("$")
-          ? userData.pricePerHour
-          : `$${userData.pricePerHour}`,
-      );
+      setPrice(formatCurrency(userData.pricePerHour));
     }
+
     const savedAvatar = localStorage.getItem("coachAvatar");
-    if (savedAvatar) setAvatar(savedAvatar);
+
+    if (savedAvatar) {
+      setAvatar(savedAvatar);
+    }
   }, [userData]);
 
-  const name = userData?.username || "Leo";
-  const username = userData?.username
-    ? `@${userData.username}`
-    : "@Juanceballospro";
+  const name = userData?.username || "Coach";
+  const username = userData?.username ? `@${userData.username}` : "@coach";
 
   return (
     <div className="coach-home">
@@ -46,6 +60,7 @@ function CoachHomePage() {
           <h1 className="coach-home__welcome">
             Welcome Back, <strong>{name}</strong>
           </h1>
+
           <p className="coach-home__subtitle">
             Your profile is active and visible to players looking to improve
             their game.
@@ -53,6 +68,7 @@ function CoachHomePage() {
             Keep your information updated to increase visibility and attract
             more students.
           </p>
+
           <p className="coach-home__profile-label">
             <strong>Currently, players see your profile like this:</strong>
           </p>
@@ -60,16 +76,19 @@ function CoachHomePage() {
           <div className="coach-home__profile-card">
             <div className="coach-home__profile-top">
               <img src={avatar} alt={name} className="coach-home__avatar" />
+
               <div>
                 <h2 className="coach-home__coach-name">{name}</h2>
                 <p className="coach-home__coach-username">{username}</p>
               </div>
             </div>
+
             <div className="coach-home__profile-details">
               <p>
-                <span className="coach-home__detail-label">Contact:</span> +57
-                3176480086
+                <span className="coach-home__detail-label">Contact:</span>{" "}
+                {userData?.phone || "Not specified"}
               </p>
+
               <p>
                 <span className="coach-home__detail-label">
                   Price per hour:
@@ -80,17 +99,32 @@ function CoachHomePage() {
           </div>
 
           <div className="coach-home__schedule">
-            {availableDays.map((day) => (
-              <div key={day} className="coach-home__day-row">
-                <img src={avatar} alt="" className="coach-home__day-icon" />
-                <span className="coach-home__day-name">{day}</span>
-                <span className="coach-home__check-circle coach-home__check-circle--active">
-                  ✓
-                </span>
-              </div>
-            ))}
+            {availableDays.length === 0 ? (
+              <p
+                style={{
+                  color: "#777",
+                  fontWeight: 700,
+                  padding: "1rem 0",
+                }}
+              >
+                No available days selected.
+              </p>
+            ) : (
+              availableDays.map((day) => (
+                <div key={day} className="coach-home__day-row">
+                  <img src={avatar} alt="" className="coach-home__day-icon" />
+
+                  <span className="coach-home__day-name">{day}</span>
+
+                  <span className="coach-home__check-circle coach-home__check-circle--active">
+                    ✓
+                  </span>
+                </div>
+              ))
+            )}
           </div>
         </section>
+
         <AdBanners />
       </div>
     </div>
