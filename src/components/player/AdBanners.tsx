@@ -1,13 +1,24 @@
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/useAuth";
 import bannerTournament from "../../assets/banner-tournament.jpg";
 import bannerBrand from "../../assets/banner-brand.jpg";
 
 function AdBanners() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { userData } = useAuth();
 
-  const role = userData?.role;
+  const getCurrentRole = () => {
+    if (location.pathname.startsWith("/admin")) return "admin";
+    if (location.pathname.startsWith("/coach")) return "coach";
+    if (location.pathname.startsWith("/player")) return "player";
+
+    if (userData?.role) return userData.role;
+
+    return localStorage.getItem("role") || "player";
+  };
+
+  const role = getCurrentRole();
 
   const goToTournaments = () => {
     if (role === "admin") {
@@ -53,7 +64,9 @@ function AdBanners() {
         <div className="player-home__aside-text">
           <span className="player-home__aside-text-big">New</span>
           <span className="player-home__aside-text-big">Tournaments</span>
-          <span className="player-home__aside-text-small">Sign Up Now</span>
+          <span className="player-home__aside-text-small">
+            {role === "coach" ? "View profile" : "Sign Up Now"}
+          </span>
         </div>
       </button>
 
