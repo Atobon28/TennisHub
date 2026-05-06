@@ -144,10 +144,52 @@ export const getPlayerTournaments = async (playerId: string) => {
   return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 };
 
-export const joinTournament = async (playerId: string, tournament: object) => {
+export const getPlayerTournamentById = async (
+  playerId: string,
+  tournamentId: string,
+) => {
+  const q = query(
+    collection(db, "playerTournaments"),
+    where("playerId", "==", playerId),
+    where("tournamentId", "==", tournamentId),
+  );
+
+  const snapshot = await getDocs(q);
+
+  if (snapshot.empty) return null;
+
+  return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+};
+
+export const joinTournament = async (
+  playerId: string,
+  playerUsername: string,
+  tournament: {
+    id: string;
+    name: string;
+    info: string;
+    categories?: string[];
+    courts?: string[];
+  },
+) => {
+  const existingTournament = await getPlayerTournamentById(
+    playerId,
+    tournament.id,
+  );
+
+  if (existingTournament) {
+    throw new Error("You are already registered for this tournament.");
+  }
+
   return await addDoc(collection(db, "playerTournaments"), {
     playerId,
-    ...tournament,
+    playerUsername,
+    tournamentId: tournament.id,
+    name: tournament.name,
+    info: tournament.info,
+    categories: tournament.categories || [],
+    courts: tournament.courts || [],
+    joinedAt: new Date().toISOString(),
   });
 };
 

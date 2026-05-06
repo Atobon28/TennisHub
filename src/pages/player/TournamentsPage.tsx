@@ -128,7 +128,7 @@ function TournamentsPage() {
                     info={tournament.info}
                     buttonLabel="View"
                     disabled={!canApply}
-                    disabledLabel="No aplicas"
+                    disabledLabel="Not eligible"
                     onView={() =>
                       navigate(`/player/tournaments/view/${tournament.id}`)
                     }
