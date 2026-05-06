@@ -9,7 +9,8 @@ interface UserData {
   email: string;
   username: string;
   role: string;
-  level?: number;
+  level?: number | null;
+  category?: string;
   pricePerHour?: string;
   availableDays?: string[];
   phone?: string;
@@ -34,9 +35,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUserData = async () => {
     if (!currentUid) return;
+
     try {
-      const data = (await getUserByUid(currentUid)) as any;
-      if (data) setUserData(data);
+      const data = (await getUserByUid(currentUid)) as UserData | null;
+
+      if (data) {
+        setUserData(data);
+      }
     } catch (error) {
       console.error("Error refreshing user data:", error);
     }
@@ -46,9 +51,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setCurrentUid(user.uid);
+
         try {
-          const data = (await getUserByUid(user.uid)) as any;
-          if (data) setUserData(data);
+          const data = (await getUserByUid(user.uid)) as UserData | null;
+
+          if (data) {
+            setUserData(data);
+          }
         } catch (error) {
           console.error("Error fetching user data:", error);
         }
@@ -56,8 +65,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUserData(null);
         setCurrentUid(null);
       }
+
       setLoading(false);
     });
+
     return () => unsubscribe();
   }, []);
 
