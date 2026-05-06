@@ -7,6 +7,7 @@ import {
   getAdminTournaments,
   addTournament,
   getAdminCourts,
+  deleteTournament,
 } from "../../firebase/services";
 import { useAuth } from "../../context/AuthContext";
 import "../../styles/admin-tournaments.css";
@@ -172,6 +173,21 @@ function AdminTournamentsPage() {
     }
   };
 
+  const handleDeleteTournament = async (tournamentId: string) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this tournament?"
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      await deleteTournament(tournamentId);
+      await fetchData();
+    } catch (error) {
+      console.error("Error deleting tournament:", error);
+    }
+  };
+
   const handleClose = () => {
     setShowModal(false);
     setNewName("");
@@ -208,16 +224,30 @@ function AdminTournamentsPage() {
           ) : (
             <div className="admin-tournaments__cards-grid">
               {tournaments.map((tournament) => (
-                <TournamentCard
-                  key={tournament.id}
-                  level={tournament.level}
-                  name={tournament.name}
-                  info={tournament.info}
-                  buttonLabel="View"
-                  onView={() =>
-                    navigate(`/admin/tournaments/view/${tournament.id}`)
-                  }
-                />
+                <div key={tournament.id}>
+                  <TournamentCard
+                    level={tournament.level}
+                    name={tournament.name}
+                    info={tournament.info}
+                    buttonLabel="View"
+                    onView={() =>
+                      navigate(`/admin/tournaments/view/${tournament.id}`)
+                    }
+                  />
+
+                  <button
+                    type="button"
+                    className="create-match__btn"
+                    onClick={() => handleDeleteTournament(tournament.id)}
+                    style={{
+                      marginTop: "0.75rem",
+                      backgroundColor: "#e05252",
+                      width: "100%",
+                    }}
+                  >
+                    Delete Tournament
+                  </button>
+                </div>
               ))}
             </div>
           )}
@@ -230,6 +260,7 @@ function AdminTournamentsPage() {
         <div className="admin-tournaments__modal-overlay">
           <div className="admin-tournaments__modal">
             <button
+              type="button"
               className="admin-tournaments__modal-close"
               onClick={handleClose}
             >
@@ -379,6 +410,7 @@ function AdminTournamentsPage() {
               {error && <p className="create-match__error">{error}</p>}
 
               <button
+                type="button"
                 className="create-match__btn"
                 onClick={handleAdd}
                 disabled={creating || courts.length === 0}

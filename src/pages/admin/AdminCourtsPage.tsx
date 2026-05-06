@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import { Icon } from "@iconify/react";
-import { getAdminCourts, addCourt } from "../../firebase/services";
+import { getAdminCourts, addCourt, deleteCourt } from "../../firebase/services";
 import { useAuth } from "../../context/AuthContext";
 import "../../styles/admin-courts.css";
 import "../../styles/create-match.css";
@@ -150,6 +150,21 @@ function AdminCourtsPage() {
     }
   };
 
+  const handleDeleteCourt = async (courtId: string) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this court?"
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      await deleteCourt(courtId);
+      await fetchCourts();
+    } catch (error) {
+      console.error("Error deleting court:", error);
+    }
+  };
+
   const handleClose = () => {
     setShowModal(false);
     setNewName("");
@@ -197,13 +212,26 @@ function AdminCourtsPage() {
                       {court.name}
                     </span>
 
-                    <button
-                      type="button"
-                      className="admin-courts__see-more-btn"
-                      onClick={() => navigate(`/admin/courts/view/${court.id}`)}
-                    >
-                      See more
-                    </button>
+                    <div style={{ display: "flex", gap: "0.5rem" }}>
+                      <button
+                        type="button"
+                        className="admin-courts__see-more-btn"
+                        onClick={() =>
+                          navigate(`/admin/courts/view/${court.id}`)
+                        }
+                      >
+                        See more
+                      </button>
+
+                      <button
+                        type="button"
+                        className="admin-courts__see-more-btn"
+                        onClick={() => handleDeleteCourt(court.id)}
+                        style={{ backgroundColor: "#e05252" }}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </article>
               ))}
