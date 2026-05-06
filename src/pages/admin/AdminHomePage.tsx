@@ -30,7 +30,6 @@ function AdminHomePage() {
 
   useEffect(() => {
     const fetchAdminData = async () => {
-      // Si todavía no hay usuario cargado, no buscamos nada
       if (!userData?.uid) return;
 
       try {
@@ -87,17 +86,24 @@ function AdminHomePage() {
             </p>
           ) : (
             <div className="admin-home__tournament-cards">
-              {tournaments.map((t) => (
-                <article key={t.id} className="admin-home__tournament-card">
-                  <div className="admin-home__level-badge">{t.level}</div>
+              {tournaments.map((tournament) => (
+                <article
+                  key={tournament.id}
+                  className="admin-home__tournament-card"
+                >
+                  <div className="admin-home__level-badge">
+                    {tournament.level}
+                  </div>
 
-                  <h3 className="admin-home__card-name">{t.name}</h3>
+                  <h3 className="admin-home__card-name">{tournament.name}</h3>
 
-                  <p className="admin-home__card-info">{t.info}</p>
+                  <p className="admin-home__card-info">{tournament.info}</p>
 
                   <button
                     className="admin-home__view-btn"
-                    onClick={() => navigate("/admin/tournaments/view")}
+                    onClick={() =>
+                      navigate(`/admin/tournaments/view/${tournament.id}`)
+                    }
                   >
                     View
                   </button>
@@ -147,7 +153,7 @@ function AdminHomePage() {
 
                     <button
                       className="admin-home__see-more-btn"
-                      onClick={() => navigate("/admin/courts/view")}
+                      onClick={() => navigate(`/admin/courts/view/${court.id}`)}
                     >
                       See more
                     </button>
