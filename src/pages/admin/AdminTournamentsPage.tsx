@@ -3,7 +3,11 @@ import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import TournamentCard from "../../components/player/TournamentCard";
 import { Icon } from "@iconify/react";
-import { getAdminTournaments, addTournament } from "../../firebase/services";
+import {
+  getAdminTournaments,
+  addTournament,
+  getAdminCourts,
+} from "../../firebase/services";
 import { useAuth } from "../../context/AuthContext";
 import "../../styles/admin-tournaments.css";
 import "../../styles/create-match.css";
@@ -39,13 +43,19 @@ const categoryOptions = [
   "Senior",
 ];
 
+interface Court {
+  id: string;
+  name: string;
+}
+
 interface Tournament {
   id: string;
   name: string;
   info: string;
   date: string;
   hour: string;
-  court: string;
+  court?: string;
+  courts?: string[];
   categories?: string[];
   level?: number;
 }
@@ -55,20 +65,22 @@ function AdminTournamentsPage() {
   const { userData } = useAuth();
 
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [courts, setCourts] = useState<Court[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
 
   const [newName, setNewName] = useState("");
   const [newDate, setNewDate] = useState("");
   const [newHour, setNewHour] = useState("");
-  const [newCourt, setNewCourt] = useState("");
   const [newCategories, setNewCategories] = useState<string[]>([]);
+  const [selectedCourts, setSelectedCourts] = useState<string[]>([]);
 
   const [error, setError] = useState("");
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
-    fetchTournaments();
+    fetchData();
   }, [userData]);
 
   useEffect(() => {
@@ -79,16 +91,19 @@ function AdminTournamentsPage() {
     return () => window.removeEventListener("admin:addTournament", handler);
   }, []);
 
-  const fetchTournaments = async () => {
+  const fetchData = async () => {
     if (!userData?.uid) return;
 
     setLoading(true);
 
     try {
-      const data = await getAdminTournaments(userData.uid);
-      setTournaments(data as Tournament[]);
+      const tournamentsData = await getAdminTournaments(userData.uid);
+      setTournaments(tournamentsData as Tournament[]);
+
+      const courtsData = await getAdminCourts(userData.uid);
+      setCourts(courtsData as Court[]);
     } catch (error) {
-      console.error("Error fetching tournaments:", error);
+      console.error("Error fetching admin data:", error);
     } finally {
       setLoading(false);
     }
@@ -102,11 +117,27 @@ function AdminTournamentsPage() {
     }
   };
 
+  const handleCourtChange = (courtName: string) => {
+    if (selectedCourts.includes(courtName)) {
+      setSelectedCourts(selectedCourts.filter((item) => item !== courtName));
+    } else {
+      setSelectedCourts([...selectedCourts, courtName]);
+    }
+  };
+
   const handleAdd = async () => {
     if (!userData?.uid) return;
 
-    if (!newName || !newDate || !newHour || !newCourt || newCategories.length === 0) {
-      setError("Please fill in all fields and select at least one category.");
+    if (
+      !newName ||
+      !newDate ||
+      !newHour ||
+      newCategories.length === 0 ||
+      selectedCourts.length === 0
+    ) {
+      setError(
+        "Please fill in all fields, select at least one category and one court."
+      );
       return;
     }
 
@@ -114,14 +145,16 @@ function AdminTournamentsPage() {
     setCreating(true);
 
     const categoriesText = newCategories.join(", ");
-    const info = `${newDate} - ${newHour} - Court: ${newCourt} - Categories: ${categoriesText}`;
+    const courtsText = selectedCourts.join(", ");
+
+    const info = `${newDate} - ${newHour} - Courts: ${courtsText} - Categories: ${categoriesText}`;
 
     const newTournament = {
       name: newName,
       info,
       date: newDate,
       hour: newHour,
-      court: newCourt,
+      courts: selectedCourts,
       categories: newCategories,
       createdAt: new Date().toISOString(),
     };
@@ -129,7 +162,7 @@ function AdminTournamentsPage() {
     try {
       await addTournament(userData.uid, newTournament);
 
-      await fetchTournaments();
+      await fetchData();
       handleClose();
     } catch (error) {
       console.error("Error adding tournament:", error);
@@ -144,8 +177,8 @@ function AdminTournamentsPage() {
     setNewName("");
     setNewDate("");
     setNewHour("");
-    setNewCourt("");
     setNewCategories([]);
+    setSelectedCourts([]);
     setError("");
   };
 
@@ -177,7 +210,7 @@ function AdminTournamentsPage() {
               {tournaments.map((tournament) => (
                 <TournamentCard
                   key={tournament.id}
-                  level={tournament.level || 0}
+                  level={tournament.level}
                   name={tournament.name}
                   info={tournament.info}
                   buttonLabel="View"
@@ -297,18 +330,50 @@ function AdminTournamentsPage() {
               </div>
 
               <div className="create-match__section">
-                <h3 className="create-match__section-title">Place</h3>
+                <h3 className="create-match__section-title">Courts</h3>
 
-                <label className="create-match__label">Court:</label>
-                <div className="create-match__select-wrap">
-                  <input
-                    type="text"
-                    className="create-match__select"
-                    placeholder="Court name..."
-                    value={newCourt}
-                    onChange={(e) => setNewCourt(e.target.value)}
-                  />
-                </div>
+                <label className="create-match__label">
+                  Select one or more courts:
+                </label>
+
+                {courts.length === 0 ? (
+                  <p className="create-match__error">
+                    You need to create a court first.
+                  </p>
+                ) : (
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns:
+                        "repeat(auto-fit, minmax(160px, 1fr))",
+                      gap: "0.75rem",
+                      marginTop: "0.75rem",
+                    }}
+                  >
+                    {courts.map((court) => (
+                      <label
+                        key={court.id}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.5rem",
+                          backgroundColor: "#f6f6f6",
+                          padding: "0.75rem",
+                          borderRadius: "12px",
+                          cursor: "pointer",
+                          fontWeight: 600,
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedCourts.includes(court.name)}
+                          onChange={() => handleCourtChange(court.name)}
+                        />
+                        {court.name}
+                      </label>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {error && <p className="create-match__error">{error}</p>}
@@ -316,7 +381,7 @@ function AdminTournamentsPage() {
               <button
                 className="create-match__btn"
                 onClick={handleAdd}
-                disabled={creating}
+                disabled={creating || courts.length === 0}
               >
                 {creating ? "Creating..." : "Create Tournament"}
               </button>
