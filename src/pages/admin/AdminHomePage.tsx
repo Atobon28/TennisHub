@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import { getAdminTournaments, getAdminCourts } from "../../firebase/services";
+import { useAuth } from "../../context/AuthContext";
 import "../../styles/admin-home.css";
 import court1 from "../../assets/court-1.jpg";
 
@@ -20,27 +21,30 @@ interface Court {
 
 function AdminHomePage() {
   const navigate = useNavigate();
+  const { userData } = useAuth();
+
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [courts, setCourts] = useState<Court[]>([]);
   const [loadingTournaments, setLoadingTournaments] = useState(true);
   const [loadingCourts, setLoadingCourts] = useState(true);
 
   useEffect(() => {
-    const fetchTournaments = async () => {
+    const fetchAdminData = async () => {
+      // Si todavía no hay usuario cargado, no buscamos nada
+      if (!userData?.uid) return;
+
       try {
-        const data = await getAdminTournaments("admin1");
-        setTournaments(data as Tournament[]);
+        const tournamentsData = await getAdminTournaments(userData.uid);
+        setTournaments(tournamentsData as Tournament[]);
       } catch (error) {
         console.error("Error fetching tournaments:", error);
       } finally {
         setLoadingTournaments(false);
       }
-    };
 
-    const fetchCourts = async () => {
       try {
-        const data = await getAdminCourts("admin1");
-        setCourts(data as Court[]);
+        const courtsData = await getAdminCourts(userData.uid);
+        setCourts(courtsData as Court[]);
       } catch (error) {
         console.error("Error fetching courts:", error);
       } finally {
@@ -48,9 +52,8 @@ function AdminHomePage() {
       }
     };
 
-    fetchTournaments();
-    fetchCourts();
-  }, []);
+    fetchAdminData();
+  }, [userData]);
 
   return (
     <div className="admin-home">
@@ -62,22 +65,36 @@ function AdminHomePage() {
               <span className="admin-home__icon-gradient-wrap">
                 <span>🔍</span>
               </span>
+
               <h2 className="admin-home__section-title">
                 My Upcoming Tournaments
               </h2>
             </div>
-            <button className="admin-home__more-btn">Ver más...</button>
+
+            <button
+              className="admin-home__more-btn"
+              onClick={() => navigate("/admin/tournaments")}
+            >
+              See more...
+            </button>
           </div>
 
           {loadingTournaments ? (
             <p className="admin-home__loading">Loading tournaments...</p>
+          ) : tournaments.length === 0 ? (
+            <p className="admin-home__loading">
+              You have not created tournaments yet.
+            </p>
           ) : (
             <div className="admin-home__tournament-cards">
               {tournaments.map((t) => (
                 <article key={t.id} className="admin-home__tournament-card">
                   <div className="admin-home__level-badge">{t.level}</div>
+
                   <h3 className="admin-home__card-name">{t.name}</h3>
+
                   <p className="admin-home__card-info">{t.info}</p>
+
                   <button
                     className="admin-home__view-btn"
                     onClick={() => navigate("/admin/tournaments/view")}
@@ -95,13 +112,24 @@ function AdminHomePage() {
               <span className="admin-home__icon-gradient-wrap admin-home__icon-gradient-wrap--orange">
                 <span>🔥</span>
               </span>
+
               <h2 className="admin-home__section-title">My Courts</h2>
             </div>
-            <button className="admin-home__more-btn">Ver más...</button>
+
+            <button
+              className="admin-home__more-btn"
+              onClick={() => navigate("/admin/courts")}
+            >
+              See more...
+            </button>
           </div>
 
           {loadingCourts ? (
             <p className="admin-home__loading">Loading courts...</p>
+          ) : courts.length === 0 ? (
+            <p className="admin-home__loading">
+              You have not created courts yet.
+            </p>
           ) : (
             <div className="admin-home__courts-grid">
               {courts.map((court) => (
@@ -111,8 +139,12 @@ function AdminHomePage() {
                     alt={court.name}
                     className="admin-home__court-image"
                   />
+
                   <div className="admin-home__court-overlay">
-                    <span className="admin-home__court-name">{court.name}</span>
+                    <span className="admin-home__court-name">
+                      {court.name}
+                    </span>
+
                     <button
                       className="admin-home__see-more-btn"
                       onClick={() => navigate("/admin/courts/view")}
@@ -125,6 +157,7 @@ function AdminHomePage() {
             </div>
           )}
         </section>
+
         <AdBanners />
       </div>
     </div>
