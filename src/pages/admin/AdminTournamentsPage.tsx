@@ -27,14 +27,27 @@ const timeOptions = [
   "21:00",
 ];
 
+const categoryOptions = [
+  "Open",
+  "First Category",
+  "Second Category",
+  "Third Category",
+  "Fourth Category",
+  "Fifth Category",
+  "Beginner",
+  "Junior",
+  "Senior",
+];
+
 interface Tournament {
   id: string;
-  level: number;
   name: string;
   info: string;
   date: string;
   hour: string;
   court: string;
+  categories?: string[];
+  level?: number;
 }
 
 function AdminTournamentsPage() {
@@ -49,7 +62,7 @@ function AdminTournamentsPage() {
   const [newDate, setNewDate] = useState("");
   const [newHour, setNewHour] = useState("");
   const [newCourt, setNewCourt] = useState("");
-  const [newLevel, setNewLevel] = useState("");
+  const [newCategories, setNewCategories] = useState<string[]>([]);
 
   const [error, setError] = useState("");
   const [creating, setCreating] = useState(false);
@@ -81,26 +94,36 @@ function AdminTournamentsPage() {
     }
   };
 
+  const handleCategoryChange = (category: string) => {
+    if (newCategories.includes(category)) {
+      setNewCategories(newCategories.filter((item) => item !== category));
+    } else {
+      setNewCategories([...newCategories, category]);
+    }
+  };
+
   const handleAdd = async () => {
     if (!userData?.uid) return;
 
-    if (!newName || !newDate || !newHour || !newCourt || !newLevel) {
-      setError("Please fill in all fields.");
+    if (!newName || !newDate || !newHour || !newCourt || newCategories.length === 0) {
+      setError("Please fill in all fields and select at least one category.");
       return;
     }
 
     setError("");
     setCreating(true);
 
-    const info = `${newDate} - ${newHour} - Court: ${newCourt}`;
+    const categoriesText = newCategories.join(", ");
+    const info = `${newDate} - ${newHour} - Court: ${newCourt} - Categories: ${categoriesText}`;
 
     const newTournament = {
-      level: parseInt(newLevel),
       name: newName,
       info,
       date: newDate,
       hour: newHour,
       court: newCourt,
+      categories: newCategories,
+      createdAt: new Date().toISOString(),
     };
 
     try {
@@ -122,7 +145,7 @@ function AdminTournamentsPage() {
     setNewDate("");
     setNewHour("");
     setNewCourt("");
-    setNewLevel("");
+    setNewCategories([]);
     setError("");
   };
 
@@ -154,7 +177,7 @@ function AdminTournamentsPage() {
               {tournaments.map((tournament) => (
                 <TournamentCard
                   key={tournament.id}
-                  level={tournament.level}
+                  level={tournament.level || 0}
                   name={tournament.name}
                   info={tournament.info}
                   buttonLabel="View"
@@ -198,21 +221,47 @@ function AdminTournamentsPage() {
                     onChange={(e) => setNewName(e.target.value)}
                   />
                 </div>
+              </div>
 
-                <label className="create-match__label">Minimum Level:</label>
-                <div className="create-match__select-wrap">
-                  <select
-                    className="create-match__select"
-                    value={newLevel}
-                    onChange={(e) => setNewLevel(e.target.value)}
-                  >
-                    <option value="">Select level</option>
-                    <option value="1">Level 1</option>
-                    <option value="2">Level 2</option>
-                    <option value="3">Level 3</option>
-                    <option value="4">Level 4</option>
-                    <option value="5">Level 5</option>
-                  </select>
+              <div className="create-match__section">
+                <h3 className="create-match__section-title">
+                  Allowed Categories
+                </h3>
+
+                <label className="create-match__label">
+                  Select one or more categories:
+                </label>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+                    gap: "0.75rem",
+                    marginTop: "0.75rem",
+                  }}
+                >
+                  {categoryOptions.map((category) => (
+                    <label
+                      key={category}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                        backgroundColor: "#f6f6f6",
+                        padding: "0.75rem",
+                        borderRadius: "12px",
+                        cursor: "pointer",
+                        fontWeight: 600,
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={newCategories.includes(category)}
+                        onChange={() => handleCategoryChange(category)}
+                      />
+                      {category}
+                    </label>
+                  ))}
                 </div>
               </div>
 
