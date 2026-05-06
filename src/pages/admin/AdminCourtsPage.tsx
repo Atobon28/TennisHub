@@ -20,6 +20,7 @@ function AdminCourtsPage() {
   const navigate = useNavigate();
   const { userData } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isCreatingRef = useRef(false);
 
   const [courts, setCourts] = useState<Court[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,43 +61,91 @@ function AdminCourtsPage() {
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const resizeImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        const image = new Image();
+
+        image.onload = () => {
+          const canvas = document.createElement("canvas");
+          const maxWidth = 800;
+          const scale = maxWidth / image.width;
+
+          canvas.width = maxWidth;
+          canvas.height = image.height * scale;
+
+          const ctx = canvas.getContext("2d");
+
+          if (!ctx) {
+            reject("Canvas error");
+            return;
+          }
+
+          ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+          const resizedImage = canvas.toDataURL("image/jpeg", 0.7);
+
+          resolve(resizedImage);
+        };
+
+        image.onerror = reject;
+        image.src = reader.result as string;
+      };
+
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
     if (!file) return;
 
-    const reader = new FileReader();
-
-    reader.onload = () => setNewImage(reader.result as string);
-
-    reader.readAsDataURL(file);
+    try {
+      const resizedImage = await resizeImage(file);
+      setNewImage(resizedImage);
+    } catch (error) {
+      console.error("Error resizing image:", error);
+      setError("Error uploading image. Please try another one.");
+    }
   };
 
   const handleAdd = async () => {
-    if (!userData?.uid) return;
+    if (isCreatingRef.current || creating) return;
 
-    if (!newName || !newContact || !newAddress) {
+    if (!userData?.uid) {
+      setError("User not found.");
+      return;
+    }
+
+    if (!newName.trim() || !newContact.trim() || !newAddress.trim()) {
       setError("Please fill in all fields.");
       return;
     }
 
+    isCreatingRef.current = true;
     setError("");
     setCreating(true);
 
     try {
       await addCourt(userData.uid, {
-        name: newName,
-        contact: newContact,
-        address: newAddress,
+        name: newName.trim(),
+        contact: newContact.trim(),
+        address: newAddress.trim(),
         image: newImage || court1,
+        createdAt: new Date().toISOString(),
       });
 
-      await fetchCourts();
       handleClose();
+      await fetchCourts();
     } catch (error) {
       console.error("Error adding court:", error);
       setError("Error creating court. Please try again.");
     } finally {
+      isCreatingRef.current = false;
       setCreating(false);
     }
   };
@@ -108,6 +157,8 @@ function AdminCourtsPage() {
     setNewAddress("");
     setNewImage(null);
     setError("");
+    isCreatingRef.current = false;
+    setCreating(false);
   };
 
   return (
@@ -147,6 +198,7 @@ function AdminCourtsPage() {
                     </span>
 
                     <button
+                      type="button"
                       className="admin-courts__see-more-btn"
                       onClick={() => navigate(`/admin/courts/view/${court.id}`)}
                     >
@@ -165,7 +217,11 @@ function AdminCourtsPage() {
       {showModal && (
         <div className="admin-courts__modal-overlay">
           <div className="admin-courts__modal">
-            <button className="admin-courts__modal-close" onClick={handleClose}>
+            <button
+              type="button"
+              className="admin-courts__modal-close"
+              onClick={handleClose}
+            >
               ✕
             </button>
 
@@ -243,6 +299,7 @@ function AdminCourtsPage() {
               {error && <p className="create-match__error">{error}</p>}
 
               <button
+                type="button"
                 className="create-match__btn"
                 onClick={handleAdd}
                 disabled={creating}
