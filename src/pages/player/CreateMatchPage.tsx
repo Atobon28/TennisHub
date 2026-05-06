@@ -29,13 +29,20 @@ interface Court {
   name: string;
 }
 
+type MatchType = "singles" | "doubles";
+
 function CreateMatchPage() {
   const navigate = useNavigate();
   const { userData } = useAuth();
+
   const [courts, setCourts] = useState<Court[]>([]);
   const [court, setCourt] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
+
+  // Esta variable guarda si el partido es sencillo o dobles
+  const [matchType, setMatchType] = useState<MatchType>("singles");
+
   const [loading, setLoading] = useState(false);
   const [created, setCreated] = useState(false);
   const [error, setError] = useState("");
@@ -49,6 +56,7 @@ function CreateMatchPage() {
         console.error("Error fetching courts:", error);
       }
     };
+
     fetchCourts();
   }, []);
 
@@ -57,24 +65,34 @@ function CreateMatchPage() {
       setError("Please fill in all fields.");
       return;
     }
+
     setError("");
     setLoading(true);
+
     try {
+      // Si el partido es sencillo, máximo son 2 jugadores.
+      // Si es dobles, máximo son 4 jugadores.
+      const maxPlayers = matchType === "singles" ? 2 : 4;
+
       await createMatch({
         court,
         date,
         time,
+        matchType,
         hostId: userData?.uid,
         hostUsername: userData?.username,
         players: [{ uid: userData?.uid, username: userData?.username }],
         playerIds: [userData?.uid],
-        maxPlayers: 4,
+        maxPlayers,
         createdAt: new Date().toISOString(),
       });
+
       setCreated(true);
       setCourt("");
       setDate("");
       setTime("");
+      setMatchType("singles");
+
       setTimeout(() => {
         setCreated(false);
         navigate("/player/matches");
@@ -96,7 +114,9 @@ function CreateMatchPage() {
 
             <div className="create-match__section">
               <h3 className="create-match__section-title">Place</h3>
+
               <label className="create-match__label">Court:</label>
+
               <div className="create-match__select-wrap">
                 <select
                   className="create-match__select"
@@ -104,6 +124,7 @@ function CreateMatchPage() {
                   onChange={(e) => setCourt(e.target.value)}
                 >
                   <option value="">Select the court</option>
+
                   {courts.map((c) => (
                     <option key={c.id} value={c.name}>
                       {c.name}
@@ -114,10 +135,29 @@ function CreateMatchPage() {
             </div>
 
             <div className="create-match__section">
+              <h3 className="create-match__section-title">Match Type</h3>
+
+              <label className="create-match__label">Type:</label>
+
+              <div className="create-match__select-wrap">
+                <select
+                  className="create-match__select"
+                  value={matchType}
+                  onChange={(e) => setMatchType(e.target.value as MatchType)}
+                >
+                  <option value="singles">Singles - 2 players</option>
+                  <option value="doubles">Doubles - 4 players</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="create-match__section">
               <h3 className="create-match__section-title">Date and Hour</h3>
+
               <div className="create-match__date-row">
                 <div className="create-match__field">
                   <label className="create-match__label">Date:</label>
+
                   <div className="create-match__select-wrap">
                     <input
                       type="date"
@@ -127,8 +167,10 @@ function CreateMatchPage() {
                     />
                   </div>
                 </div>
+
                 <div className="create-match__field">
                   <label className="create-match__label">Time:</label>
+
                   <div className="create-match__select-wrap">
                     <select
                       className="create-match__select"
@@ -136,6 +178,7 @@ function CreateMatchPage() {
                       onChange={(e) => setTime(e.target.value)}
                     >
                       <option value="">00:00</option>
+
                       {timeOptions.map((t) => (
                         <option key={t} value={t}>
                           {t}
@@ -144,6 +187,7 @@ function CreateMatchPage() {
                     </select>
                   </div>
                 </div>
+
                 <button
                   className="create-match__btn"
                   onClick={handleCreate}
@@ -152,15 +196,18 @@ function CreateMatchPage() {
                   {loading ? "Creating..." : "Create Match"}
                 </button>
               </div>
+
               {created && (
                 <p className="create-match__success">
                   ✓ Match created! Redirecting...
                 </p>
               )}
+
               {error && <p className="create-match__error">{error}</p>}
             </div>
           </div>
         </section>
+
         <AdBanners />
       </div>
     </div>
