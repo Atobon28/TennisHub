@@ -9,7 +9,7 @@ import {
   getAdminCourts,
   deleteTournament,
 } from "../../firebase/services";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/useAuth";
 import "../../styles/admin-tournaments.css";
 import "../../styles/create-match.css";
 

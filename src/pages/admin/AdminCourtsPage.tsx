@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import { Icon } from "@iconify/react";
 import { getAdminCourts, addCourt, deleteCourt } from "../../firebase/services";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/useAuth";
 import "../../styles/admin-courts.css";
 import "../../styles/create-match.css";
 import court1 from "../../assets/court-1.jpg";

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import { getAdminTournaments, getAdminCourts } from "../../firebase/services";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/useAuth";
 import "../../styles/admin-home.css";
 import court1 from "../../assets/court-1.jpg";
 

@@ -10,7 +10,7 @@ import {
   logoutUser,
   updateUser,
 } from "../../firebase/services";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/useAuth";
 import "../../styles/player-profile.css";
 import player1 from "../../assets/player-1.jpg";
 
@@ -26,7 +26,10 @@ const categoryOptions = [
   "Senior",
 ];
 
-const getPlayerCategory = (level?: number, category?: string) => {
+const getPlayerCategory = (
+  level?: number | null,
+  category?: string | null
+) => {
   if (category) return category;
 
   if (level === 1) return "First Category";

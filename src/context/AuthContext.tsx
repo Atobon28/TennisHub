@@ -1,9 +1,9 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase/firebase";
 import { getUserByUid } from "../firebase/services";
 
-interface UserData {
+export interface UserData {
   id: string;
   uid: string;
   email: string;
@@ -16,13 +16,13 @@ interface UserData {
   phone?: string;
 }
 
-interface AuthContextType {
+export interface AuthContextType {
   userData: UserData | null;
   loading: boolean;
   refreshUserData: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType>({
+export const AuthContext = createContext<AuthContextType>({
   userData: null,
   loading: true,
   refreshUserData: async () => {},
@@ -78,5 +78,3 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     </AuthContext.Provider>
   );
 }
-
-export const useAuth = () => useContext(AuthContext);

@@ -4,7 +4,7 @@ import { Icon } from "@iconify/react";
 import AdBanners from "../../components/player/AdBanners";
 import TournamentCard from "../../components/player/TournamentCard";
 import { getTournaments } from "../../firebase/services";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/useAuth";
 import "../../styles/tournaments-page.css";
 
 interface Tournament {
@@ -15,7 +15,10 @@ interface Tournament {
   categories?: string[];
 }
 
-const getPlayerCategory = (level?: number, category?: string) => {
+const getPlayerCategory = (
+  level?: number | null,
+  category?: string | null
+) => {
   if (category) return category;
 
   if (level === 1) return "First Category";

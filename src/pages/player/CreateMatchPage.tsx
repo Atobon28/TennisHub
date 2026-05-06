@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/useAuth";
 import { createMatch, getCourts } from "../../firebase/services";
 import "../../styles/create-match.css";
 

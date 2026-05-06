@@ -2,7 +2,7 @@ import { Outlet } from "react-router-dom";
 import SidebarPlayer from "../components/player/SidebarPlayer";
 import TopbarMobilePlayer from "../components/player/TopbarMobilePlayer";
 import BottomNavPlayer from "../components/player/BottomNavPlayer";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import "../styles/player-layout.css";
 import logo from "../assets/Logo.png";
 
