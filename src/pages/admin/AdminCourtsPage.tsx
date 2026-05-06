@@ -14,7 +14,10 @@ interface Court {
   image: string;
   contact?: string;
   address?: string;
+  courtType?: string;
 }
+
+const courtTypeOptions = ["Grass", "Hard", "Clay"];
 
 function AdminCourtsPage() {
   const navigate = useNavigate();
@@ -29,6 +32,7 @@ function AdminCourtsPage() {
   const [newName, setNewName] = useState("");
   const [newContact, setNewContact] = useState("");
   const [newAddress, setNewAddress] = useState("");
+  const [newCourtType, setNewCourtType] = useState("");
   const [newImage, setNewImage] = useState<string | null>(null);
 
   const [error, setError] = useState("");
@@ -121,7 +125,12 @@ function AdminCourtsPage() {
       return;
     }
 
-    if (!newName.trim() || !newContact.trim() || !newAddress.trim()) {
+    if (
+      !newName.trim() ||
+      !newContact.trim() ||
+      !newAddress.trim() ||
+      !newCourtType
+    ) {
       setError("Please fill in all fields.");
       return;
     }
@@ -135,6 +144,7 @@ function AdminCourtsPage() {
         name: newName.trim(),
         contact: newContact.trim(),
         address: newAddress.trim(),
+        courtType: newCourtType,
         image: newImage || court1,
         createdAt: new Date().toISOString(),
       });
@@ -170,6 +180,7 @@ function AdminCourtsPage() {
     setNewName("");
     setNewContact("");
     setNewAddress("");
+    setNewCourtType("");
     setNewImage(null);
     setError("");
     isCreatingRef.current = false;
@@ -212,7 +223,29 @@ function AdminCourtsPage() {
                       {court.name}
                     </span>
 
-                    <div style={{ display: "flex", gap: "0.5rem" }}>
+                    {court.courtType && (
+                      <span
+                        style={{
+                          backgroundColor: "rgba(255,255,255,0.9)",
+                          color: "#111",
+                          padding: "0.25rem 0.7rem",
+                          borderRadius: "999px",
+                          fontSize: "0.8rem",
+                          fontWeight: 700,
+                          marginTop: "0.4rem",
+                        }}
+                      >
+                        {court.courtType}
+                      </span>
+                    )}
+
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: "0.5rem",
+                        marginTop: "0.75rem",
+                      }}
+                    >
                       <button
                         type="button"
                         className="admin-courts__see-more-btn"
@@ -268,6 +301,23 @@ function AdminCourtsPage() {
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
                   />
+                </div>
+
+                <label className="create-match__label">Court Type:</label>
+                <div className="create-match__select-wrap">
+                  <select
+                    className="create-match__select"
+                    value={newCourtType}
+                    onChange={(e) => setNewCourtType(e.target.value)}
+                  >
+                    <option value="">Select court type</option>
+
+                    {courtTypeOptions.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <label className="create-match__label">Contact Phone:</label>
