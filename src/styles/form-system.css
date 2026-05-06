@@ -1,0 +1,279 @@
+:root {
+  --form-bg: #ffffff;
+  --form-bg-soft: #f7f3f2;
+  --form-black: #0f0e0c;
+  --form-dark: #25292d;
+  --form-green: #bfe212;
+  --form-green-dark: #7f9800;
+  --form-border: rgba(15, 14, 12, 0.18);
+  --form-muted: #777777;
+  --form-error: #e05252;
+  --form-radius: 16px;
+  --form-radius-small: 10px;
+  --form-shadow: 0 18px 50px rgba(15, 14, 12, 0.12);
+  --form-gradient: linear-gradient(180deg, #bfe212 0%, #6f8500 100%);
+}
+
+/* FORM CARDS */
+
+.access-form,
+.create-match__card,
+.admin-courts__modal,
+.admin-tournaments__modal,
+.coach-profile__modal,
+.admin-profile__modal,
+.admin-court-view__modal {
+  border-radius: var(--form-radius) !important;
+}
+
+.create-match__card,
+.admin-courts__modal,
+.admin-tournaments__modal,
+.coach-profile__modal,
+.admin-profile__modal,
+.admin-court-view__modal {
+  background: var(--form-bg) !important;
+  box-shadow: var(--form-shadow) !important;
+}
+
+/* LABELS */
+
+.access-form__label,
+.create-match__label,
+.coach-profile__modal-label,
+.admin-profile__modal-label,
+.admin-court-view__modal-label {
+  color: var(--form-black) !important;
+  font-size: 0.82rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.01em;
+}
+
+/* INPUTS / SELECTS */
+
+.access-form__input,
+.create-match__select,
+.coach-profile__modal-input,
+.admin-profile__modal-input,
+.admin-court-view__modal-input {
+  width: 100% !important;
+  min-height: 46px !important;
+  border: 1.5px solid var(--form-border) !important;
+  border-radius: var(--form-radius-small) !important;
+  background: #ffffff !important;
+  color: var(--form-black) !important;
+  padding: 0 14px !important;
+  font-size: 0.92rem !important;
+  font-family: inherit !important;
+  font-weight: 600 !important;
+  outline: none !important;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.access-form__input::placeholder,
+.create-match__select::placeholder,
+.coach-profile__modal-input::placeholder,
+.admin-profile__modal-input::placeholder,
+.admin-court-view__modal-input::placeholder {
+  color: #9b9b9b !important;
+  font-weight: 500 !important;
+}
+
+.access-form__input:focus,
+.create-match__select:focus,
+.coach-profile__modal-input:focus,
+.admin-profile__modal-input:focus,
+.admin-court-view__modal-input:focus {
+  border-color: var(--form-green-dark) !important;
+  box-shadow: 0 0 0 4px rgba(191, 226, 18, 0.22) !important;
+}
+
+/* SELECT OPTIONS */
+
+.create-match__select option,
+.admin-court-view__modal-input option {
+  background: #ffffff !important;
+  color: var(--form-black) !important;
+}
+
+/* FORM SECTIONS */
+
+.create-match__section {
+  gap: 10px !important;
+}
+
+.create-match__section-title,
+.coach-profile__modal-subtitle,
+.admin-profile__modal-subtitle {
+  color: var(--form-black) !important;
+  font-size: 1rem !important;
+  font-weight: 900 !important;
+}
+
+/* BUTTONS */
+
+.access-form__button-primary,
+.create-match__btn,
+.coach-profile__modal-confirm,
+.admin-profile__modal-confirm,
+.admin-court-view__modal-confirm,
+.access-screen__button-dark {
+  min-height: 46px !important;
+  border: none !important;
+  border-radius: 999px !important;
+  background: var(--form-gradient) !important;
+  color: #ffffff !important;
+  font-size: 0.95rem !important;
+  font-weight: 900 !important;
+  font-family: inherit !important;
+  cursor: pointer !important;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.access-form__button-primary:hover,
+.create-match__btn:hover,
+.coach-profile__modal-confirm:hover,
+.admin-profile__modal-confirm:hover,
+.admin-court-view__modal-confirm:hover,
+.access-screen__button-dark:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(15, 14, 12, 0.16);
+}
+
+.access-form__button-primary:disabled,
+.create-match__btn:disabled,
+.coach-profile__modal-confirm:disabled,
+.admin-profile__modal-confirm:disabled,
+.admin-court-view__modal-confirm:disabled {
+  opacity: 0.55 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* SECONDARY / DARK ROLE BUTTONS */
+
+.access-screen__button-dark {
+  background: var(--form-dark) !important;
+}
+
+.access-screen__button-dark:hover {
+  background: var(--form-black) !important;
+}
+
+/* ERRORS */
+
+.access-form__error,
+.create-match__error,
+.coach-profile__modal-error,
+.admin-profile__modal-error {
+  color: var(--form-error) !important;
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+  margin-top: 0.4rem !important;
+}
+
+/* MODAL CLOSE BUTTONS */
+
+.admin-courts__modal-close,
+.admin-tournaments__modal-close,
+.coach-profile__modal-close,
+.admin-profile__modal-close,
+.admin-court-view__modal-close {
+  width: 34px !important;
+  height: 34px !important;
+  border: none !important;
+  border-radius: 999px !important;
+  background: #f0f0f0 !important;
+  color: var(--form-black) !important;
+  font-weight: 900 !important;
+  cursor: pointer !important;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.admin-courts__modal-close:hover,
+.admin-tournaments__modal-close:hover,
+.coach-profile__modal-close:hover,
+.admin-profile__modal-close:hover,
+.admin-court-view__modal-close:hover {
+  background: #e2e2e2 !important;
+  transform: rotate(90deg);
+}
+
+/* LOGIN / REGISTER POLISH */
+
+.access-screen__content--form,
+.access-screen__content {
+  background: transparent;
+}
+
+.access-screen__title {
+  letter-spacing: -0.04em;
+}
+
+.access-screen__subtitle,
+.access-screen__subtitle--login {
+  color: var(--form-green-dark) !important;
+  font-weight: 900 !important;
+}
+
+/* FILE UPLOAD BOX */
+
+.admin-courts__modal-photo {
+  border: 1.5px dashed var(--form-border) !important;
+  border-radius: var(--form-radius-small) !important;
+  background: #fafafa !important;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.admin-courts__modal-photo:hover {
+  border-color: var(--form-green-dark) !important;
+  background: rgba(191, 226, 18, 0.08) !important;
+}
+
+.admin-courts__modal-photo-placeholder {
+  color: var(--form-muted) !important;
+  font-weight: 700 !important;
+}
+
+/* MOBILE */
+
+@media (max-width: 768px) {
+  .create-match__card,
+  .admin-courts__modal,
+  .admin-tournaments__modal,
+  .coach-profile__modal,
+  .admin-profile__modal,
+  .admin-court-view__modal {
+    border-radius: 14px !important;
+  }
+
+  .access-form__input,
+  .create-match__select,
+  .coach-profile__modal-input,
+  .admin-profile__modal-input,
+  .admin-court-view__modal-input {
+    min-height: 44px !important;
+    font-size: 0.88rem !important;
+  }
+
+  .access-form__button-primary,
+  .create-match__btn,
+  .coach-profile__modal-confirm,
+  .admin-profile__modal-confirm,
+  .admin-court-view__modal-confirm,
+  .access-screen__button-dark {
+    min-height: 44px !important;
+    font-size: 0.9rem !important;
+  }
+}
