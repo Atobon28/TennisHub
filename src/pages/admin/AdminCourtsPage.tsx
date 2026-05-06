@@ -110,8 +110,7 @@ function AdminCourtsPage() {
                     </span>
                     <button
                       className="admin-courts__see-more-btn"
-                      onClick={() => navigate("/admin/courts/view")}
-                    >
+                      onClick={() => navigate(`/admin/courts/view/${court.id}`)}>
                       See more
                     </button>
                   </div>
