@@ -3,6 +3,12 @@ import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase/firebase";
 import { getUserByUid } from "../firebase/services";
 
+export interface CoachScheduleDay {
+  enabled: boolean;
+  start: string;
+  end: string;
+}
+
 export interface UserData {
   id: string;
   uid: string;
@@ -13,6 +19,7 @@ export interface UserData {
   category?: string;
   pricePerHour?: string;
   availableDays?: string[];
+  availableSchedule?: Record<string, CoachScheduleDay>;
   phone?: string;
 }
 

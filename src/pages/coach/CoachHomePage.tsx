@@ -5,11 +5,28 @@ import { useAuth } from "../../context/useAuth";
 import "../../styles/coach-home.css";
 import coach1 from "../../assets/coach-1.jpg";
 
+interface ScheduleDay {
+  enabled: boolean;
+  start: string;
+  end: string;
+}
+
+const allDays = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
+
 function CoachHomePage() {
   const navigate = useNavigate();
   const { userData } = useAuth();
 
   const [availableDays, setAvailableDays] = useState<string[]>([]);
+  const [schedule, setSchedule] = useState<Record<string, ScheduleDay>>({});
   const [price, setPrice] = useState<string>("Not configured");
   const [avatar, setAvatar] = useState<string>(coach1);
   const [showSetupNotice, setShowSetupNotice] = useState(false);
@@ -33,6 +50,12 @@ function CoachHomePage() {
       setAvailableDays(userData.availableDays);
     } else {
       setAvailableDays([]);
+    }
+
+    if (userData?.availableSchedule) {
+      setSchedule(userData.availableSchedule);
+    } else {
+      setSchedule({});
     }
 
     if (userData?.pricePerHour) {
@@ -169,17 +192,42 @@ function CoachHomePage() {
                 No available days selected.
               </p>
             ) : (
-              availableDays.map((day) => (
-                <div key={day} className="coach-home__day-row">
-                  <img src={avatar} alt="" className="coach-home__day-icon" />
+              allDays
+                .filter((day) => availableDays.includes(day))
+                .map((day) => {
+                  const currentDay = schedule[day];
 
-                  <span className="coach-home__day-name">{day}</span>
+                  return (
+                    <div key={day} className="coach-home__day-row">
+                      <img
+                        src={avatar}
+                        alt=""
+                        className="coach-home__day-icon"
+                      />
 
-                  <span className="coach-home__check-circle coach-home__check-circle--active">
-                    ✓
-                  </span>
-                </div>
-              ))
+                      <span className="coach-home__day-name">
+                        {day}
+                        {currentDay?.start && currentDay?.end && (
+                          <span
+                            style={{
+                              display: "block",
+                              fontSize: "0.75rem",
+                              color: "#777",
+                              fontWeight: 700,
+                              marginTop: "0.2rem",
+                            }}
+                          >
+                            {currentDay.start} - {currentDay.end}
+                          </span>
+                        )}
+                      </span>
+
+                      <span className="coach-home__check-circle coach-home__check-circle--active">
+                        ✓
+                      </span>
+                    </div>
+                  );
+                })
             )}
           </div>
         </section>

@@ -16,6 +16,47 @@ const allDays = [
   "Sunday",
 ];
 
+const hourOptions = [
+  "06:00",
+  "07:00",
+  "08:00",
+  "09:00",
+  "10:00",
+  "11:00",
+  "12:00",
+  "13:00",
+  "14:00",
+  "15:00",
+  "16:00",
+  "17:00",
+  "18:00",
+  "19:00",
+  "20:00",
+  "21:00",
+];
+
+interface ScheduleDay {
+  enabled: boolean;
+  start: string;
+  end: string;
+}
+
+type Schedule = Record<string, ScheduleDay>;
+
+const createEmptySchedule = () => {
+  const schedule: Schedule = {};
+
+  allDays.forEach((day) => {
+    schedule[day] = {
+      enabled: false,
+      start: "",
+      end: "",
+    };
+  });
+
+  return schedule;
+};
+
 function CoachProfilePage() {
   const navigate = useNavigate();
   const { userData, refreshUserData } = useAuth();
@@ -25,9 +66,10 @@ function CoachProfilePage() {
     return localStorage.getItem("coachAvatar") || coach1;
   });
 
-  const [selectedDays, setSelectedDays] = useState<string[]>([]);
-  const [price, setPrice] = useState<string>("$150.000 COP");
+  const [schedule, setSchedule] = useState<Schedule>(createEmptySchedule());
+  const [price, setPrice] = useState<string>("Not configured");
   const [saved, setSaved] = useState(false);
+  const [scheduleError, setScheduleError] = useState("");
 
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showPriceModal, setShowPriceModal] = useState(false);
@@ -42,7 +84,7 @@ function CoachProfilePage() {
   const formatCurrency = (value: string | number) => {
     const onlyNumbers = String(value).replace(/\D/g, "");
 
-    if (!onlyNumbers) return "$0 COP";
+    if (!onlyNumbers) return "Not configured";
 
     const numberValue = Number(onlyNumbers);
 
@@ -56,20 +98,38 @@ function CoachProfilePage() {
   useEffect(() => {
     if (userData?.pricePerHour) {
       setPrice(formatCurrency(userData.pricePerHour));
+    } else {
+      setPrice("Not configured");
+    }
+
+    const baseSchedule = createEmptySchedule();
+
+    if (userData?.availableSchedule) {
+      allDays.forEach((day) => {
+        baseSchedule[day] = {
+          enabled: Boolean(userData.availableSchedule?.[day]?.enabled),
+          start: userData.availableSchedule?.[day]?.start || "",
+          end: userData.availableSchedule?.[day]?.end || "",
+        };
+      });
+
+      setSchedule(baseSchedule);
+      return;
     }
 
     if (Array.isArray(userData?.availableDays)) {
-      setSelectedDays(userData.availableDays);
-    } else {
-      setSelectedDays([
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-      ]);
+      userData.availableDays.forEach((day) => {
+        if (baseSchedule[day]) {
+          baseSchedule[day] = {
+            enabled: true,
+            start: "",
+            end: "",
+          };
+        }
+      });
     }
+
+    setSchedule(baseSchedule);
   }, [userData]);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -90,25 +150,77 @@ function CoachProfilePage() {
 
   const toggleDay = (day: string) => {
     setSaved(false);
+    setScheduleError("");
 
-    setSelectedDays((prev) =>
-      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
-    );
+    setSchedule((prev) => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        enabled: !prev[day].enabled,
+      },
+    }));
+  };
+
+  const handleHourChange = (
+    day: string,
+    field: "start" | "end",
+    value: string
+  ) => {
+    setSaved(false);
+    setScheduleError("");
+
+    setSchedule((prev) => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        [field]: value,
+      },
+    }));
+  };
+
+  const validateSchedule = () => {
+    for (const day of allDays) {
+      const currentDay = schedule[day];
+
+      if (currentDay.enabled && (!currentDay.start || !currentDay.end)) {
+        setScheduleError(`Please select start and end time for ${day}.`);
+        return false;
+      }
+
+      if (
+        currentDay.enabled &&
+        currentDay.start &&
+        currentDay.end &&
+        currentDay.start >= currentDay.end
+      ) {
+        setScheduleError(`End time must be later than start time for ${day}.`);
+        return false;
+      }
+    }
+
+    return true;
   };
 
   const handleSave = async () => {
+    if (!validateSchedule()) return;
+
     try {
       if (userData?.id) {
+        const availableDays = allDays.filter((day) => schedule[day].enabled);
+
         await updateUser(userData.id, {
-          availableDays: selectedDays,
+          availableDays,
+          availableSchedule: schedule,
         });
 
         await refreshUserData();
       }
 
       setSaved(true);
+      setScheduleError("");
     } catch (error) {
-      console.error("Error saving days:", error);
+      console.error("Error saving schedule:", error);
+      setScheduleError("Error saving schedule. Please try again.");
     }
   };
 
@@ -259,31 +371,136 @@ function CoachProfilePage() {
 
           <div className="coach-profile__schedule">
             {allDays.map((day) => {
-              const isSelected = selectedDays.includes(day);
+              const currentDay = schedule[day];
+              const isSelected = currentDay.enabled;
 
               return (
-                <div key={day} className="coach-profile__day-row">
+                <div
+                  key={day}
+                  className="coach-profile__day-row"
+                  style={{
+                    alignItems: "flex-start",
+                    gap: "0.75rem",
+                  }}
+                >
                   <img
                     src={avatar}
                     alt=""
                     className="coach-profile__day-icon"
                   />
 
-                  <span className="coach-profile__day-name">{day}</span>
+                  <div style={{ flex: 1 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "0.75rem",
+                      }}
+                    >
+                      <span className="coach-profile__day-name">{day}</span>
 
-                  <button
-                    type="button"
-                    className={`coach-profile__check-circle ${
-                      isSelected ? "coach-profile__check-circle--active" : ""
-                    }`}
-                    onClick={() => toggleDay(day)}
-                  >
-                    {isSelected ? "✓" : ""}
-                  </button>
+                      <button
+                        type="button"
+                        className={`coach-profile__check-circle ${
+                          isSelected
+                            ? "coach-profile__check-circle--active"
+                            : ""
+                        }`}
+                        onClick={() => toggleDay(day)}
+                      >
+                        {isSelected ? "✓" : ""}
+                      </button>
+                    </div>
+
+                    {isSelected && (
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns:
+                            "repeat(auto-fit, minmax(120px, 1fr))",
+                          gap: "0.75rem",
+                          marginTop: "0.75rem",
+                        }}
+                      >
+                        <div>
+                          <label
+                            style={{
+                              display: "block",
+                              fontSize: "0.78rem",
+                              fontWeight: 800,
+                              marginBottom: "0.35rem",
+                              color: "#555",
+                            }}
+                          >
+                            Start
+                          </label>
+
+                          <select
+                            value={currentDay.start}
+                            onChange={(e) =>
+                              handleHourChange(day, "start", e.target.value)
+                            }
+                            className="coach-profile__modal-input"
+                          >
+                            <option value="">Start time</option>
+
+                            {hourOptions.map((hour) => (
+                              <option key={hour} value={hour}>
+                                {hour}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label
+                            style={{
+                              display: "block",
+                              fontSize: "0.78rem",
+                              fontWeight: 800,
+                              marginBottom: "0.35rem",
+                              color: "#555",
+                            }}
+                          >
+                            End
+                          </label>
+
+                          <select
+                            value={currentDay.end}
+                            onChange={(e) =>
+                              handleHourChange(day, "end", e.target.value)
+                            }
+                            className="coach-profile__modal-input"
+                          >
+                            <option value="">End time</option>
+
+                            {hourOptions.map((hour) => (
+                              <option key={hour} value={hour}>
+                                {hour}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}
           </div>
+
+          {scheduleError && (
+            <p
+              style={{
+                color: "#e05252",
+                fontWeight: 800,
+                marginTop: "0.75rem",
+              }}
+            >
+              {scheduleError}
+            </p>
+          )}
 
           <div className="coach-profile__save-wrap">
             {saved && (
