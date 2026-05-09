@@ -20,13 +20,15 @@ interface Tournament {
   id: string;
   name: string;
   info: string;
-  level: number;
+  level?: number;
+  categories?: string[];
 }
 
 interface Court {
   id: string;
   name: string;
   image: string;
+  courtType?: string;
 }
 
 interface Player {
@@ -34,6 +36,7 @@ interface Player {
   uid: string;
   username: string;
   level?: number;
+  category?: string;
 }
 
 interface Coach {
@@ -61,8 +64,10 @@ const classNames = [
 
 function PlayerHomePage() {
   const navigate = useNavigate();
+
   const matchesScrollRef = useRef<HTMLDivElement | null>(null);
   const tournamentsScrollRef = useRef<HTMLDivElement | null>(null);
+
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [courts, setCourts] = useState<Court[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
@@ -85,46 +90,52 @@ function PlayerHomePage() {
           getCoaches(),
           getMatches(),
         ]);
+
         setTournaments(tournamentsData as Tournament[]);
         setCourts(courtsData as Court[]);
         setPlayers(playersData as Player[]);
         setCoaches(coachesData as Coach[]);
 
-        // filtrar solo los partidos de hoy
         const today = new Date().toISOString().split("T")[0];
-        const filtered = (matchesData as Match[]).filter(
-          (m) => m.date === today,
+
+        const filteredMatches = (matchesData as Match[]).filter(
+          (match) => match.date === today
         );
-        setTodayMatches(filtered);
+
+        setTodayMatches(filteredMatches);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching player home data:", error);
       }
     };
+
     fetchAll();
   }, []);
 
   const scroll = (
     ref: React.RefObject<HTMLDivElement | null>,
-    direction: "left" | "right",
+    direction: "left" | "right"
   ) => {
-    if (ref.current) {
-      ref.current.scrollBy({
-        left: direction === "right" ? 300 : -300,
-        behavior: "smooth",
-      });
-    }
+    if (!ref.current) return;
+
+    ref.current.scrollBy({
+      left: direction === "right" ? 300 : -300,
+      behavior: "smooth",
+    });
   };
 
   return (
     <div className="player-home">
       <div className="player-home__mobile-actions">
         <button
+          type="button"
           className="player-home__action player-home__action--primary"
           onClick={() => navigate("/player/create-match")}
         >
           Create Match
         </button>
+
         <button
+          type="button"
           className="player-home__action player-home__action--secondary"
           onClick={() => navigate("/player/coaches")}
         >
@@ -132,6 +143,7 @@ function PlayerHomePage() {
             icon="solar:magnifer-linear"
             className="player-home__action-icon"
           />
+
           <span>Find a Coach</span>
         </button>
       </div>
@@ -139,7 +151,6 @@ function PlayerHomePage() {
       <div className="player-home__grid">
         <section className="player-home__main">
           <div className="player-home__top-cards">
-            {/* Players Nearby */}
             <div className="player-home__mini-section">
               <div className="player-home__section-header">
                 <div className="player-home__section-title-wrap">
@@ -149,15 +160,19 @@ function PlayerHomePage() {
                       className="player-home__section-icon"
                     />
                   </span>
+
                   <h2 className="player-home__section-title">Players Nearby</h2>
                 </div>
+
                 <button
+                  type="button"
                   className="player-home__section-more-button"
                   onClick={() => navigate("/player/players")}
                 >
-                  Ver más...
+                  See more...
                 </button>
               </div>
+
               <div className="player-home__small-cards">
                 {players.slice(0, 3).map((player) => (
                   <div
@@ -177,7 +192,6 @@ function PlayerHomePage() {
               </div>
             </div>
 
-            {/* Coaches */}
             <div className="player-home__mini-section">
               <div className="player-home__section-header">
                 <div className="player-home__section-title-wrap">
@@ -187,15 +201,19 @@ function PlayerHomePage() {
                       className="player-home__section-icon"
                     />
                   </span>
+
                   <h2 className="player-home__section-title">Coaches</h2>
                 </div>
+
                 <button
+                  type="button"
                   className="player-home__section-more-button"
                   onClick={() => navigate("/player/coaches")}
                 >
-                  Ver más...
+                  See more...
                 </button>
               </div>
+
               <div className="player-home__small-cards">
                 {coaches.slice(0, 3).map((coach) => (
                   <div
@@ -212,7 +230,6 @@ function PlayerHomePage() {
             </div>
           </div>
 
-          {/* Today's Matches */}
           <section className="player-home__section">
             <div className="player-home__section-header">
               <div className="player-home__section-title-wrap">
@@ -222,23 +239,30 @@ function PlayerHomePage() {
                     className="player-home__section-icon"
                   />
                 </span>
+
                 <h2 className="player-home__section-title">Today's Matches</h2>
               </div>
+
               <div className="player-home__section-right">
                 <button
+                  type="button"
                   className="player-home__section-more-button"
                   onClick={() => navigate("/player/matches")}
                 >
-                  Ver más...
+                  See more...
                 </button>
+
                 <div className="player-home__scroll-btns">
                   <button
+                    type="button"
                     className="player-home__scroll-btn"
                     onClick={() => scroll(matchesScrollRef, "left")}
                   >
                     ‹
                   </button>
+
                   <button
+                    type="button"
                     className="player-home__scroll-btn"
                     onClick={() => scroll(matchesScrollRef, "right")}
                   >
@@ -247,6 +271,7 @@ function PlayerHomePage() {
                 </div>
               </div>
             </div>
+
             <div
               className="player-home__horizontal-scroll"
               ref={matchesScrollRef}
@@ -275,7 +300,6 @@ function PlayerHomePage() {
             </div>
           </section>
 
-          {/* Upcoming Tournaments */}
           <section className="player-home__section">
             <div className="player-home__section-header">
               <div className="player-home__section-title-wrap">
@@ -285,25 +309,32 @@ function PlayerHomePage() {
                     className="player-home__section-icon"
                   />
                 </span>
+
                 <h2 className="player-home__section-title">
                   Upcoming Tournaments
                 </h2>
               </div>
+
               <div className="player-home__section-right">
                 <button
+                  type="button"
                   className="player-home__section-more-button"
                   onClick={() => navigate("/player/tournaments")}
                 >
-                  Ver más...
+                  See more...
                 </button>
+
                 <div className="player-home__scroll-btns">
                   <button
+                    type="button"
                     className="player-home__scroll-btn"
                     onClick={() => scroll(tournamentsScrollRef, "left")}
                   >
                     ‹
                   </button>
+
                   <button
+                    type="button"
                     className="player-home__scroll-btn"
                     onClick={() => scroll(tournamentsScrollRef, "right")}
                   >
@@ -312,22 +343,38 @@ function PlayerHomePage() {
                 </div>
               </div>
             </div>
+
             <div
               className="player-home__horizontal-scroll"
               ref={tournamentsScrollRef}
             >
-              {tournaments.map((tournament) => (
-                <TournamentCard
-                  key={tournament.id}
-                  level={tournament.level}
-                  name={tournament.name}
-                  info={tournament.info}
-                />
-              ))}
+              {tournaments.length === 0 ? (
+                <p
+                  style={{
+                    color: "#888",
+                    fontSize: "0.9rem",
+                    padding: "8px 0",
+                  }}
+                >
+                  No tournaments available.
+                </p>
+              ) : (
+                tournaments.map((tournament) => (
+                  <TournamentCard
+                    key={tournament.id}
+                    level={tournament.level}
+                    name={tournament.name}
+                    info={tournament.info}
+                    buttonLabel="View"
+                    onView={() =>
+                      navigate(`/player/tournaments/view/${tournament.id}`)
+                    }
+                  />
+                ))
+              )}
             </div>
           </section>
 
-          {/* Trending Courts */}
           <section className="player-home__section">
             <div className="player-home__section-header">
               <div className="player-home__section-title-wrap">
@@ -337,15 +384,19 @@ function PlayerHomePage() {
                     className="player-home__section-icon"
                   />
                 </span>
+
                 <h2 className="player-home__section-title">Trending Courts</h2>
               </div>
+
               <button
+                type="button"
                 className="player-home__section-more-button"
                 onClick={() => navigate("/player/courts")}
               >
-                Ver más...
+                See more...
               </button>
             </div>
+
             <div className="player-home__courts-grid">
               {courts.slice(0, 3).map((court, index) => (
                 <CourtCard
