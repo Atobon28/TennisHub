@@ -172,6 +172,13 @@ export const joinTournament = async (
     info: string;
     categories?: string[];
     courts?: string[];
+    tournamentType?: string;
+  },
+  registrationInfo: {
+    entryType: "singles" | "doubles";
+    hasPartner?: boolean;
+    partnerName?: string;
+    needsPartner?: boolean;
   },
 ) => {
   const existingTournament = await getPlayerTournamentById(
@@ -191,6 +198,11 @@ export const joinTournament = async (
     info: tournament.info,
     categories: tournament.categories || [],
     courts: tournament.courts || [],
+    tournamentType: tournament.tournamentType || "singles",
+    entryType: registrationInfo.entryType,
+    hasPartner: registrationInfo.hasPartner || false,
+    partnerName: registrationInfo.partnerName || "",
+    needsPartner: registrationInfo.needsPartner || false,
     joinedAt: new Date().toISOString(),
   });
 };

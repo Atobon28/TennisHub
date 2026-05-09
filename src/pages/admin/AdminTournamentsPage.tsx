@@ -33,7 +33,6 @@ const timeOptions = [
 ];
 
 const categoryOptions = [
-  "Open",
   "First Category",
   "Second Category",
   "Third Category",
@@ -49,6 +48,13 @@ interface Court {
   name: string;
 }
 
+interface CapacityByCategory {
+  [category: string]: {
+    singlesPlayers?: number;
+    doublesPairs?: number;
+  };
+}
+
 interface Tournament {
   id: string;
   name: string;
@@ -59,6 +65,8 @@ interface Tournament {
   courts?: string[];
   categories?: string[];
   level?: number;
+  tournamentType?: "singles" | "doubles" | "both";
+  capacityByCategory?: CapacityByCategory;
 }
 
 function AdminTournamentsPage() {
@@ -74,8 +82,15 @@ function AdminTournamentsPage() {
   const [newName, setNewName] = useState("");
   const [newDate, setNewDate] = useState("");
   const [newHour, setNewHour] = useState("");
+  const [newTournamentType, setNewTournamentType] = useState<
+    "singles" | "doubles" | "both"
+  >("singles");
+
   const [newCategories, setNewCategories] = useState<string[]>([]);
   const [selectedCourts, setSelectedCourts] = useState<string[]>([]);
+  const [capacityInputs, setCapacityInputs] = useState<
+    Record<string, { singlesPlayers: string; doublesPairs: string }>
+  >({});
 
   const [error, setError] = useState("");
   const [creating, setCreating] = useState(false);
@@ -110,11 +125,32 @@ function AdminTournamentsPage() {
     }
   };
 
+  const getTournamentTypeLabel = (type?: string) => {
+    if (type === "doubles") return "Doubles";
+    if (type === "both") return "Singles and Doubles";
+
+    return "Singles";
+  };
+
   const handleCategoryChange = (category: string) => {
     if (newCategories.includes(category)) {
       setNewCategories(newCategories.filter((item) => item !== category));
+
+      setCapacityInputs((prev) => {
+        const updated = { ...prev };
+        delete updated[category];
+        return updated;
+      });
     } else {
       setNewCategories([...newCategories, category]);
+
+      setCapacityInputs((prev) => ({
+        ...prev,
+        [category]: {
+          singlesPlayers: "",
+          doublesPairs: "",
+        },
+      }));
     }
   };
 
@@ -126,15 +162,79 @@ function AdminTournamentsPage() {
     }
   };
 
+  const handleCapacityChange = (
+    category: string,
+    field: "singlesPlayers" | "doublesPairs",
+    value: string
+  ) => {
+    const onlyNumbers = value.replace(/\D/g, "");
+
+    setCapacityInputs((prev) => ({
+      ...prev,
+      [category]: {
+        singlesPlayers: prev[category]?.singlesPlayers || "",
+        doublesPairs: prev[category]?.doublesPairs || "",
+        [field]: onlyNumbers,
+      },
+    }));
+  };
+
+  const buildCapacityByCategory = () => {
+    const capacityByCategory: CapacityByCategory = {};
+
+    newCategories.forEach((category) => {
+      const singlesValue = Number(capacityInputs[category]?.singlesPlayers || 0);
+      const doublesValue = Number(capacityInputs[category]?.doublesPairs || 0);
+
+      capacityByCategory[category] = {};
+
+      if (newTournamentType === "singles" || newTournamentType === "both") {
+        capacityByCategory[category].singlesPlayers = singlesValue;
+      }
+
+      if (newTournamentType === "doubles" || newTournamentType === "both") {
+        capacityByCategory[category].doublesPairs = doublesValue;
+      }
+    });
+
+    return capacityByCategory;
+  };
+
+  const validateCapacity = () => {
+    for (const category of newCategories) {
+      const singlesValue = Number(capacityInputs[category]?.singlesPlayers || 0);
+      const doublesValue = Number(capacityInputs[category]?.doublesPairs || 0);
+
+      if (
+        (newTournamentType === "singles" || newTournamentType === "both") &&
+        singlesValue <= 0
+      ) {
+        setError(`Please enter singles player spots for ${category}.`);
+        return false;
+      }
+
+      if (
+        (newTournamentType === "doubles" || newTournamentType === "both") &&
+        doublesValue <= 0
+      ) {
+        setError(`Please enter doubles pair spots for ${category}.`);
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   const handleAdd = async () => {
     if (!userData?.uid) return;
 
     if (
-      !newName ||
+      !newName.trim() ||
       !newDate ||
       !newHour ||
       newCategories.length === 0 ||
-      selectedCourts.length === 0
+      selectedCourts.length === 0 ||
+      !newTournamentType
     ) {
       setError(
         "Please fill in all fields, select at least one category and one court."
@@ -142,21 +242,27 @@ function AdminTournamentsPage() {
       return;
     }
 
+    if (!validateCapacity()) return;
+
     setError("");
     setCreating(true);
 
     const categoriesText = newCategories.join(", ");
     const courtsText = selectedCourts.join(", ");
+    const typeText = getTournamentTypeLabel(newTournamentType);
+    const capacityByCategory = buildCapacityByCategory();
 
-    const info = `${newDate} - ${newHour} - Courts: ${courtsText} - Categories: ${categoriesText}`;
+    const info = `${newDate} - ${newHour} - Type: ${typeText} - Courts: ${courtsText} - Categories: ${categoriesText}`;
 
     const newTournament = {
-      name: newName,
+      name: newName.trim(),
       info,
       date: newDate,
       hour: newHour,
+      tournamentType: newTournamentType,
       courts: selectedCourts,
       categories: newCategories,
+      capacityByCategory,
       createdAt: new Date().toISOString(),
     };
 
@@ -193,9 +299,12 @@ function AdminTournamentsPage() {
     setNewName("");
     setNewDate("");
     setNewHour("");
+    setNewTournamentType("singles");
     setNewCategories([]);
     setSelectedCourts([]);
+    setCapacityInputs({});
     setError("");
+    setCreating(false);
   };
 
   return (
@@ -258,11 +367,25 @@ function AdminTournamentsPage() {
 
       {showModal && (
         <div className="admin-tournaments__modal-overlay">
-          <div className="admin-tournaments__modal">
+          <div
+            className="admin-tournaments__modal"
+            style={{
+              width: "min(760px, 94vw)",
+              maxHeight: "92vh",
+              overflowY: "auto",
+              padding: "1rem",
+            }}
+          >
             <button
               type="button"
               className="admin-tournaments__modal-close"
               onClick={handleClose}
+              style={{
+                position: "sticky",
+                top: 0,
+                marginLeft: "auto",
+                zIndex: 5,
+              }}
             >
               ✕
             </button>
@@ -272,7 +395,7 @@ function AdminTournamentsPage() {
 
               <div className="create-match__section">
                 <h3 className="create-match__section-title">
-                  Tournament Info
+                  1. Tournament Info
                 </h3>
 
                 <label className="create-match__label">Name:</label>
@@ -285,11 +408,28 @@ function AdminTournamentsPage() {
                     onChange={(e) => setNewName(e.target.value)}
                   />
                 </div>
+
+                <label className="create-match__label">Tournament Type:</label>
+                <div className="create-match__select-wrap">
+                  <select
+                    className="create-match__select"
+                    value={newTournamentType}
+                    onChange={(e) =>
+                      setNewTournamentType(
+                        e.target.value as "singles" | "doubles" | "both"
+                      )
+                    }
+                  >
+                    <option value="singles">Singles</option>
+                    <option value="doubles">Doubles</option>
+                    <option value="both">Singles and Doubles</option>
+                  </select>
+                </div>
               </div>
 
               <div className="create-match__section">
                 <h3 className="create-match__section-title">
-                  Allowed Categories
+                  2. Allowed Categories
                 </h3>
 
                 <label className="create-match__label">
@@ -299,7 +439,7 @@ function AdminTournamentsPage() {
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
                     gap: "0.75rem",
                     marginTop: "0.75rem",
                   }}
@@ -311,11 +451,12 @@ function AdminTournamentsPage() {
                         display: "flex",
                         alignItems: "center",
                         gap: "0.5rem",
-                        backgroundColor: "#f6f6f6",
+                        backgroundColor: "#25292d",
+                        color: "white",
                         padding: "0.75rem",
                         borderRadius: "12px",
                         cursor: "pointer",
-                        fontWeight: 600,
+                        fontWeight: 700,
                       }}
                     >
                       <input
@@ -329,8 +470,124 @@ function AdminTournamentsPage() {
                 </div>
               </div>
 
+              {newCategories.length > 0 && (
+                <div className="create-match__section">
+                  <h3 className="create-match__section-title">
+                    3. Spots by Category
+                  </h3>
+
+                  <p
+                    style={{
+                      margin: 0,
+                      color: "#555",
+                      fontWeight: 700,
+                      fontSize: "0.9rem",
+                    }}
+                  >
+                    For Singles, enter player spots. For Doubles, enter pair
+                    spots.
+                  </p>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "1rem",
+                    }}
+                  >
+                    {newCategories.map((category) => (
+                      <div
+                        key={category}
+                        style={{
+                          border: "1px solid rgba(0,0,0,0.12)",
+                          borderRadius: "16px",
+                          padding: "1rem",
+                          backgroundColor: "#f8f8f8",
+                        }}
+                      >
+                        <h4
+                          style={{
+                            margin: "0 0 0.75rem",
+                            fontSize: "1rem",
+                            fontWeight: 900,
+                            color: "#111",
+                          }}
+                        >
+                          {category}
+                        </h4>
+
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns:
+                              newTournamentType === "both"
+                                ? "repeat(auto-fit, minmax(180px, 1fr))"
+                                : "1fr",
+                            gap: "0.75rem",
+                          }}
+                        >
+                          {(newTournamentType === "singles" ||
+                            newTournamentType === "both") && (
+                            <div>
+                              <label className="create-match__label">
+                                Singles player spots:
+                              </label>
+
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                className="create-match__select"
+                                placeholder="Example: 16"
+                                value={
+                                  capacityInputs[category]?.singlesPlayers || ""
+                                }
+                                onChange={(e) =>
+                                  handleCapacityChange(
+                                    category,
+                                    "singlesPlayers",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </div>
+                          )}
+
+                          {(newTournamentType === "doubles" ||
+                            newTournamentType === "both") && (
+                            <div>
+                              <label className="create-match__label">
+                                Doubles pair spots:
+                              </label>
+
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                className="create-match__select"
+                                placeholder="Example: 8"
+                                value={
+                                  capacityInputs[category]?.doublesPairs || ""
+                                }
+                                onChange={(e) =>
+                                  handleCapacityChange(
+                                    category,
+                                    "doublesPairs",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="create-match__section">
-                <h3 className="create-match__section-title">Date and Hour</h3>
+                <h3 className="create-match__section-title">
+                  4. Date and Hour
+                </h3>
 
                 <label className="create-match__label">Date:</label>
                 <div className="create-match__select-wrap">
@@ -349,7 +606,7 @@ function AdminTournamentsPage() {
                     value={newHour}
                     onChange={(e) => setNewHour(e.target.value)}
                   >
-                    <option value="">00:00</option>
+                    <option value="">Select hour</option>
 
                     {timeOptions.map((hour) => (
                       <option key={hour} value={hour}>
@@ -361,7 +618,7 @@ function AdminTournamentsPage() {
               </div>
 
               <div className="create-match__section">
-                <h3 className="create-match__section-title">Courts</h3>
+                <h3 className="create-match__section-title">5. Courts</h3>
 
                 <label className="create-match__label">
                   Select one or more courts:
@@ -376,7 +633,7 @@ function AdminTournamentsPage() {
                     style={{
                       display: "grid",
                       gridTemplateColumns:
-                        "repeat(auto-fit, minmax(160px, 1fr))",
+                        "repeat(auto-fit, minmax(170px, 1fr))",
                       gap: "0.75rem",
                       marginTop: "0.75rem",
                     }}
@@ -388,11 +645,12 @@ function AdminTournamentsPage() {
                           display: "flex",
                           alignItems: "center",
                           gap: "0.5rem",
-                          backgroundColor: "#f6f6f6",
+                          backgroundColor: "#25292d",
+                          color: "white",
                           padding: "0.75rem",
                           borderRadius: "12px",
                           cursor: "pointer",
-                          fontWeight: 600,
+                          fontWeight: 700,
                         }}
                       >
                         <input
