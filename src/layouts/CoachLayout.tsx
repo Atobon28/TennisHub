@@ -2,7 +2,7 @@ import { Outlet } from "react-router-dom";
 import SidebarCoach from "../components/coach/SidebarCoach";
 import TopbarMobileCoach from "../components/coach/TopbarMobileCoach";
 import BottomNavCoach from "../components/coach/BottomNavCoach";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import "../styles/player-layout.css";
 import logo from "../assets/Logo.png";
 

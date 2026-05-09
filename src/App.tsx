@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import ProtectedRoute from "./components/ProtectedRoute";
 import SelectRolePage from "./pages/SelectRolePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -39,7 +40,14 @@ function App() {
       <Route path="/register-coach" element={<RegisterCoachPage />} />
       <Route path="/register-admin" element={<RegisterAdminPage />} />
 
-      <Route path="/player" element={<PlayerLayout />}>
+      <Route
+        path="/player"
+        element={
+          <ProtectedRoute allowedRole="player">
+            <PlayerLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<Navigate to="home" replace />} />
         <Route path="home" element={<PlayerHomePage />} />
         <Route path="tournaments" element={<TournamentsPage />} />
@@ -56,13 +64,27 @@ function App() {
         <Route path="matches/view/:id" element={<MatchViewPage />} />
       </Route>
 
-      <Route path="/coach" element={<CoachLayout />}>
+      <Route
+        path="/coach"
+        element={
+          <ProtectedRoute allowedRole="coach">
+            <CoachLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<Navigate to="home" replace />} />
         <Route path="home" element={<CoachHomePage />} />
         <Route path="profile" element={<CoachProfilePage />} />
       </Route>
 
-      <Route path="/admin" element={<AdminLayout />}>
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute allowedRole="admin">
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<Navigate to="home" replace />} />
         <Route path="home" element={<AdminHomePage />} />
         <Route path="courts" element={<AdminCourtsPage />} />

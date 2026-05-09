@@ -2,41 +2,75 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../styles/access-pages.css";
 import loginImage from "../assets/login.jpg";
-import { loginUser, getUserByUid } from "../firebase/services";
+import { loginUser, getUserByUid, logoutUser } from "../firebase/services";
 
 function LoginPage() {
   const navigate = useNavigate();
-  const role = localStorage.getItem("role");
+
+  const selectedRole = localStorage.getItem("role");
+
   const registerLink =
-    role === "coach"
+    selectedRole === "coach"
       ? "/register-coach"
-      : role === "admin"
+      : selectedRole === "admin"
         ? "/register-admin"
         : "/register";
 
+  const selectedRoleLabel =
+    selectedRole === "coach"
+      ? "Coach"
+      : selectedRole === "admin"
+        ? "Admin"
+        : "Player";
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const getHomeRouteByRole = (role: string) => {
+    if (role === "coach") return "/coach/home";
+    if (role === "admin") return "/admin/home";
+    return "/player/home";
+  };
+
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
     setError("");
     setLoading(true);
+
     try {
       const userCredential = await loginUser(email, password);
       const userData = (await getUserByUid(userCredential.user.uid)) as any;
-      if (!userData) throw new Error("User not found");
-      localStorage.setItem("role", userData.role);
-      if (userData.role === "coach") {
-        navigate("/coach/home");
-      } else if (userData.role === "admin") {
-        navigate("/admin/home");
-      } else {
-        navigate("/player/home");
+
+      if (!userData) {
+        await logoutUser();
+        throw new Error("User not found");
       }
+
+      const realRole = userData.role;
+
+      if (selectedRole && realRole !== selectedRole) {
+        await logoutUser();
+
+        setError(
+          `This account is registered as ${realRole}. Please select ${realRole} to log in.`
+        );
+
+        return;
+      }
+
+      localStorage.setItem("role", realRole);
+
+      navigate(getHomeRouteByRole(realRole));
     } catch (err: any) {
-      setError("Invalid email or password. Please try again.");
+      console.error("Login error:", err);
+
+      if (!error) {
+        setError("Invalid email or password. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -47,8 +81,9 @@ function LoginPage() {
       <section className="access-screen__left">
         <div className="access-screen__content access-screen__content--form">
           <h1 className="access-screen__title">TennisHub</h1>
+
           <h2 className="access-screen__subtitle access-screen__subtitle--login">
-            Log in
+            Log in as {selectedRoleLabel}
           </h2>
 
           <form className="access-form" onSubmit={handleLogin}>
@@ -56,6 +91,7 @@ function LoginPage() {
               <label className="access-form__label" htmlFor="email">
                 Email
               </label>
+
               <input
                 id="email"
                 type="email"
@@ -70,6 +106,7 @@ function LoginPage() {
               <label className="access-form__label" htmlFor="password">
                 Password
               </label>
+
               <input
                 id="password"
                 type="password"
@@ -87,15 +124,26 @@ function LoginPage() {
               className="access-form__button-primary"
               disabled={loading}
             >
-              {loading ? "Logging in..." : "Login"}
+              {loading ? "Logging in..." : `Login as ${selectedRoleLabel}`}
             </button>
 
             <div className="access-form__footer">
               <span className="access-form__footer-line">
                 <span className="access-form__back-icon">‹</span>
                 <span>No account yet?</span>
+
                 <Link to={registerLink} className="access-form__footer-link">
                   Sign up
+                </Link>
+              </span>
+            </div>
+
+            <div className="access-form__footer">
+              <span className="access-form__footer-line">
+                <span>Wrong role?</span>
+
+                <Link to="/" className="access-form__footer-link">
+                  Go back
                 </Link>
               </span>
             </div>

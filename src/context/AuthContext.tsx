@@ -1,27 +1,35 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase/firebase";
 import { getUserByUid } from "../firebase/services";
 
-interface UserData {
+export interface CoachScheduleDay {
+  enabled: boolean;
+  start: string;
+  end: string;
+}
+
+export interface UserData {
   id: string;
   uid: string;
   email: string;
   username: string;
   role: string;
-  level?: number;
+  level?: number | null;
+  category?: string;
   pricePerHour?: string;
   availableDays?: string[];
+  availableSchedule?: Record<string, CoachScheduleDay>;
   phone?: string;
 }
 
-interface AuthContextType {
+export interface AuthContextType {
   userData: UserData | null;
   loading: boolean;
   refreshUserData: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType>({
+export const AuthContext = createContext<AuthContextType>({
   userData: null,
   loading: true,
   refreshUserData: async () => {},
@@ -34,9 +42,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUserData = async () => {
     if (!currentUid) return;
+
     try {
-      const data = (await getUserByUid(currentUid)) as any;
-      if (data) setUserData(data);
+      const data = (await getUserByUid(currentUid)) as UserData | null;
+
+      if (data) {
+        setUserData(data);
+      }
     } catch (error) {
       console.error("Error refreshing user data:", error);
     }
@@ -46,9 +58,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setCurrentUid(user.uid);
+
         try {
-          const data = (await getUserByUid(user.uid)) as any;
-          if (data) setUserData(data);
+          const data = (await getUserByUid(user.uid)) as UserData | null;
+
+          if (data) {
+            setUserData(data);
+          }
         } catch (error) {
           console.error("Error fetching user data:", error);
         }
@@ -56,8 +72,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUserData(null);
         setCurrentUid(null);
       }
+
       setLoading(false);
     });
+
     return () => unsubscribe();
   }, []);
 
@@ -67,5 +85,3 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     </AuthContext.Provider>
   );
 }
-
-export const useAuth = () => useContext(AuthContext);

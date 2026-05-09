@@ -15,6 +15,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
+  updatePassword,
 } from "firebase/auth";
 
 // ── USERS ──────────────────────────────────────────
@@ -68,7 +69,7 @@ export const getTournaments = async () => {
 export const getAdminTournaments = async (adminId: string) => {
   const q = query(
     collection(db, "tournaments"),
-    where("adminId", "==", adminId),
+    where("adminId", "==", adminId)
   );
   const snapshot = await getDocs(q);
   return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -102,7 +103,7 @@ export const createMatch = async (match: object) => {
 export const getPlayerMatches = async (playerId: string) => {
   const q = query(
     collection(db, "matches"),
-    where("playerIds", "array-contains", playerId),
+    where("playerIds", "array-contains", playerId)
   );
   const snapshot = await getDocs(q);
   return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -111,7 +112,7 @@ export const getPlayerMatches = async (playerId: string) => {
 export const joinMatch = async (
   matchId: string,
   playerId: string,
-  playerUsername: string,
+  playerUsername: string
 ) => {
   return await updateDoc(doc(db, "matches", matchId), {
     players: arrayUnion({ uid: playerId, username: playerUsername }),
@@ -122,7 +123,7 @@ export const joinMatch = async (
 export const leaveMatch = async (
   matchId: string,
   playerId: string,
-  playerUsername: string,
+  playerUsername: string
 ) => {
   return await updateDoc(doc(db, "matches", matchId), {
     players: arrayRemove({ uid: playerId, username: playerUsername }),
@@ -138,17 +139,77 @@ export const deleteMatch = async (id: string) => {
 export const getPlayerTournaments = async (playerId: string) => {
   const q = query(
     collection(db, "playerTournaments"),
-    where("playerId", "==", playerId),
+    where("playerId", "==", playerId)
   );
+
   const snapshot = await getDocs(q);
+
   return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 };
 
-export const joinTournament = async (playerId: string, tournament: object) => {
+export const getPlayerTournamentById = async (
+  playerId: string,
+  tournamentId: string
+) => {
+  const q = query(
+    collection(db, "playerTournaments"),
+    where("playerId", "==", playerId),
+    where("tournamentId", "==", tournamentId)
+  );
+
+  const snapshot = await getDocs(q);
+
+  if (snapshot.empty) return null;
+
+  return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+};
+
+export const joinTournament = async (
+  playerId: string,
+  playerUsername: string,
+  tournament: {
+    id: string;
+    name: string;
+    info: string;
+    categories?: string[];
+    courts?: string[];
+    tournamentType?: string;
+  },
+  registrationInfo: {
+    entryType: "singles" | "doubles";
+    hasPartner?: boolean;
+    partnerName?: string;
+    needsPartner?: boolean;
+  }
+) => {
+  const existingTournament = await getPlayerTournamentById(
+    playerId,
+    tournament.id
+  );
+
+  if (existingTournament) {
+    throw new Error("You are already registered for this tournament.");
+  }
+
   return await addDoc(collection(db, "playerTournaments"), {
     playerId,
-    ...tournament,
+    playerUsername,
+    tournamentId: tournament.id,
+    name: tournament.name,
+    info: tournament.info,
+    categories: tournament.categories || [],
+    courts: tournament.courts || [],
+    tournamentType: tournament.tournamentType || "singles",
+    entryType: registrationInfo.entryType,
+    hasPartner: registrationInfo.hasPartner || false,
+    partnerName: registrationInfo.partnerName || "",
+    needsPartner: registrationInfo.needsPartner || false,
+    joinedAt: new Date().toISOString(),
   });
+};
+
+export const leaveTournament = async (playerTournamentId: string) => {
+  return await deleteDoc(doc(db, "playerTournaments", playerTournamentId));
 };
 
 // ── AUTH ───────────────────────────────────────────
@@ -162,6 +223,14 @@ export const loginUser = async (email: string, password: string) => {
 
 export const logoutUser = async () => {
   return await signOut(auth);
+};
+
+export const changeCurrentUserPassword = async (newPassword: string) => {
+  if (!auth.currentUser) {
+    throw new Error("No authenticated user found.");
+  }
+
+  return await updatePassword(auth.currentUser, newPassword);
 };
 
 export const getUserByUid = async (uid: string) => {

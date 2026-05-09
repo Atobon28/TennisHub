@@ -96,54 +96,58 @@
   font-family: inherit;
 }
 
-/* MODAL */
 .admin-courts__modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.56);
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
   z-index: 100;
+  padding: 16px;
 }
 
 .admin-courts__modal {
-  background: #2a2a2a;
-  border-radius: 20px 20px 0 0;
-  padding: 28px 20px 40px;
-  width: 100%;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 18px;
+  width: min(560px, 96vw);
+  max-height: 92vh;
+  overflow-y: auto;
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
+  box-shadow: 0 20px 60px rgba(15, 14, 12, 0.22);
 }
 
 .admin-courts__modal::before {
-  content: "";
-  display: block;
-  width: 40px;
-  height: 4px;
-  background: #555;
-  border-radius: 999px;
-  margin: 0 auto 8px;
+  display: none;
 }
 
 .admin-courts__modal-close {
-  position: absolute;
-  top: 16px;
-  right: 20px;
-  background: none;
+  position: sticky;
+  top: 0;
+  margin-left: auto;
+  z-index: 10;
+  width: 34px;
+  height: 34px;
   border: none;
-  font-size: 1.3rem;
+  border-radius: 999px;
+  background: #f0f0f0;
+  color: #0f0e0c;
+  font-size: 1rem;
   cursor: pointer;
-  color: #e05252;
-  font-weight: 700;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .admin-courts__modal-title {
   font-size: 1.3rem;
   font-weight: 800;
-  color: var(--player-white);
+  color: var(--player-black);
   margin: 0;
   text-align: center;
 }
@@ -156,28 +160,29 @@
 
 .admin-courts__modal-label {
   font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--player-white);
+  font-weight: 700;
+  color: var(--player-black);
 }
 
 .admin-courts__modal-input {
-  background-color: #3a3a3a;
-  border: none;
-  border-radius: 8px;
+  background-color: #ffffff;
+  border: 1.5px solid rgba(15, 14, 12, 0.18);
+  border-radius: 10px;
   padding: 14px 16px;
   font-size: 0.95rem;
-  color: var(--player-white);
+  color: var(--player-black);
   font-family: inherit;
   width: 100%;
 }
 
 .admin-courts__modal-input::placeholder {
-  color: #aaa;
+  color: #888;
 }
 
 .admin-courts__modal-photo {
-  background-color: #3a3a3a;
-  border-radius: 8px;
+  background-color: #fafafa;
+  border: 1.5px dashed rgba(15, 14, 12, 0.18);
+  border-radius: 10px;
   padding: 14px 16px;
   cursor: pointer;
   min-height: 52px;
@@ -187,15 +192,16 @@
 }
 
 .admin-courts__modal-photo-placeholder {
-  color: #aaa;
+  color: #777;
   font-size: 0.95rem;
+  font-weight: 700;
 }
 
 .admin-courts__modal-photo-preview {
   width: 100%;
   height: 120px;
   object-fit: cover;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
 .admin-courts__modal-confirm {
@@ -205,7 +211,7 @@
   border-radius: 999px;
   padding: 14px;
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 800;
   cursor: pointer;
   font-family: inherit;
   width: 100%;
@@ -255,30 +261,7 @@
     aspect-ratio: 16 / 10;
   }
 
-  .admin-courts__modal-overlay {
-    align-items: center;
-  }
-
   .admin-courts__modal {
-    border-radius: 20px;
-    padding: 40px;
-    max-width: 560px;
-    gap: 24px;
-  }
-
-  .admin-courts__modal::before {
-    display: none;
-  }
-
-  .admin-courts__modal-title {
-    color: var(--player-black);
-  }
-
-  .admin-courts__modal-label {
-    color: var(--player-black);
-  }
-
-  .admin-courts__modal-confirm {
-    width: 60%;
+    padding: 28px;
   }
 }
