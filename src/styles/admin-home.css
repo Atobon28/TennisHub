@@ -22,6 +22,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
 }
 
 .admin-home__section-title-wrap {
@@ -32,18 +33,73 @@
 
 .admin-home__section-title {
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--player-black);
   margin: 0;
 }
 
-.admin-home__more-btn {
-  background: none;
+.admin-home__icon-gradient-wrap {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: var(--player-green-gradient);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--player-white);
+  font-size: 1rem;
+}
+
+.admin-home__icon-gradient-wrap--orange {
+  background: linear-gradient(180deg, #ffb347 0%, #ff7b00 100%);
+}
+
+.admin-home__more-btn,
+.admin-home__view-btn,
+.admin-home__see-more-btn,
+.admin-home__primary-btn {
   border: none;
-  font-size: 0.82rem;
-  color: #888;
-  cursor: pointer;
+  border-radius: 999px;
+  background: var(--player-green-gradient);
+  color: var(--player-white);
   font-family: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.admin-home__more-btn {
+  padding: 8px 16px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.admin-home__view-btn {
+  padding: 8px 28px;
+  font-size: 0.85rem;
+  margin-top: 6px;
+}
+
+.admin-home__see-more-btn {
+  align-self: flex-start;
+  padding: 7px 18px;
+  font-size: 0.8rem;
+}
+
+.admin-home__primary-btn {
+  padding: 10px 18px;
+  font-size: 0.85rem;
+}
+
+.admin-home__more-btn:hover,
+.admin-home__view-btn:hover,
+.admin-home__see-more-btn:hover,
+.admin-home__primary-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(15, 14, 12, 0.16);
 }
 
 .admin-home__tournament-cards {
@@ -64,22 +120,23 @@
 }
 
 .admin-home__level-badge {
-  width: 30px;
+  min-width: 30px;
   height: 30px;
+  padding: 0 10px;
   border-radius: 999px;
   background-color: var(--player-green);
   color: var(--player-dark);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 0.88rem;
+  font-weight: 900;
+  font-size: 0.82rem;
 }
 
 .admin-home__card-name {
   color: var(--player-white);
   font-size: 0.95rem;
-  font-weight: 700;
+  font-weight: 800;
   margin: 0;
 }
 
@@ -87,19 +144,6 @@
   color: #b0b0b0;
   font-size: 0.82rem;
   margin: 0;
-}
-
-.admin-home__view-btn {
-  background: var(--player-green-gradient);
-  color: var(--player-white);
-  border: none;
-  border-radius: 999px;
-  padding: 7px 28px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
-  margin-top: 4px;
 }
 
 .admin-home__courts-grid {
@@ -113,7 +157,6 @@
   border-radius: 14px;
   overflow: hidden;
   aspect-ratio: 16 / 9;
-  cursor: pointer;
 }
 
 .admin-home__court-image {
@@ -126,7 +169,7 @@
 .admin-home__court-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.65) 0%, transparent 55%);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.72) 0%, transparent 58%);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -137,20 +180,17 @@
 .admin-home__court-name {
   color: var(--player-white);
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 800;
 }
 
-.admin-home__see-more-btn {
+.admin-home__court-type {
   align-self: flex-start;
-  background: var(--player-green-gradient);
-  color: var(--player-white);
-  border: none;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--player-black);
+  padding: 0.25rem 0.7rem;
   border-radius: 999px;
-  padding: 5px 16px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 800;
 }
 
 .admin-home__loading {
@@ -158,6 +198,18 @@
   font-size: 0.95rem;
   text-align: center;
   padding: 20px 0;
+  margin: 0;
+}
+
+.admin-home__empty-state {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 6px 18px rgba(15, 14, 12, 0.06);
 }
 
 @media (min-width: 1024px) {
