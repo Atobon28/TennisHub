@@ -9,13 +9,13 @@ import {
   deleteMatch,
   logoutUser,
   updateUser,
+  leaveTournament,
 } from "../../firebase/services";
 import { useAuth } from "../../context/useAuth";
 import "../../styles/player-profile.css";
 import player1 from "../../assets/player-1.jpg";
 
 const categoryOptions = [
-  "Open",
   "First Category",
   "Second Category",
   "Third Category",
@@ -45,7 +45,6 @@ const getCategoryBadge = (category?: string) => {
   if (!category) return "🎾";
 
   const badges: Record<string, string> = {
-    Open: "O",
     "First Category": "1",
     "Second Category": "2",
     "Third Category": "3",
@@ -71,6 +70,7 @@ const getCategoryLevel = (category: string) => {
 
 interface Tournament {
   id: string;
+  tournamentId?: string;
   level?: number;
   name: string;
   info: string;
@@ -144,8 +144,8 @@ function PlayerProfilePage() {
         const data = await getPlayerMatches(userData.uid);
         const now = new Date();
 
-        const filtered = (data as Match[]).filter((m) => {
-          const matchDate = new Date(`${m.date}T${m.time}`);
+        const filtered = (data as Match[]).filter((match) => {
+          const matchDate = new Date(`${match.date}T${match.time}`);
           return matchDate >= now;
         });
 
@@ -230,9 +230,27 @@ function PlayerProfilePage() {
         await leaveMatch(match.id, userData.uid, userData.username);
       }
 
-      setMatches((prev) => prev.filter((m) => m.id !== match.id));
+      setMatches((prev) => prev.filter((item) => item.id !== match.id));
     } catch (error) {
       console.error("Error cancelling match:", error);
+    }
+  };
+
+  const handleLeaveTournament = async (playerTournamentId: string) => {
+    const confirmLeave = window.confirm(
+      "Are you sure you want to leave this tournament?"
+    );
+
+    if (!confirmLeave) return;
+
+    try {
+      await leaveTournament(playerTournamentId);
+
+      setTournaments((prev) =>
+        prev.filter((tournament) => tournament.id !== playerTournamentId)
+      );
+    } catch (error) {
+      console.error("Error leaving tournament:", error);
     }
   };
 
@@ -288,15 +306,20 @@ function PlayerProfilePage() {
                     Your Category:
                   </span>
 
-                  <span
+                  <button
+                    type="button"
                     className="player-profile__level-badge player-profile__level-badge--clickable"
                     onClick={() => {
                       setTempCategory(playerCategory);
                       setShowCategoryModal(true);
                     }}
+                    style={{
+                      border: "none",
+                      cursor: "pointer",
+                    }}
                   >
                     {getCategoryBadge(playerCategory)}
-                  </span>
+                  </button>
                 </div>
               </div>
 
@@ -449,14 +472,42 @@ function PlayerProfilePage() {
               </p>
             ) : (
               tournaments.map((tournament) => (
-                <TournamentCard
-                  key={tournament.id}
-                  categoryBadge={getCategoryBadge(
-                    tournament.categories?.[0] || playerCategory
-                  )}
-                  name={tournament.name}
-                  info={tournament.info}
-                />
+                <div key={tournament.id}>
+                  <TournamentCard
+                    categoryBadge={getCategoryBadge(
+                      tournament.categories?.[0] || playerCategory
+                    )}
+                    name={tournament.name}
+                    info={tournament.info}
+                    buttonLabel="View"
+                    onView={() =>
+                      navigate(
+                        tournament.tournamentId
+                          ? `/player/tournaments/view/${tournament.tournamentId}`
+                          : "/player/tournaments"
+                      )
+                    }
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => handleLeaveTournament(tournament.id)}
+                    style={{
+                      marginTop: "0.75rem",
+                      width: "100%",
+                      border: "none",
+                      borderRadius: "999px",
+                      padding: "0.75rem 1rem",
+                      background: "#e05252",
+                      color: "white",
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                    }}
+                  >
+                    Leave tournament
+                  </button>
+                </div>
               ))
             )}
           </div>

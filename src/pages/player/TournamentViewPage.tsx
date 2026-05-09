@@ -5,6 +5,7 @@ import {
   getPlayerTournamentById,
   getTournaments,
   joinTournament,
+  leaveTournament,
 } from "../../firebase/services";
 import { useAuth } from "../../context/useAuth";
 import "../../styles/tournament-view.css";
@@ -17,6 +18,10 @@ interface Tournament {
   categories?: string[];
   courts?: string[];
   image?: string;
+}
+
+interface PlayerTournament {
+  id: string;
 }
 
 const getPlayerCategory = (
@@ -41,16 +46,18 @@ function TournamentViewPage() {
 
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [joined, setJoined] = useState(false);
+  const [registrationId, setRegistrationId] = useState<string | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   const [error, setError] = useState("");
 
   const playerCategory = getPlayerCategory(userData?.level, userData?.category);
 
   const canApply =
     !tournament?.categories?.length ||
-    tournament.categories.includes(playerCategory) ||
-    tournament.categories.includes("Open");
+    tournament.categories.includes(playerCategory);
 
   useEffect(() => {
     const fetchTournament = async () => {
@@ -61,7 +68,9 @@ function TournamentViewPage() {
 
       try {
         const tournamentsData = (await getTournaments()) as Tournament[];
-        const selectedTournament = tournamentsData.find((item) => item.id === id);
+        const selectedTournament = tournamentsData.find(
+          (item) => item.id === id,
+        );
 
         if (!selectedTournament) {
           setError("Tournament not found.");
@@ -71,12 +80,18 @@ function TournamentViewPage() {
         setTournament(selectedTournament);
 
         if (userData?.uid) {
-          const existingTournament = await getPlayerTournamentById(
+          const existingTournament = (await getPlayerTournamentById(
             userData.uid,
             id,
-          );
+          )) as PlayerTournament | null;
 
-          setJoined(Boolean(existingTournament));
+          if (existingTournament) {
+            setJoined(true);
+            setRegistrationId(existingTournament.id);
+          } else {
+            setJoined(false);
+            setRegistrationId(null);
+          }
         }
       } catch (err) {
         console.error("Error loading tournament:", err);
@@ -102,7 +117,14 @@ function TournamentViewPage() {
 
     try {
       await joinTournament(userData.uid, userData.username, tournament);
+
+      const existingTournament = (await getPlayerTournamentById(
+        userData.uid,
+        tournament.id,
+      )) as PlayerTournament | null;
+
       setJoined(true);
+      setRegistrationId(existingTournament?.id || null);
     } catch (err) {
       console.error("Error joining tournament:", err);
 
@@ -113,6 +135,31 @@ function TournamentViewPage() {
       }
     } finally {
       setJoining(false);
+    }
+  };
+
+  const handleLeave = async () => {
+    if (!registrationId) return;
+
+    const confirmLeave = window.confirm(
+      "Are you sure you want to leave this tournament?",
+    );
+
+    if (!confirmLeave) return;
+
+    setLeaving(true);
+    setError("");
+
+    try {
+      await leaveTournament(registrationId);
+
+      setJoined(false);
+      setRegistrationId(null);
+    } catch (err) {
+      console.error("Error leaving tournament:", err);
+      setError("Error leaving tournament.");
+    } finally {
+      setLeaving(false);
     }
   };
 
@@ -175,7 +222,9 @@ function TournamentViewPage() {
                 </p>
 
                 <p className="tournament-view__detail">
-                  <span className="tournament-view__label">Your category: </span>
+                  <span className="tournament-view__label">
+                    Your category:{" "}
+                  </span>
                   {playerCategory}
                 </p>
 
@@ -185,7 +234,7 @@ function TournamentViewPage() {
                   </span>
                   {tournament.categories?.length
                     ? tournament.categories.join(", ")
-                    : "Open"}
+                    : "Not specified"}
                 </p>
 
                 <p className="tournament-view__detail">
@@ -210,9 +259,24 @@ function TournamentViewPage() {
             )}
 
             {joined ? (
-              <p className="tournament-view__joined-msg">
-                ✓ You have joined this tournament!
-              </p>
+              <div style={{ marginTop: "1rem" }}>
+                <p className="tournament-view__joined-msg">
+                  ✓ You have joined this tournament!
+                </p>
+
+                <button
+                  type="button"
+                  className="tournament-view__join-btn"
+                  onClick={handleLeave}
+                  disabled={leaving}
+                  style={{
+                    background: "#e05252",
+                    marginTop: "0.75rem",
+                  }}
+                >
+                  {leaving ? "Leaving..." : "Leave tournament"}
+                </button>
+              </div>
             ) : (
               <button
                 type="button"

@@ -140,7 +140,9 @@ export const getPlayerTournaments = async (playerId: string) => {
     collection(db, "playerTournaments"),
     where("playerId", "==", playerId),
   );
+
   const snapshot = await getDocs(q);
+
   return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 };
 
@@ -191,6 +193,10 @@ export const joinTournament = async (
     courts: tournament.courts || [],
     joinedAt: new Date().toISOString(),
   });
+};
+
+export const leaveTournament = async (playerTournamentId: string) => {
+  return await deleteDoc(doc(db, "playerTournaments", playerTournamentId));
 };
 
 // ── AUTH ───────────────────────────────────────────
