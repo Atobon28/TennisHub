@@ -311,25 +311,73 @@ function AdminTournamentsPage() {
     <div className="admin-tournaments">
       <div className="admin-tournaments__grid">
         <section className="admin-tournaments__main">
-          <div className="admin-tournaments__section-title-wrap">
-            <span className="admin-tournaments__icon-gradient-wrap">
-              <Icon
-                icon="game-icons:tennis-racket"
-                className="admin-tournaments__section-icon"
-              />
-            </span>
+          <div
+            className="admin-tournaments__section-title-wrap"
+            style={{
+              justifyContent: "space-between",
+              width: "100%",
+              gap: "1rem",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span className="admin-tournaments__icon-gradient-wrap">
+                <Icon
+                  icon="game-icons:tennis-racket"
+                  className="admin-tournaments__section-icon"
+                />
+              </span>
 
-            <h2 className="admin-tournaments__section-title">
-              My Upcoming Tournaments
-            </h2>
+              <h2 className="admin-tournaments__section-title">
+                My Upcoming Tournaments
+              </h2>
+            </div>
+
+            <button
+              type="button"
+              className="create-match__btn"
+              onClick={() => setShowModal(true)}
+              style={{
+                width: "auto",
+                padding: "0 1.25rem",
+                minHeight: "40px",
+                fontSize: "0.85rem",
+              }}
+            >
+              {tournaments.length === 0
+                ? "Create first tournament"
+                : "Add more tournaments"}
+            </button>
           </div>
 
           {loading ? (
             <p className="admin-tournaments__loading">Loading tournaments...</p>
           ) : tournaments.length === 0 ? (
-            <p className="admin-tournaments__loading">
-              You have not created tournaments yet.
-            </p>
+            <div
+              style={{
+                background: "white",
+                borderRadius: "16px",
+                padding: "1.5rem",
+                textAlign: "center",
+                boxShadow: "0 8px 18px rgba(15, 14, 12, 0.06)",
+              }}
+            >
+              <p className="admin-tournaments__loading">
+                You have not created tournaments yet.
+              </p>
+
+              <button
+                type="button"
+                className="create-match__btn"
+                onClick={() => setShowModal(true)}
+                style={{
+                  marginTop: "0.75rem",
+                  width: "auto",
+                  padding: "0 1.25rem",
+                }}
+              >
+                Create first tournament
+              </button>
+            </div>
           ) : (
             <div className="admin-tournaments__cards-grid">
               {tournaments.map((tournament) => (

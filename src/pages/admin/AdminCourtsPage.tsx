@@ -191,23 +191,69 @@ function AdminCourtsPage() {
     <div className="admin-courts">
       <div className="admin-courts__grid">
         <section className="admin-courts__main">
-          <div className="admin-courts__section-title-wrap">
-            <span className="admin-courts__icon-gradient-wrap">
-              <Icon
-                icon="mingcute:fire-fill"
-                className="admin-courts__section-icon"
-              />
-            </span>
+          <div
+            className="admin-courts__section-title-wrap"
+            style={{
+              justifyContent: "space-between",
+              width: "100%",
+              gap: "1rem",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span className="admin-courts__icon-gradient-wrap">
+                <Icon
+                  icon="mingcute:fire-fill"
+                  className="admin-courts__section-icon"
+                />
+              </span>
 
-            <h2 className="admin-courts__section-title">My Courts</h2>
+              <h2 className="admin-courts__section-title">My Courts</h2>
+            </div>
+
+            <button
+              type="button"
+              className="create-match__btn"
+              onClick={() => setShowModal(true)}
+              style={{
+                width: "auto",
+                padding: "0 1.25rem",
+                minHeight: "40px",
+                fontSize: "0.85rem",
+              }}
+            >
+              {courts.length === 0 ? "Create first court" : "Add more courts"}
+            </button>
           </div>
 
           {loading ? (
             <p className="admin-courts__loading">Loading courts...</p>
           ) : courts.length === 0 ? (
-            <p className="admin-courts__loading">
-              You have not created courts yet.
-            </p>
+            <div
+              style={{
+                background: "white",
+                borderRadius: "16px",
+                padding: "1.5rem",
+                textAlign: "center",
+                boxShadow: "0 8px 18px rgba(15, 14, 12, 0.06)",
+              }}
+            >
+              <p className="admin-courts__loading">
+                You have not created courts yet.
+              </p>
+
+              <button
+                type="button"
+                className="create-match__btn"
+                onClick={() => setShowModal(true)}
+                style={{
+                  marginTop: "0.75rem",
+                  width: "auto",
+                  padding: "0 1.25rem",
+                }}
+              >
+                Create first court
+              </button>
+            </div>
           ) : (
             <div className="admin-courts__courts-grid">
               {courts.map((court) => (
