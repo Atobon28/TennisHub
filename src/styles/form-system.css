@@ -309,3 +309,37 @@
     font-size: 0.9rem !important;
   }
 }
+
+/* SAFE MODALS */
+
+.admin-tournaments__modal-overlay,
+.admin-courts__modal-overlay,
+.coach-profile__modal-overlay,
+.admin-profile__modal-overlay,
+.admin-court-view__modal-overlay,
+.player-profile__modal-overlay {
+  padding: 16px !important;
+  align-items: center !important;
+}
+
+.admin-tournaments__modal,
+.admin-courts__modal,
+.coach-profile__modal,
+.admin-profile__modal,
+.admin-court-view__modal,
+.player-profile__modal {
+  max-height: 92vh !important;
+  overflow-y: auto !important;
+}
+
+.admin-tournaments__modal-close,
+.admin-courts__modal-close,
+.coach-profile__modal-close,
+.admin-profile__modal-close,
+.admin-court-view__modal-close,
+.player-profile__modal-close {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 20 !important;
+  margin-left: auto !important;
+}
