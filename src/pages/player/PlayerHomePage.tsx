@@ -400,12 +400,13 @@ function PlayerHomePage() {
             <div className="player-home__courts-grid">
               {courts.slice(0, 3).map((court, index) => (
                 <CourtCard
-                  key={court.id}
-                  name={court.name}
-                  image={court.image || court1}
-                  className={classNames[index]}
-                  onSeeMore={() => navigate(`/player/courts/view/${court.id}`)}
-                />
+                key={court.id}
+                name={court.name}
+                image={court.image || court1}
+                courtType={court.courtType}
+                className={classNames[index]}
+                onSeeMore={() => navigate(`/player/courts/view/${court.id}`)}
+              />
               ))}
             </div>
           </section>

@@ -10,10 +10,12 @@ interface Court {
   id: string;
   name: string;
   image: string;
+  courtType?: string;
 }
 
 function BookCourtPage() {
   const navigate = useNavigate();
+
   const [courts, setCourts] = useState<Court[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -28,6 +30,7 @@ function BookCourtPage() {
         setLoading(false);
       }
     };
+
     fetchCourts();
   }, []);
 
@@ -42,11 +45,14 @@ function BookCourtPage() {
                 className="book-court__section-icon"
               />
             </span>
+
             <h2 className="book-court__section-title">Trending Courts</h2>
           </div>
 
           {loading ? (
             <p className="book-court__loading">Loading courts...</p>
+          ) : courts.length === 0 ? (
+            <p className="book-court__loading">No courts available.</p>
           ) : (
             <div className="book-court__courts-grid">
               {courts.map((court) => (
@@ -56,9 +62,28 @@ function BookCourtPage() {
                     alt={court.name}
                     className="book-court__court-image"
                   />
+
                   <div className="book-court__court-overlay">
                     <span className="book-court__court-name">{court.name}</span>
+
+                    {court.courtType && (
+                      <span
+                        style={{
+                          backgroundColor: "rgba(255, 255, 255, 0.92)",
+                          color: "#111",
+                          padding: "0.25rem 0.75rem",
+                          borderRadius: "999px",
+                          fontSize: "0.78rem",
+                          fontWeight: 800,
+                          marginTop: "0.35rem",
+                        }}
+                      >
+                        {court.courtType}
+                      </span>
+                    )}
+
                     <button
+                      type="button"
                       className="book-court__see-more-btn"
                       onClick={() =>
                         navigate(`/player/courts/view/${court.id}`)
@@ -72,6 +97,7 @@ function BookCourtPage() {
             </div>
           )}
         </section>
+
         <AdBanners />
       </div>
     </div>
