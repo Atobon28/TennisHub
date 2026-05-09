@@ -3,6 +3,7 @@
   --form-bg-soft: #f7f3f2;
   --form-black: #0f0e0c;
   --form-dark: #25292d;
+  --form-dark-soft: #32383d;
   --form-green: #bfe212;
   --form-green-dark: #7f9800;
   --form-border: rgba(15, 14, 12, 0.18);
@@ -111,6 +112,37 @@
   color: var(--form-black) !important;
   font-size: 1rem !important;
   font-weight: 900 !important;
+}
+
+/* DARK OPTION CARDS INSIDE ADMIN FORMS */
+
+.create-match__section label[style*="backgroundColor: #25292d"],
+.create-match__section label[style*="background-color: #25292d"],
+.create-match__section label[style*="background: #25292d"] {
+  background: linear-gradient(180deg, #2f353a 0%, #191d20 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(191, 226, 18, 0.22) !important;
+  box-shadow: 0 8px 18px rgba(15, 14, 12, 0.14) !important;
+}
+
+.create-match__section label[style*="backgroundColor: #25292d"] *,
+.create-match__section label[style*="background-color: #25292d"] *,
+.create-match__section label[style*="background: #25292d"] * {
+  color: #ffffff !important;
+}
+
+.create-match__section input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--form-green);
+  cursor: pointer;
+}
+
+/* DARK FORM BLOCKS */
+
+.create-match__section div[style*="backgroundColor: #f8f8f8"],
+.create-match__section div[style*="background-color: #f8f8f8"] {
+  background: linear-gradient(180deg, #ffffff 0%, #f6f6f6 100%) !important;
 }
 
 /* BUTTONS */
