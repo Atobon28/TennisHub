@@ -10,6 +10,7 @@ import {
   logoutUser,
   updateUser,
   leaveTournament,
+  changeCurrentUserPassword,
 } from "../../firebase/services";
 import { useAuth } from "../../context/useAuth";
 import "../../styles/player-profile.css";
@@ -41,8 +42,10 @@ const getPlayerCategory = (
   return "Beginner";
 };
 
-const getCategoryBadge = (category?: string) => {
+const getCategoryBadge = (category?: string | null) => {
   if (!category) return "🎾";
+
+  const normalizedCategory = category.trim();
 
   const badges: Record<string, string> = {
     "First Category": "1",
@@ -55,7 +58,7 @@ const getCategoryBadge = (category?: string) => {
     Senior: "S",
   };
 
-  return badges[category] || category.charAt(0);
+  return badges[normalizedCategory] || normalizedCategory.charAt(0);
 };
 
 const getCategoryLevel = (category: string) => {
@@ -124,7 +127,10 @@ function PlayerProfilePage() {
   const [tempCategory, setTempCategory] = useState(playerCategory);
 
   useEffect(() => {
-    setPlayerCategory(getPlayerCategory(userData?.level, userData?.category));
+    const realCategory = getPlayerCategory(userData?.level, userData?.category);
+
+    setPlayerCategory(realCategory);
+    setTempCategory(realCategory);
   }, [userData]);
 
   useEffect(() => {
@@ -181,9 +187,14 @@ function PlayerProfilePage() {
     reader.readAsDataURL(file);
   };
 
-  const handleConfirmPassword = () => {
+  const handleConfirmPassword = async () => {
     if (!newPassword || !confirmPassword) {
       setPasswordMsg("Please fill in both fields.");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordMsg("Password must be at least 6 characters.");
       return;
     }
 
@@ -192,10 +203,27 @@ function PlayerProfilePage() {
       return;
     }
 
-    setPasswordMsg("");
-    setNewPassword("");
-    setConfirmPassword("");
-    setShowPasswordModal(false);
+    try {
+      await changeCurrentUserPassword(newPassword);
+
+      setPasswordMsg("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setShowPasswordModal(false);
+
+      alert("Password updated successfully.");
+    } catch (error: any) {
+      console.error("Error changing password:", error);
+
+      if (error.code === "auth/requires-recent-login") {
+        setPasswordMsg(
+          "Please log out and log in again before changing password."
+        );
+        return;
+      }
+
+      setPasswordMsg("Error updating password. Please try again.");
+    }
   };
 
   const handleConfirmCategory = async () => {
@@ -214,6 +242,7 @@ function PlayerProfilePage() {
       }
 
       setPlayerCategory(tempCategory);
+      setTempCategory(tempCategory);
       setShowCategoryModal(false);
     } catch (error) {
       console.error("Error updating category:", error);
@@ -271,6 +300,7 @@ function PlayerProfilePage() {
 
   const name = userData?.username || "Player";
   const username = userData?.username ? `@${userData.username}` : "@player";
+  const visibleCategory = userData?.category || playerCategory;
 
   return (
     <div className="player-profile">
@@ -310,7 +340,7 @@ function PlayerProfilePage() {
                     type="button"
                     className="player-profile__level-badge player-profile__level-badge--clickable"
                     onClick={() => {
-                      setTempCategory(playerCategory);
+                      setTempCategory(visibleCategory);
                       setShowCategoryModal(true);
                     }}
                     style={{
@@ -318,7 +348,7 @@ function PlayerProfilePage() {
                       cursor: "pointer",
                     }}
                   >
-                    {getCategoryBadge(playerCategory)}
+                    {getCategoryBadge(visibleCategory)}
                   </button>
                 </div>
               </div>
@@ -333,7 +363,7 @@ function PlayerProfilePage() {
                   color: "#666",
                 }}
               >
-                {playerCategory}
+                {visibleCategory}
               </p>
 
               <div className="player-profile__links">
@@ -475,7 +505,7 @@ function PlayerProfilePage() {
                 <div key={tournament.id}>
                   <TournamentCard
                     categoryBadge={getCategoryBadge(
-                      tournament.categories?.[0] || playerCategory
+                      tournament.categories?.[0] || visibleCategory
                     )}
                     name={tournament.name}
                     info={tournament.info}
