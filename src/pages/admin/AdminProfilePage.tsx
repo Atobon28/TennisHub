@@ -6,6 +6,7 @@ import {
   getAdminTournaments,
   getAdminCourts,
   logoutUser,
+  changeCurrentUserPassword,
 } from "../../firebase/services";
 import { useAuth } from "../../context/useAuth";
 import "../../styles/admin-profile.css";
@@ -91,9 +92,14 @@ function AdminProfilePage() {
     reader.readAsDataURL(file);
   };
 
-  const handleConfirmPassword = () => {
+  const handleConfirmPassword = async () => {
     if (!newPassword || !confirmPassword) {
       setPasswordMsg("Please fill in both fields.");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordMsg("Password must be at least 6 characters.");
       return;
     }
 
@@ -102,10 +108,25 @@ function AdminProfilePage() {
       return;
     }
 
-    setPasswordMsg("");
-    setNewPassword("");
-    setConfirmPassword("");
-    setShowPasswordModal(false);
+    try {
+      await changeCurrentUserPassword(newPassword);
+
+      setPasswordMsg("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setShowPasswordModal(false);
+
+      alert("Password updated successfully.");
+    } catch (error: any) {
+      console.error("Error changing password:", error);
+
+      if (error.code === "auth/requires-recent-login") {
+        setPasswordMsg("Please log out and log in again before changing password.");
+        return;
+      }
+
+      setPasswordMsg("Error updating password. Please try again.");
+    }
   };
 
   const handleLogout = async () => {

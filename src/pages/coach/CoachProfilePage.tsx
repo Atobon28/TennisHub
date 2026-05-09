@@ -2,7 +2,11 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import { useAuth } from "../../context/useAuth";
-import { logoutUser, updateUser } from "../../firebase/services";
+import {
+  logoutUser,
+  updateUser,
+  changeCurrentUserPassword,
+} from "../../firebase/services";
 import "../../styles/coach-profile.css";
 import coach1 from "../../assets/coach-1.jpg";
 
@@ -224,9 +228,14 @@ function CoachProfilePage() {
     }
   };
 
-  const handleConfirmPassword = () => {
+  const handleConfirmPassword = async () => {
     if (!newPassword || !confirmPassword) {
       setPasswordMsg("Please fill in both fields.");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordMsg("Password must be at least 6 characters.");
       return;
     }
 
@@ -235,10 +244,25 @@ function CoachProfilePage() {
       return;
     }
 
-    setPasswordMsg("");
-    setNewPassword("");
-    setConfirmPassword("");
-    setShowPasswordModal(false);
+    try {
+      await changeCurrentUserPassword(newPassword);
+
+      setPasswordMsg("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setShowPasswordModal(false);
+
+      alert("Password updated successfully.");
+    } catch (error: any) {
+      console.error("Error changing password:", error);
+
+      if (error.code === "auth/requires-recent-login") {
+        setPasswordMsg("Please log out and log in again before changing password.");
+        return;
+      }
+
+      setPasswordMsg("Error updating password. Please try again.");
+    }
   };
 
   const handlePriceChange = (value: string) => {
