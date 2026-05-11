@@ -1,6 +1,3 @@
-Claro. Te lo dejo actualizado para D3, manteniendo el estilo simple:
-
-````markdown
 # TennisHub
 
 TennisHub is a web application developed by **Ana Tobon** and **Juan Pablo Castro**.
@@ -50,7 +47,7 @@ Clone the repository and install dependencies:
 git clone <your-repository-url>
 cd tennishub
 npm install
-````
+```
 
 Run the project locally:
 
@@ -74,9 +71,9 @@ npm run preview
 
 ## Main Scripts
 
-* `npm run dev` → starts the project locally
-* `npm run build` → builds the project for production
-* `npm run preview` → previews the production version
+- `npm run dev` → starts the project locally
+- `npm run build` → builds the project for production
+- `npm run preview` → previews the production version
 
 ---
 
@@ -114,15 +111,15 @@ src/
 
 ## Simple Folder Explanation
 
-* `assets`: images and static files
-* `components`: reusable interface parts
-* `context`: global user session and authentication state
-* `firebase`: Firebase configuration and database services
-* `layouts`: shared page structures by role
-* `pages`: main screens of the app
-* `styles`: CSS files
-* `App.tsx`: main routes and protected routes
-* `main.tsx`: app entry point
+- `assets`: images and static files
+- `components`: reusable interface parts
+- `context`: global user session and authentication state
+- `firebase`: Firebase configuration and database services
+- `layouts`: shared page structures by role
+- `pages`: main screens of the app
+- `styles`: CSS files
+- `App.tsx`: main routes and protected routes
+- `main.tsx`: app entry point
 
 ---
 
@@ -130,23 +127,23 @@ src/
 
 Right now, the project includes:
 
-* role-based login
-* protected routes for Player, Coach, and Admin
-* Firebase Authentication
-* Firestore data persistence
-* global user state with Context API
-* functional match system
-* singles and doubles matches
-* court creation and management
-* court surface types: Grass, Hard, and Clay
-* tournament creation and management
-* tournament categories and capacity configuration
-* real tournament enrollment
-* player profile with matches and tournaments
-* coach profile with price and availability schedule
-* admin management for courts and tournaments
-* real password update with Firebase Auth
-* public deployment with Vercel
+- role-based login
+- protected routes for Player, Coach, and Admin
+- Firebase Authentication
+- Firestore data persistence
+- global user state with Context API
+- functional match system
+- singles and doubles matches
+- court creation and management
+- court surface types: Grass, Hard, and Clay
+- tournament creation and management
+- tournament categories and capacity configuration
+- real tournament enrollment
+- player profile with matches and tournaments
+- coach profile with price and availability schedule
+- admin management for courts and tournaments
+- real password update with Firebase Auth
+- public deployment with Vercel
 
 ---
 
@@ -156,38 +153,38 @@ Right now, the project includes:
 
 Players can:
 
-* view available courts
-* filter courts by surface type
-* create and join matches
-* leave matches
-* view match details
-* view tournaments
-* join eligible tournaments
-* leave tournaments
-* manage their profile category
+- view available courts
+- filter courts by surface type
+- create and join matches
+- leave matches
+- view match details
+- view tournaments
+- join eligible tournaments
+- leave tournaments
+- manage their profile category
 
 ### Coach
 
 Coaches can:
 
-* register and log in
-* configure price per hour
-* select available days
-* define start and end hours for each available day
-* update their profile information
+- register and log in
+- configure price per hour
+- select available days
+- define start and end hours for each available day
+- update their profile information
 
 ### Admin
 
 Admins can:
 
-* create courts
-* delete courts
-* create tournaments
-* delete tournaments
-* select allowed tournament categories
-* select one or more courts for a tournament
-* define tournament type: Singles, Doubles, or Singles and Doubles
-* define capacity by category
+- create courts
+- delete courts
+- create tournaments
+- delete tournaments
+- select allowed tournament categories
+- select one or more courts for a tournament
+- define tournament type: Singles, Doubles, or Singles and Doubles
+- define capacity by category
 
 ---
 
@@ -201,10 +198,10 @@ The project is deployed publicly using Vercel.
 
 This project is still under development. The main MVP flows are already functional, but some improvements are still pending, such as:
 
-* final responsive testing
-* accessibility review
-* Firebase Storage for avatars
-* tournament capacity enforcement
-* showing registered players and pairs in tournaments
-* better success and error messages
-* performance optimization
+- final responsive testing
+- accessibility review
+- Firebase Storage for avatars
+- tournament capacity enforcement
+- showing registered players and pairs in tournaments
+- better success and error messages
+- performance optimization
