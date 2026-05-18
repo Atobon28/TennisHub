@@ -16,11 +16,20 @@ interface Coach {
   phone?: string;
 }
 
-const formatPhone = (phone: string) => {
+const buildCoachWhatsAppLink = (phone: string, coachName: string) => {
   const cleaned = phone.replace(/\D/g, "");
-  if (cleaned.startsWith("57")) return cleaned;
-  if (cleaned.startsWith("3")) return `57${cleaned}`;
-  return cleaned;
+
+  if (!cleaned) return "";
+
+  const formattedPhone = cleaned.startsWith("57")
+    ? cleaned
+    : cleaned.startsWith("3")
+      ? `57${cleaned}`
+      : cleaned;
+
+  const message = `Hi ${coachName}! I found your profile on TennisHub and I would like to connect for coaching sessions.`;
+
+  return `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
 };
 
 function CoachViewPage() {
@@ -31,6 +40,7 @@ function CoachViewPage() {
   useEffect(() => {
     const fetchCoach = async () => {
       if (!uid) return;
+
       try {
         const data = await getUserByUid(uid);
         setCoach(data as Coach);
@@ -40,14 +50,23 @@ function CoachViewPage() {
         setLoading(false);
       }
     };
+
     fetchCoach();
   }, [uid]);
 
-  if (loading) return <p style={{ padding: 20, color: "#888" }}>Loading...</p>;
-  if (!coach)
+  if (loading) {
+    return <p style={{ padding: 20, color: "#888" }}>Loading...</p>;
+  }
+
+  if (!coach) {
     return <p style={{ padding: 20, color: "#888" }}>Coach not found.</p>;
+  }
 
   const availableDays = coach.availableDays || [];
+
+  const whatsappLink = coach.phone
+    ? buildCoachWhatsAppLink(coach.phone, coach.username)
+    : "";
 
   return (
     <div className="find-coach">
@@ -57,6 +76,7 @@ function CoachViewPage() {
             <span className="find-coach__icon-gradient-wrap">
               <Icon icon="mdi:arm-flex" className="find-coach__section-icon" />
             </span>
+
             <h2 className="find-coach__section-title">Coach Profile</h2>
           </div>
 
@@ -71,7 +91,6 @@ function CoachViewPage() {
               gap: 16,
             }}
           >
-            {/* Avatar + info */}
             <div
               style={{
                 display: "flex",
@@ -91,17 +110,18 @@ function CoachViewPage() {
                   objectFit: "cover",
                 }}
               />
+
               <div style={{ textAlign: "center" }}>
                 <h2 style={{ margin: 0, fontSize: "1.4rem", fontWeight: 800 }}>
                   {coach.username}
                 </h2>
+
                 <p style={{ margin: 0, color: "#888", fontSize: "0.9rem" }}>
                   @{coach.username}
                 </p>
               </div>
             </div>
 
-            {/* Details */}
             <div
               style={{
                 display: "flex",
@@ -114,39 +134,46 @@ function CoachViewPage() {
               <p style={{ margin: 0, fontSize: "0.95rem" }}>
                 <strong>Contact:</strong> {coach.phone || coach.email}
               </p>
+
               <p style={{ margin: 0, fontSize: "0.95rem" }}>
                 <strong>Price per hour:</strong>{" "}
                 {coach.pricePerHour || "Not specified"}
               </p>
             </div>
 
-            {/* WhatsApp button */}
-            <button
-              onClick={() =>
-                coach.phone
-                  ? window.open(
-                      `https://wa.me/${formatPhone(coach.phone)}?text=Hi! I found you on TennisHub and would like to connect.`,
-                      "_blank",
-                    )
-                  : alert("This coach has no phone number registered.")
-              }
-              style={{
-                background: "var(--player-green-gradient)",
-                color: "white",
-                border: "none",
-                borderRadius: "999px",
-                padding: "10px 0",
-                width: "100%",
-                fontWeight: 700,
-                fontSize: "0.95rem",
-                cursor: "pointer",
-                fontFamily: "inherit",
-              }}
-            >
-              Contact via WhatsApp
-            </button>
+            {whatsappLink ? (
+              <a
+                href={whatsappLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  background: "var(--player-green-gradient)",
+                  color: "white",
+                  textDecoration: "none",
+                  borderRadius: "999px",
+                  padding: "10px 0",
+                  width: "100%",
+                  fontWeight: 700,
+                  fontSize: "0.95rem",
+                  textAlign: "center",
+                  fontFamily: "inherit",
+                }}
+              >
+                Contact Coach on WhatsApp
+              </a>
+            ) : (
+              <p
+                style={{
+                  color: "#888",
+                  fontSize: "0.9rem",
+                  textAlign: "center",
+                  margin: 0,
+                }}
+              >
+                This coach has no WhatsApp phone number available.
+              </p>
+            )}
 
-            {/* Available days */}
             {availableDays.length > 0 && (
               <>
                 <h3
@@ -158,6 +185,7 @@ function CoachViewPage() {
                 >
                   Available Days
                 </h3>
+
                 <div
                   style={{
                     display: "flex",
@@ -188,7 +216,9 @@ function CoachViewPage() {
                           objectFit: "cover",
                         }}
                       />
+
                       <span style={{ flex: 1, fontWeight: 600 }}>{day}</span>
+
                       <span
                         style={{
                           width: 26,
@@ -211,6 +241,7 @@ function CoachViewPage() {
             )}
           </div>
         </section>
+
         <AdBanners />
       </div>
     </div>
