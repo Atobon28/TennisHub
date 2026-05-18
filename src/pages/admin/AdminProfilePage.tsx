@@ -7,6 +7,7 @@ import {
   getAdminCourts,
   logoutUser,
   changeCurrentUserPassword,
+  uploadUserAvatar,
 } from "../../firebase/services";
 import { useAuth } from "../../context/useAuth";
 import "../../styles/admin-profile.css";
@@ -34,16 +35,18 @@ interface Court {
 
 function AdminProfilePage() {
   const navigate = useNavigate();
-  const { userData } = useAuth();
+  const { userData, refreshUserData } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [activeTab, setActiveTab] = useState<"courts" | "tournaments">(
-    "courts"
+    "courts",
   );
 
-  const [avatar, setAvatar] = useState<string>(() => {
-    return localStorage.getItem("adminAvatar") || court1;
-  });
+  const [avatar, setAvatar] = useState<string>(
+    (userData as any)?.photoURL || court1,
+  );
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarMsg, setAvatarMsg] = useState("");
 
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [courts, setCourts] = useState<Court[]>([]);
@@ -56,6 +59,7 @@ function AdminProfilePage() {
 
   useEffect(() => {
     fetchAdminProfileData();
+    setAvatar((userData as any)?.photoURL || court1);
   }, [userData]);
 
   const fetchAdminProfileData = async () => {
@@ -76,20 +80,36 @@ function AdminProfilePage() {
     }
   };
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
-    if (!file) return;
+    if (!file || !userData?.id || !userData?.uid) return;
 
-    const reader = new FileReader();
+    setUploadingAvatar(true);
+    setAvatarMsg("");
 
-    reader.onload = () => {
-      const result = reader.result as string;
-      localStorage.setItem("adminAvatar", result);
-      setAvatar(result);
-    };
+    try {
+      const imageUrl = await uploadUserAvatar(userData.id, userData.uid, file);
 
-    reader.readAsDataURL(file);
+      setAvatar(imageUrl);
+      await refreshUserData();
+
+      setAvatarMsg("Avatar updated successfully.");
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+
+      if (error instanceof Error) {
+        setAvatarMsg(error.message);
+      } else {
+        setAvatarMsg("Error uploading avatar. Please try again.");
+      }
+    } finally {
+      setUploadingAvatar(false);
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
   };
 
   const handleConfirmPassword = async () => {
@@ -121,7 +141,9 @@ function AdminProfilePage() {
       console.error("Error changing password:", error);
 
       if (error.code === "auth/requires-recent-login") {
-        setPasswordMsg("Please log out and log in again before changing password.");
+        setPasswordMsg(
+          "Please log out and log in again before changing password.",
+        );
         return;
       }
 
@@ -143,19 +165,24 @@ function AdminProfilePage() {
         <section className="admin-profile__main">
           <div className="admin-profile__header">
             <div className="admin-profile__avatar-wrap">
-              <img src={avatar} alt={name} className="admin-profile__avatar" />
+              <img
+                src={avatar || court1}
+                alt={name}
+                className="admin-profile__avatar"
+              />
 
               <button
                 type="button"
                 className="admin-profile__edit-btn"
                 onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingAvatar}
               >
-                ✏️
+                {uploadingAvatar ? "..." : "✏️"}
               </button>
 
               <input
                 type="file"
-                accept="image/*"
+                accept="image/png,image/jpeg,image/webp"
                 ref={fileInputRef}
                 style={{ display: "none" }}
                 onChange={handleAvatarChange}
@@ -165,6 +192,21 @@ function AdminProfilePage() {
             <div className="admin-profile__user-info">
               <h2 className="admin-profile__name">{name}</h2>
               <p className="admin-profile__username">{username}</p>
+
+              {avatarMsg && (
+                <p
+                  style={{
+                    margin: "0.35rem 0 0",
+                    fontSize: "0.8rem",
+                    fontWeight: 700,
+                    color: avatarMsg.includes("successfully")
+                      ? "#2f9e44"
+                      : "#e05252",
+                  }}
+                >
+                  {avatarMsg}
+                </p>
+              )}
 
               <div className="admin-profile__links">
                 <button
@@ -200,9 +242,7 @@ function AdminProfilePage() {
             <button
               type="button"
               className={`admin-profile__tab ${
-                activeTab === "tournaments"
-                  ? "admin-profile__tab--active"
-                  : ""
+                activeTab === "tournaments" ? "admin-profile__tab--active" : ""
               }`}
               onClick={() => setActiveTab("tournaments")}
             >
