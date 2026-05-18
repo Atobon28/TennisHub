@@ -284,6 +284,50 @@ export const leaveTournament = async (playerTournamentId: string) => {
   return await deleteDoc(doc(db, "playerTournaments", playerTournamentId));
 };
 
+// ── AVATARS / CLOUDINARY ───────────────────────────
+export const uploadUserAvatar = async (
+  userDocId: string,
+  uid: string,
+  file: File,
+) => {
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+  const maxSize = 2 * 1024 * 1024;
+
+  if (!allowedTypes.includes(file.type)) {
+    throw new Error("Only JPG, PNG or WEBP images are allowed.");
+  }
+
+  if (file.size > maxSize) {
+    throw new Error("Image must be smaller than 2MB.");
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", "tennishub_avatars");
+  formData.append("folder", `avatars/${uid}`);
+
+  const response = await fetch(
+    "https://api.cloudinary.com/v1_1/dndxvdev7/image/upload",
+    {
+      method: "POST",
+      body: formData,
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error("Error uploading image. Please try again.");
+  }
+
+  const data = await response.json();
+  const downloadURL = data.secure_url;
+
+  await updateUser(userDocId, {
+    photoURL: downloadURL,
+  });
+
+  return downloadURL;
+};
+
 // ── AUTH ───────────────────────────────────────────
 export const registerUser = async (email: string, password: string) => {
   return await createUserWithEmailAndPassword(auth, email, password);
@@ -308,7 +352,9 @@ export const changeCurrentUserPassword = async (newPassword: string) => {
 export const getUserByUid = async (uid: string) => {
   const q = query(collection(db, "users"), where("uid", "==", uid));
   const snapshot = await getDocs(q);
+
   if (snapshot.empty) return null;
+
   return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
 };
 
