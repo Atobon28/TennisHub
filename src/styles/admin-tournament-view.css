@@ -305,3 +305,53 @@
     align-self: center;
   }
 }
+.admin-tournament-view__modal {
+  max-height: 92vh;
+  overflow-y: auto;
+}
+
+.admin-tournament-view__modal-section {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.admin-tournament-view__modal-section::-webkit-scrollbar {
+  width: 6px;
+}
+
+.admin-tournament-view__modal-section::-webkit-scrollbar-thumb {
+  background: #777;
+  border-radius: 999px;
+}
+
+.admin-tournament-view__modal-input[type="checkbox"] {
+  width: auto;
+}
+
+.admin-tournament-view__modal-section label {
+  line-height: 1.3;
+}
+
+.admin-tournament-view__modal-section input[type="checkbox"] {
+  accent-color: #84d957;
+}
+
+.admin-tournament-view__modal-section > div {
+  width: 100%;
+}
+
+.admin-tournament-view__modal-confirm {
+  flex-shrink: 0;
+}
+
+@media (min-width: 1024px) {
+  .admin-tournament-view__modal {
+    max-width: 720px;
+    max-height: 90vh;
+  }
+
+  .admin-tournament-view__modal-section {
+    max-height: 62vh;
+  }
+}
