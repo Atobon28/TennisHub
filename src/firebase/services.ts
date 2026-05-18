@@ -69,7 +69,7 @@ export const getTournaments = async () => {
 export const getAdminTournaments = async (adminId: string) => {
   const q = query(
     collection(db, "tournaments"),
-    where("adminId", "==", adminId)
+    where("adminId", "==", adminId),
   );
   const snapshot = await getDocs(q);
   return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -103,7 +103,7 @@ export const createMatch = async (match: object) => {
 export const getPlayerMatches = async (playerId: string) => {
   const q = query(
     collection(db, "matches"),
-    where("playerIds", "array-contains", playerId)
+    where("playerIds", "array-contains", playerId),
   );
   const snapshot = await getDocs(q);
   return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -112,7 +112,7 @@ export const getPlayerMatches = async (playerId: string) => {
 export const joinMatch = async (
   matchId: string,
   playerId: string,
-  playerUsername: string
+  playerUsername: string,
 ) => {
   return await updateDoc(doc(db, "matches", matchId), {
     players: arrayUnion({ uid: playerId, username: playerUsername }),
@@ -123,7 +123,7 @@ export const joinMatch = async (
 export const leaveMatch = async (
   matchId: string,
   playerId: string,
-  playerUsername: string
+  playerUsername: string,
 ) => {
   return await updateDoc(doc(db, "matches", matchId), {
     players: arrayRemove({ uid: playerId, username: playerUsername }),
@@ -136,25 +136,52 @@ export const deleteMatch = async (id: string) => {
 };
 
 // ── PLAYER TOURNAMENTS ─────────────────────────────
+type EntryType = "singles" | "doubles";
+
+interface CapacityByCategory {
+  [category: string]: {
+    singlesPlayers?: number;
+    doublesPairs?: number;
+  };
+}
+
+interface TournamentForJoin {
+  id: string;
+  name: string;
+  info: string;
+  categories?: string[];
+  courts?: string[];
+  tournamentType?: string;
+  capacityByCategory?: CapacityByCategory;
+  status?: "Open" | "Full" | "Closed";
+}
+
+interface RegistrationInfo {
+  entryType: EntryType;
+  playerCategory: string;
+  hasPartner?: boolean;
+  partnerName?: string;
+  needsPartner?: boolean;
+}
+
 export const getPlayerTournaments = async (playerId: string) => {
   const q = query(
     collection(db, "playerTournaments"),
-    where("playerId", "==", playerId)
+    where("playerId", "==", playerId),
   );
 
   const snapshot = await getDocs(q);
-
   return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 };
 
 export const getPlayerTournamentById = async (
   playerId: string,
-  tournamentId: string
+  tournamentId: string,
 ) => {
   const q = query(
     collection(db, "playerTournaments"),
     where("playerId", "==", playerId),
-    where("tournamentId", "==", tournamentId)
+    where("tournamentId", "==", tournamentId),
   );
 
   const snapshot = await getDocs(q);
@@ -164,31 +191,75 @@ export const getPlayerTournamentById = async (
   return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
 };
 
+export const getTournamentRegistrations = async (tournamentId: string) => {
+  const q = query(
+    collection(db, "playerTournaments"),
+    where("tournamentId", "==", tournamentId),
+  );
+
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+};
+
 export const joinTournament = async (
   playerId: string,
   playerUsername: string,
-  tournament: {
-    id: string;
-    name: string;
-    info: string;
-    categories?: string[];
-    courts?: string[];
-    tournamentType?: string;
-  },
-  registrationInfo: {
-    entryType: "singles" | "doubles";
-    hasPartner?: boolean;
-    partnerName?: string;
-    needsPartner?: boolean;
-  }
+  tournament: TournamentForJoin,
+  registrationInfo: RegistrationInfo,
 ) => {
   const existingTournament = await getPlayerTournamentById(
     playerId,
-    tournament.id
+    tournament.id,
   );
 
   if (existingTournament) {
     throw new Error("You are already registered for this tournament.");
+  }
+
+  const playerCategory = registrationInfo.playerCategory;
+  const allowedCategories = tournament.categories || [];
+
+  const isEligible =
+    allowedCategories.length === 0 ||
+    allowedCategories.includes(playerCategory) ||
+    allowedCategories.includes("Open");
+
+  if (!isEligible) {
+    throw new Error("You are not eligible for this tournament.");
+  }
+
+  if (tournament.status === "Closed") {
+    throw new Error("This tournament is closed.");
+  }
+
+  const categoryCapacity = tournament.capacityByCategory?.[playerCategory];
+
+  if (!categoryCapacity) {
+    throw new Error("This tournament has no capacity for your category.");
+  }
+
+  const capacity =
+    registrationInfo.entryType === "singles"
+      ? categoryCapacity.singlesPlayers || 0
+      : categoryCapacity.doublesPairs || 0;
+
+  if (capacity <= 0) {
+    throw new Error("There are no spots available for this modality.");
+  }
+
+  const registrations = await getTournamentRegistrations(tournament.id);
+
+  const usedSpots = registrations.filter((registration: any) => {
+    return (
+      registration.playerCategory === playerCategory &&
+      registration.entryType === registrationInfo.entryType
+    );
+  }).length;
+
+  const availableSpots = capacity - usedSpots;
+
+  if (availableSpots <= 0) {
+    throw new Error("This category is full.");
   }
 
   return await addDoc(collection(db, "playerTournaments"), {
@@ -201,6 +272,7 @@ export const joinTournament = async (
     courts: tournament.courts || [],
     tournamentType: tournament.tournamentType || "singles",
     entryType: registrationInfo.entryType,
+    playerCategory,
     hasPartner: registrationInfo.hasPartner || false,
     partnerName: registrationInfo.partnerName || "",
     needsPartner: registrationInfo.needsPartner || false,
