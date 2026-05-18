@@ -39,6 +39,7 @@ interface TournamentRegistration {
   id: string;
   playerCategory?: string;
   entryType?: "singles" | "doubles";
+  needsPartner?: boolean;
 }
 
 const getPlayerCategory = (level?: number | null, category?: string | null) => {
@@ -102,7 +103,6 @@ function TournamentViewPage() {
   const [error, setError] = useState("");
 
   const playerCategory = getPlayerCategory(userData?.level, userData?.category);
-
   const tournamentType = normalizeTournamentType(tournament?.tournamentType);
 
   const canApply =
@@ -131,6 +131,33 @@ function TournamentViewPage() {
   }).length;
 
   const availableSpots = Math.max(totalSpots - usedSpots, 0);
+
+  const totalSinglesSpots = tournament?.capacityByCategory
+    ? Object.values(tournament.capacityByCategory).reduce(
+        (total, category) => total + (category.singlesPlayers || 0),
+        0,
+      )
+    : 0;
+
+  const totalDoublesPairs = tournament?.capacityByCategory
+    ? Object.values(tournament.capacityByCategory).reduce(
+        (total, category) => total + (category.doublesPairs || 0),
+        0,
+      )
+    : 0;
+
+  const registeredSinglesPlayers = registrations.filter(
+    (registration) => registration.entryType === "singles",
+  ).length;
+
+  const registeredDoublesPairs = registrations.filter(
+    (registration) => registration.entryType === "doubles",
+  ).length;
+
+  const playersLookingForPartner = registrations.filter(
+    (registration) =>
+      registration.entryType === "doubles" && registration.needsPartner,
+  ).length;
 
   const tournamentStatus =
     tournament?.status === "Closed"
@@ -167,11 +194,7 @@ function TournamentViewPage() {
           selectedTournament.tournamentType,
         );
 
-        if (selectedType === "doubles") {
-          setEntryType("doubles");
-        } else {
-          setEntryType("singles");
-        }
+        setEntryType(selectedType === "doubles" ? "doubles" : "singles");
 
         if (userData?.uid) {
           const existingTournament = (await getPlayerTournamentById(
@@ -349,13 +372,13 @@ function TournamentViewPage() {
 
               <div className="tournament-view__info">
                 <p className="tournament-view__detail">
-                  <span className="tournament-view__label">Info: </span>
-                  {tournament.info}
+                  <span className="tournament-view__label">Type: </span>
+                  {getTournamentTypeLabel(tournament.tournamentType)}
                 </p>
 
                 <p className="tournament-view__detail">
-                  <span className="tournament-view__label">Type: </span>
-                  {getTournamentTypeLabel(tournament.tournamentType)}
+                  <span className="tournament-view__label">Status: </span>
+                  {tournamentStatus}
                 </p>
 
                 <p className="tournament-view__detail">
@@ -373,36 +396,46 @@ function TournamentViewPage() {
                     ? tournament.categories.join(", ")
                     : "Not specified"}
                 </p>
-
-                <p className="tournament-view__detail">
-                  <span className="tournament-view__label">Courts: </span>
-                  {tournament.courts?.length
-                    ? tournament.courts.join(", ")
-                    : "Not specified"}
-                </p>
-
-                <p className="tournament-view__detail">
-                  <span className="tournament-view__label">Total spots: </span>
-                  {totalSpots}
-                </p>
-
-                <p className="tournament-view__detail">
-                  <span className="tournament-view__label">Used spots: </span>
-                  {usedSpots}
-                </p>
-
-                <p className="tournament-view__detail">
-                  <span className="tournament-view__label">
-                    Available spots:{" "}
-                  </span>
-                  {availableSpots}
-                </p>
-
-                <p className="tournament-view__detail">
-                  <span className="tournament-view__label">Status: </span>
-                  {tournamentStatus}
-                </p>
               </div>
+            </div>
+
+            <div
+              style={{
+                marginTop: "1.5rem",
+                padding: "1rem",
+                borderRadius: "16px",
+                backgroundColor: "#f7f7f7",
+                display: "grid",
+                gap: "0.75rem",
+              }}
+            >
+              <h3
+                style={{
+                  margin: 0,
+                  fontSize: "1rem",
+                  fontWeight: 900,
+                  color: "#111",
+                }}
+              >
+                Registration summary
+              </h3>
+
+              <p className="tournament-view__detail">
+                <span className="tournament-view__label">Players: </span>
+                {registeredSinglesPlayers}/{totalSinglesSpots}
+              </p>
+
+              <p className="tournament-view__detail">
+                <span className="tournament-view__label">Pairs: </span>
+                {registeredDoublesPairs}/{totalDoublesPairs}
+              </p>
+
+              <p className="tournament-view__detail">
+                <span className="tournament-view__label">
+                  Looking for partner:{" "}
+                </span>
+                {playersLookingForPartner}
+              </p>
             </div>
 
             {!joined && canApply && (
