@@ -9,6 +9,7 @@ import TournamentCard from "../../components/player/TournamentCard";
 import PersonCard from "../../components/player/PersonCard";
 import CourtCard from "../../components/player/CourtCard";
 import { useAuth } from "../../context/useAuth";
+import player1 from "../../assets/player-1.jpg";
 import {
   getTournaments,
   getCourts,
@@ -38,6 +39,7 @@ interface Player {
   username: string;
   level?: number;
   category?: string;
+  photoURL?: string;
 }
 
 interface Coach {
@@ -218,7 +220,7 @@ function PlayerHomePage() {
                   >
                     <PersonCard
                       name={player.username}
-                      image={court1}
+                      image={player.photoURL || player1}
                       level={player.level}
                     />
                   </div>
