@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
-import PersonCard from "../../components/player/PersonCard";
 import { Icon } from "@iconify/react";
 import { getCoaches } from "../../firebase/services";
 import "../../styles/find-coach.css";
@@ -12,6 +11,9 @@ interface Coach {
   username: string;
   pricePerHour?: string;
   uid: string;
+  specialty?: string;
+  availableDays?: string[];
+  phone?: string;
 }
 
 function FindCoachPage() {
@@ -30,8 +32,20 @@ function FindCoachPage() {
         setLoading(false);
       }
     };
+
     fetchCoaches();
   }, []);
+
+  const isCoachComplete = (coach: Coach) => {
+    return (
+      coach.username &&
+      coach.pricePerHour &&
+      coach.specialty &&
+      coach.availableDays &&
+      coach.availableDays.length > 0 &&
+      coach.phone
+    );
+  };
 
   return (
     <div className="find-coach">
@@ -45,28 +59,67 @@ function FindCoachPage() {
           </div>
 
           {loading ? (
-            <p
-              style={{ color: "#888", textAlign: "center", padding: "20px 0" }}
-            >
-              Loading coaches...
-            </p>
+            <p className="find-coach__empty">Loading coaches...</p>
           ) : coaches.length === 0 ? (
-            <p
-              style={{ color: "#888", textAlign: "center", padding: "20px 0" }}
-            >
-              No coaches available yet.
-            </p>
+            <p className="find-coach__empty">No coaches available yet.</p>
           ) : (
             <div className="find-coach__coaches-grid">
-              {coaches.map((coach) => (
-                <div
-                  key={coach.id}
-                  onClick={() => navigate(`/player/coaches/view/${coach.uid}`)}
-                  style={{ cursor: "pointer" }}
-                >
-                  <PersonCard name={coach.username} image={coach1} />
-                </div>
-              ))}
+              {coaches.map((coach) => {
+                const complete = isCoachComplete(coach);
+
+                return (
+                  <article
+                    key={coach.id}
+                    className={`find-coach__coach-card ${
+                      !complete ? "find-coach__coach-card--incomplete" : ""
+                    }`}
+                    onClick={() =>
+                      complete && navigate(`/player/coaches/view/${coach.uid}`)
+                    }
+                  >
+                    <img
+                      src={coach1}
+                      alt={coach.username}
+                      className="find-coach__coach-image"
+                    />
+
+                    <div className="find-coach__coach-info">
+                      <h3 className="find-coach__coach-name">
+                        {coach.username}
+                      </h3>
+
+                      <p className="find-coach__coach-detail">
+                        <strong>Price:</strong>{" "}
+                        {coach.pricePerHour || "Not specified"}
+                      </p>
+
+                      <p className="find-coach__coach-detail">
+                        <strong>Specialty:</strong>{" "}
+                        {coach.specialty || "Not specified"}
+                      </p>
+
+                      <p className="find-coach__coach-detail">
+                        <strong>Availability:</strong>{" "}
+                        {coach.availableDays?.length
+                          ? coach.availableDays.join(", ")
+                          : "Not specified"}
+                      </p>
+
+                      {!complete && (
+                        <p className="find-coach__coach-warning">
+                          Incomplete profile
+                        </p>
+                      )}
+
+                      {complete && (
+                        <button type="button" className="find-coach__coach-btn">
+                          View coach
+                        </button>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>

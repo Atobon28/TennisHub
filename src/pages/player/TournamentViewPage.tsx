@@ -6,10 +6,18 @@ import {
   getTournaments,
   joinTournament,
   leaveTournament,
+  getTournamentRegistrations,
 } from "../../firebase/services";
 import { useAuth } from "../../context/useAuth";
 import "../../styles/tournament-view.css";
 import court1 from "../../assets/court-1.jpg";
+
+interface CapacityByCategory {
+  [category: string]: {
+    singlesPlayers?: number;
+    doublesPairs?: number;
+  };
+}
 
 interface Tournament {
   id: string;
@@ -19,16 +27,22 @@ interface Tournament {
   courts?: string[];
   image?: string;
   tournamentType?: string;
+  capacityByCategory?: CapacityByCategory;
+  status?: "Open" | "Full" | "Closed";
 }
 
 interface PlayerTournament {
   id: string;
 }
 
-const getPlayerCategory = (
-  level?: number | null,
-  category?: string | null
-) => {
+interface TournamentRegistration {
+  id: string;
+  playerCategory?: string;
+  entryType?: "singles" | "doubles";
+  needsPartner?: boolean;
+}
+
+const getPlayerCategory = (level?: number | null, category?: string | null) => {
   if (category) return category;
 
   if (level === 1) return "First Category";
@@ -75,6 +89,9 @@ function TournamentViewPage() {
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [joined, setJoined] = useState(false);
   const [registrationId, setRegistrationId] = useState<string | null>(null);
+  const [registrations, setRegistrations] = useState<TournamentRegistration[]>(
+    [],
+  );
 
   const [entryType, setEntryType] = useState<"singles" | "doubles">("singles");
   const [hasPartner, setHasPartner] = useState("");
@@ -86,7 +103,6 @@ function TournamentViewPage() {
   const [error, setError] = useState("");
 
   const playerCategory = getPlayerCategory(userData?.level, userData?.category);
-
   const tournamentType = normalizeTournamentType(tournament?.tournamentType);
 
   const canApply =
@@ -99,6 +115,57 @@ function TournamentViewPage() {
     tournamentType === "doubles" ||
     (tournamentType === "both" && entryType === "doubles");
 
+  const selectedCategoryCapacity =
+    tournament?.capacityByCategory?.[playerCategory];
+
+  const totalSpots =
+    entryType === "singles"
+      ? selectedCategoryCapacity?.singlesPlayers || 0
+      : selectedCategoryCapacity?.doublesPairs || 0;
+
+  const usedSpots = registrations.filter((registration) => {
+    return (
+      registration.playerCategory === playerCategory &&
+      registration.entryType === entryType
+    );
+  }).length;
+
+  const availableSpots = Math.max(totalSpots - usedSpots, 0);
+
+  const totalSinglesSpots = tournament?.capacityByCategory
+    ? Object.values(tournament.capacityByCategory).reduce(
+        (total, category) => total + (category.singlesPlayers || 0),
+        0,
+      )
+    : 0;
+
+  const totalDoublesPairs = tournament?.capacityByCategory
+    ? Object.values(tournament.capacityByCategory).reduce(
+        (total, category) => total + (category.doublesPairs || 0),
+        0,
+      )
+    : 0;
+
+  const registeredSinglesPlayers = registrations.filter(
+    (registration) => registration.entryType === "singles",
+  ).length;
+
+  const registeredDoublesPairs = registrations.filter(
+    (registration) => registration.entryType === "doubles",
+  ).length;
+
+  const playersLookingForPartner = registrations.filter(
+    (registration) =>
+      registration.entryType === "doubles" && registration.needsPartner,
+  ).length;
+
+  const tournamentStatus =
+    tournament?.status === "Closed"
+      ? "Closed"
+      : availableSpots <= 0
+        ? "Full"
+        : "Open";
+
   useEffect(() => {
     const fetchTournament = async () => {
       if (!id) return;
@@ -110,7 +177,7 @@ function TournamentViewPage() {
         const tournamentsData = (await getTournaments()) as Tournament[];
 
         const selectedTournament = tournamentsData.find(
-          (item) => item.id === id
+          (item) => item.id === id,
         );
 
         if (!selectedTournament) {
@@ -120,20 +187,19 @@ function TournamentViewPage() {
 
         setTournament(selectedTournament);
 
+        const tournamentRegistrations = await getTournamentRegistrations(id);
+        setRegistrations(tournamentRegistrations as TournamentRegistration[]);
+
         const selectedType = normalizeTournamentType(
-          selectedTournament.tournamentType
+          selectedTournament.tournamentType,
         );
 
-        if (selectedType === "doubles") {
-          setEntryType("doubles");
-        } else {
-          setEntryType("singles");
-        }
+        setEntryType(selectedType === "doubles" ? "doubles" : "singles");
 
         if (userData?.uid) {
           const existingTournament = (await getPlayerTournamentById(
             userData.uid,
-            id
+            id,
           )) as PlayerTournament | null;
 
           if (existingTournament) {
@@ -186,20 +252,24 @@ function TournamentViewPage() {
         },
         {
           entryType,
+          playerCategory,
           hasPartner: shouldAskPartner && hasPartner === "yes",
           partnerName:
-            shouldAskPartner && hasPartner === "yes"
-              ? partnerName.trim()
-              : "",
+            shouldAskPartner && hasPartner === "yes" ? partnerName.trim() : "",
           needsPartner: shouldAskPartner && hasPartner === "no",
-        }
+        },
       );
 
       const existingTournament = (await getPlayerTournamentById(
         userData.uid,
-        tournament.id
+        tournament.id,
       )) as PlayerTournament | null;
 
+      const updatedRegistrations = await getTournamentRegistrations(
+        tournament.id,
+      );
+
+      setRegistrations(updatedRegistrations as TournamentRegistration[]);
       setJoined(true);
       setRegistrationId(existingTournament?.id || null);
     } catch (err) {
@@ -216,10 +286,10 @@ function TournamentViewPage() {
   };
 
   const handleLeave = async () => {
-    if (!registrationId) return;
+    if (!registrationId || !tournament) return;
 
     const confirmLeave = window.confirm(
-      "Are you sure you want to leave this tournament?"
+      "Are you sure you want to leave this tournament?",
     );
 
     if (!confirmLeave) return;
@@ -230,6 +300,11 @@ function TournamentViewPage() {
     try {
       await leaveTournament(registrationId);
 
+      const updatedRegistrations = await getTournamentRegistrations(
+        tournament.id,
+      );
+
+      setRegistrations(updatedRegistrations as TournamentRegistration[]);
       setJoined(false);
       setRegistrationId(null);
       setHasPartner("");
@@ -297,13 +372,13 @@ function TournamentViewPage() {
 
               <div className="tournament-view__info">
                 <p className="tournament-view__detail">
-                  <span className="tournament-view__label">Info: </span>
-                  {tournament.info}
+                  <span className="tournament-view__label">Type: </span>
+                  {getTournamentTypeLabel(tournament.tournamentType)}
                 </p>
 
                 <p className="tournament-view__detail">
-                  <span className="tournament-view__label">Type: </span>
-                  {getTournamentTypeLabel(tournament.tournamentType)}
+                  <span className="tournament-view__label">Status: </span>
+                  {tournamentStatus}
                 </p>
 
                 <p className="tournament-view__detail">
@@ -321,14 +396,46 @@ function TournamentViewPage() {
                     ? tournament.categories.join(", ")
                     : "Not specified"}
                 </p>
-
-                <p className="tournament-view__detail">
-                  <span className="tournament-view__label">Courts: </span>
-                  {tournament.courts?.length
-                    ? tournament.courts.join(", ")
-                    : "Not specified"}
-                </p>
               </div>
+            </div>
+
+            <div
+              style={{
+                marginTop: "1.5rem",
+                padding: "1rem",
+                borderRadius: "16px",
+                backgroundColor: "#f7f7f7",
+                display: "grid",
+                gap: "0.75rem",
+              }}
+            >
+              <h3
+                style={{
+                  margin: 0,
+                  fontSize: "1rem",
+                  fontWeight: 900,
+                  color: "#111",
+                }}
+              >
+                Registration summary
+              </h3>
+
+              <p className="tournament-view__detail">
+                <span className="tournament-view__label">Players: </span>
+                {registeredSinglesPlayers}/{totalSinglesSpots}
+              </p>
+
+              <p className="tournament-view__detail">
+                <span className="tournament-view__label">Pairs: </span>
+                {registeredDoublesPairs}/{totalDoublesPairs}
+              </p>
+
+              <p className="tournament-view__detail">
+                <span className="tournament-view__label">
+                  Looking for partner:{" "}
+                </span>
+                {playersLookingForPartner}
+              </p>
             </div>
 
             {!joined && canApply && (
@@ -475,18 +582,39 @@ function TournamentViewPage() {
                 type="button"
                 className="tournament-view__join-btn"
                 onClick={handleJoin}
-                disabled={joining || !canApply}
+                disabled={
+                  joining ||
+                  !canApply ||
+                  availableSpots <= 0 ||
+                  tournamentStatus === "Closed"
+                }
                 style={{
-                  opacity: !canApply ? 0.5 : 1,
-                  cursor: !canApply ? "not-allowed" : "pointer",
+                  opacity:
+                    !canApply ||
+                    availableSpots <= 0 ||
+                    tournamentStatus === "Closed"
+                      ? 0.5
+                      : 1,
+                  cursor:
+                    !canApply ||
+                    availableSpots <= 0 ||
+                    tournamentStatus === "Closed"
+                      ? "not-allowed"
+                      : "pointer",
                   marginTop: "1.5rem",
                 }}
               >
                 {joining
                   ? "Joining..."
-                  : canApply
-                    ? `Join as ${entryType === "doubles" ? "Doubles" : "Singles"}`
-                    : "Not eligible"}
+                  : !canApply
+                    ? "Not eligible"
+                    : tournamentStatus === "Closed"
+                      ? "Closed"
+                      : availableSpots <= 0
+                        ? "Full"
+                        : `Join as ${
+                            entryType === "doubles" ? "Doubles" : "Singles"
+                          }`}
               </button>
             )}
           </div>

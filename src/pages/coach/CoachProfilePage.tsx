@@ -6,6 +6,7 @@ import {
   logoutUser,
   updateUser,
   changeCurrentUserPassword,
+  uploadUserAvatar,
 } from "../../firebase/services";
 import "../../styles/coach-profile.css";
 import coach1 from "../../assets/coach-1.jpg";
@@ -66,9 +67,12 @@ function CoachProfilePage() {
   const { userData, refreshUserData } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [avatar, setAvatar] = useState<string>(() => {
-    return localStorage.getItem("coachAvatar") || coach1;
-  });
+  const [avatar, setAvatar] = useState<string>(
+    (userData as any)?.photoURL || coach1,
+  );
+
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarMsg, setAvatarMsg] = useState("");
 
   const [schedule, setSchedule] = useState<Schedule>(createEmptySchedule());
   const [price, setPrice] = useState<string>("Not configured");
@@ -100,6 +104,8 @@ function CoachProfilePage() {
   };
 
   useEffect(() => {
+    setAvatar((userData as any)?.photoURL || coach1);
+
     if (userData?.pricePerHour) {
       setPrice(formatCurrency(userData.pricePerHour));
     } else {
@@ -136,20 +142,37 @@ function CoachProfilePage() {
     setSchedule(baseSchedule);
   }, [userData]);
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
-    if (!file) return;
+    if (!file || !userData?.id || !userData?.uid) return;
 
-    const reader = new FileReader();
+    setUploadingAvatar(true);
+    setAvatarMsg("");
 
-    reader.onload = () => {
-      const result = reader.result as string;
-      localStorage.setItem("coachAvatar", result);
-      setAvatar(result);
-    };
+    try {
+      const imageUrl = await uploadUserAvatar(userData.id, userData.uid, file);
 
-    reader.readAsDataURL(file);
+      setAvatar(imageUrl);
+
+      await refreshUserData();
+
+      setAvatarMsg("Avatar updated successfully.");
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+
+      if (error instanceof Error) {
+        setAvatarMsg(error.message);
+      } else {
+        setAvatarMsg("Error uploading avatar.");
+      }
+    } finally {
+      setUploadingAvatar(false);
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
   };
 
   const toggleDay = (day: string) => {
@@ -168,7 +191,7 @@ function CoachProfilePage() {
   const handleHourChange = (
     day: string,
     field: "start" | "end",
-    value: string
+    value: string,
   ) => {
     setSaved(false);
     setScheduleError("");
@@ -257,7 +280,9 @@ function CoachProfilePage() {
       console.error("Error changing password:", error);
 
       if (error.code === "auth/requires-recent-login") {
-        setPasswordMsg("Please log out and log in again before changing password.");
+        setPasswordMsg(
+          "Please log out and log in again before changing password.",
+        );
         return;
       }
 
@@ -326,13 +351,14 @@ function CoachProfilePage() {
                 type="button"
                 className="coach-profile__edit-btn"
                 onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingAvatar}
               >
-                ✏️
+                {uploadingAvatar ? "..." : "✏️"}
               </button>
 
               <input
                 type="file"
-                accept="image/*"
+                accept="image/png,image/jpeg,image/webp"
                 ref={fileInputRef}
                 style={{ display: "none" }}
                 onChange={handleAvatarChange}
@@ -342,6 +368,20 @@ function CoachProfilePage() {
             <div className="coach-profile__user-info">
               <h2 className="coach-profile__name">{name}</h2>
               <p className="coach-profile__username">{username}</p>
+              {avatarMsg && (
+                <p
+                  style={{
+                    margin: "0.35rem 0 0",
+                    fontSize: "0.8rem",
+                    fontWeight: 700,
+                    color: avatarMsg.includes("successfully")
+                      ? "#2f9e44"
+                      : "#e05252",
+                  }}
+                >
+                  {avatarMsg}
+                </p>
+              )}
 
               <div className="coach-profile__links">
                 <button
@@ -528,9 +568,7 @@ function CoachProfilePage() {
 
           <div className="coach-profile__save-wrap">
             {saved && (
-              <span className="coach-profile__saved-msg">
-                ✓ Profile saved!
-              </span>
+              <span className="coach-profile__saved-msg">✓ Profile saved!</span>
             )}
 
             <button

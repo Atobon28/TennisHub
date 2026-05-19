@@ -227,3 +227,29 @@
     width: 60%;
   }
 }
+.admin-court-view__success-message {
+  background: #e8f8ee;
+  color: #2f9e44;
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin: 0 0 1rem;
+}
+
+.admin-court-view__error-message {
+  background: #ffe8e8;
+  color: #e05252;
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.admin-court-view__preview-image {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 12px;
+}

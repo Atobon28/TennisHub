@@ -14,6 +14,16 @@ interface Court {
   courtType?: string;
 }
 
+const buildWhatsAppLink = (phone: string, courtName: string) => {
+  const cleanPhone = phone.replace(/\D/g, "");
+
+  if (!cleanPhone) return "";
+
+  const message = `Hi! I found ${courtName} on TennisHub and I would like more information about booking a court.`;
+
+  return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+};
+
 function CourtViewPage() {
   const { id } = useParams();
 
@@ -44,6 +54,10 @@ function CourtViewPage() {
     return <p style={{ padding: 20, color: "#888" }}>Court not found.</p>;
   }
 
+  const whatsappLink = court.contact
+    ? buildWhatsAppLink(court.contact, court.name)
+    : "";
+
   return (
     <div className="court-view">
       <div className="court-view__grid">
@@ -73,21 +87,20 @@ function CourtViewPage() {
                 {court.address || "Not specified"}
               </p>
 
-              <button
-                type="button"
-                className="court-view__whatsapp-btn"
-                disabled={!court.contact}
-                onClick={() => {
-                  if (!court.contact) return;
-
-                  window.open(
-                    `https://wa.me/${court.contact.replace(/\D/g, "")}`,
-                    "_blank"
-                  );
-                }}
-              >
-                Contact via WhatsApp
-              </button>
+              {whatsappLink ? (
+                <a
+                  href={whatsappLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="court-view__whatsapp-btn"
+                >
+                  Contact by WhatsApp
+                </a>
+              ) : (
+                <p className="court-view__whatsapp-message">
+                  No WhatsApp phone number available for this court.
+                </p>
+              )}
             </div>
           </div>
         </section>

@@ -8,6 +8,8 @@ import MatchCard from "../../components/player/MatchCard";
 import TournamentCard from "../../components/player/TournamentCard";
 import PersonCard from "../../components/player/PersonCard";
 import CourtCard from "../../components/player/CourtCard";
+import { useAuth } from "../../context/useAuth";
+import player1 from "../../assets/player-1.jpg";
 import {
   getTournaments,
   getCourts,
@@ -37,6 +39,7 @@ interface Player {
   username: string;
   level?: number;
   category?: string;
+  photoURL?: string;
 }
 
 interface Coach {
@@ -62,8 +65,39 @@ const classNames = [
   "player-home__court-card--small-bottom",
 ];
 
+const getPlayerCategory = (level?: number | null, category?: string | null) => {
+  if (category) return category;
+
+  if (level === 1) return "First Category";
+  if (level === 2) return "Second Category";
+  if (level === 3) return "Third Category";
+  if (level === 4) return "Fourth Category";
+  if (level === 5) return "Fifth Category";
+
+  return "";
+};
+
+const getCategoryBadge = (category?: string) => {
+  if (!category) return "🎾";
+
+  const badges: Record<string, string> = {
+    Open: "O",
+    "First Category": "1",
+    "Second Category": "2",
+    "Third Category": "3",
+    "Fourth Category": "4",
+    "Fifth Category": "5",
+    Beginner: "B",
+    Junior: "J",
+    Senior: "S",
+  };
+
+  return badges[category] || category.charAt(0);
+};
+
 function PlayerHomePage() {
   const navigate = useNavigate();
+  const { userData } = useAuth();
 
   const matchesScrollRef = useRef<HTMLDivElement | null>(null);
   const tournamentsScrollRef = useRef<HTMLDivElement | null>(null);
@@ -73,6 +107,8 @@ function PlayerHomePage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [todayMatches, setTodayMatches] = useState<Match[]>([]);
+
+  const playerCategory = getPlayerCategory(userData?.level, userData?.category);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -99,7 +135,7 @@ function PlayerHomePage() {
         const today = new Date().toISOString().split("T")[0];
 
         const filteredMatches = (matchesData as Match[]).filter(
-          (match) => match.date === today
+          (match) => match.date === today,
         );
 
         setTodayMatches(filteredMatches);
@@ -113,7 +149,7 @@ function PlayerHomePage() {
 
   const scroll = (
     ref: React.RefObject<HTMLDivElement | null>,
-    direction: "left" | "right"
+    direction: "left" | "right",
   ) => {
     if (!ref.current) return;
 
@@ -184,7 +220,7 @@ function PlayerHomePage() {
                   >
                     <PersonCard
                       name={player.username}
-                      image={court1}
+                      image={player.photoURL || player1}
                       level={player.level}
                     />
                   </div>
@@ -359,18 +395,34 @@ function PlayerHomePage() {
                   No tournaments available.
                 </p>
               ) : (
-                tournaments.map((tournament) => (
-                  <TournamentCard
-                    key={tournament.id}
-                    level={tournament.level}
-                    name={tournament.name}
-                    info={tournament.info}
-                    buttonLabel="View"
-                    onView={() =>
-                      navigate(`/player/tournaments/view/${tournament.id}`)
-                    }
-                  />
-                ))
+                tournaments.map((tournament) => {
+                  const categories = tournament.categories || [];
+
+                  const canApply =
+                    categories.length === 0 ||
+                    categories.includes(playerCategory) ||
+                    categories.includes("Open");
+
+                  const badge =
+                    categories.length === 1
+                      ? getCategoryBadge(categories[0])
+                      : "🎾";
+
+                  return (
+                    <TournamentCard
+                      key={tournament.id}
+                      categoryBadge={badge}
+                      name={tournament.name}
+                      info={tournament.info}
+                      buttonLabel="View"
+                      disabled={!canApply}
+                      disabledLabel="Not eligible"
+                      onView={() =>
+                        navigate(`/player/tournaments/view/${tournament.id}`)
+                      }
+                    />
+                  );
+                })
               )}
             </div>
           </section>
@@ -400,13 +452,13 @@ function PlayerHomePage() {
             <div className="player-home__courts-grid">
               {courts.slice(0, 3).map((court, index) => (
                 <CourtCard
-                key={court.id}
-                name={court.name}
-                image={court.image || court1}
-                courtType={court.courtType}
-                className={classNames[index]}
-                onSeeMore={() => navigate(`/player/courts/view/${court.id}`)}
-              />
+                  key={court.id}
+                  name={court.name}
+                  image={court.image || court1}
+                  courtType={court.courtType}
+                  className={classNames[index]}
+                  onSeeMore={() => navigate(`/player/courts/view/${court.id}`)}
+                />
               ))}
             </div>
           </section>

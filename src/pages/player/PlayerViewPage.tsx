@@ -13,12 +13,15 @@ interface Player {
   level?: number;
   uid: string;
   phone?: string;
+  photoURL?: string;
 }
 
 const formatPhone = (phone: string) => {
   const cleaned = phone.replace(/\D/g, "");
+
   if (cleaned.startsWith("57")) return cleaned;
   if (cleaned.startsWith("3")) return `57${cleaned}`;
+
   return cleaned;
 };
 
@@ -30,6 +33,7 @@ function PlayerViewPage() {
   useEffect(() => {
     const fetchPlayer = async () => {
       if (!uid) return;
+
       try {
         const data = await getUserByUid(uid);
         setPlayer(data as Player);
@@ -39,12 +43,17 @@ function PlayerViewPage() {
         setLoading(false);
       }
     };
+
     fetchPlayer();
   }, [uid]);
 
-  if (loading) return <p style={{ padding: 20, color: "#888" }}>Loading...</p>;
-  if (!player)
+  if (loading) {
+    return <p style={{ padding: 20, color: "#888" }}>Loading...</p>;
+  }
+
+  if (!player) {
     return <p style={{ padding: 20, color: "#888" }}>Player not found.</p>;
+  }
 
   return (
     <div className="find-coach">
@@ -54,6 +63,7 @@ function PlayerViewPage() {
             <span className="find-coach__icon-gradient-wrap">
               <Icon icon="ph:user-fill" className="find-coach__section-icon" />
             </span>
+
             <h2 className="find-coach__section-title">Player Profile</h2>
           </div>
 
@@ -68,7 +78,6 @@ function PlayerViewPage() {
               gap: 16,
             }}
           >
-            {/* Avatar + info */}
             <div
               style={{
                 display: "flex",
@@ -79,7 +88,7 @@ function PlayerViewPage() {
               }}
             >
               <img
-                src={player1}
+                src={player.photoURL || player1}
                 alt={player.username}
                 style={{
                   width: 90,
@@ -88,17 +97,18 @@ function PlayerViewPage() {
                   objectFit: "cover",
                 }}
               />
+
               <div style={{ textAlign: "center" }}>
                 <h2 style={{ margin: 0, fontSize: "1.4rem", fontWeight: 800 }}>
                   {player.username}
                 </h2>
+
                 <p style={{ margin: 0, color: "#888", fontSize: "0.9rem" }}>
                   @{player.username}
                 </p>
               </div>
             </div>
 
-            {/* Details */}
             <div
               style={{
                 display: "flex",
@@ -111,61 +121,36 @@ function PlayerViewPage() {
               <p style={{ margin: 0, fontSize: "0.95rem" }}>
                 <strong>Contact:</strong> {player.phone || player.email}
               </p>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: "0.95rem",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                }}
-              >
-                <strong>Level:</strong>
-                <span
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: "999px",
-                    background: "var(--player-green)",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontWeight: 700,
-                    fontSize: "0.9rem",
-                  }}
-                >
-                  {player.level || "?"}
-                </span>
+
+              <p style={{ margin: 0, fontSize: "0.95rem" }}>
+                <strong>Level:</strong> {player.level || "Not specified"}
               </p>
             </div>
 
-            {/* WhatsApp button */}
-            <button
-              onClick={() =>
-                player.phone
-                  ? window.open(
-                      `https://wa.me/${formatPhone(player.phone)}?text=Hi! I found you on TennisHub and would like to connect.`,
-                      "_blank",
-                    )
-                  : alert("This player has no phone number registered.")
-              }
-              style={{
-                background: "var(--player-green-gradient)",
-                color: "white",
-                border: "none",
-                borderRadius: "999px",
-                padding: "10px 0",
-                width: "100%",
-                fontWeight: 700,
-                fontSize: "0.95rem",
-                cursor: "pointer",
-                fontFamily: "inherit",
-              }}
-            >
-              Contact via WhatsApp
-            </button>
+            {player.phone && (
+              <a
+                href={`https://wa.me/${formatPhone(player.phone)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  background: "var(--player-green-gradient)",
+                  color: "white",
+                  textDecoration: "none",
+                  borderRadius: "999px",
+                  padding: "10px 0",
+                  width: "100%",
+                  fontWeight: 700,
+                  fontSize: "0.95rem",
+                  textAlign: "center",
+                  fontFamily: "inherit",
+                }}
+              >
+                Contact Player on WhatsApp
+              </a>
+            )}
           </div>
         </section>
+
         <AdBanners />
       </div>
     </div>

@@ -9,6 +9,7 @@ import {
   deleteMatch,
   logoutUser,
   updateUser,
+  uploadUserAvatar,
   leaveTournament,
   changeCurrentUserPassword,
 } from "../../firebase/services";
@@ -27,10 +28,7 @@ const categoryOptions = [
   "Senior",
 ];
 
-const getPlayerCategory = (
-  level?: number | null,
-  category?: string | null
-) => {
+const getPlayerCategory = (level?: number | null, category?: string | null) => {
   if (category) return category;
 
   if (level === 1) return "First Category";
@@ -103,15 +101,17 @@ function PlayerProfilePage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [activeTab, setActiveTab] = useState<"matches" | "tournaments">(
-    "matches"
+    "matches",
   );
 
-  const [avatar, setAvatar] = useState<string>(() => {
-    return localStorage.getItem("playerAvatar") || player1;
-  });
+  const [avatar, setAvatar] = useState<string>(
+    (userData as any)?.photoURL || player1,
+  );
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarMsg, setAvatarMsg] = useState("");
 
   const [playerCategory, setPlayerCategory] = useState(
-    getPlayerCategory(userData?.level, userData?.category)
+    getPlayerCategory(userData?.level, userData?.category),
   );
 
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
@@ -131,6 +131,7 @@ function PlayerProfilePage() {
 
     setPlayerCategory(realCategory);
     setTempCategory(realCategory);
+    setAvatar((userData as any)?.photoURL || player1);
   }, [userData]);
 
   useEffect(() => {
@@ -158,7 +159,7 @@ function PlayerProfilePage() {
         filtered.sort(
           (a, b) =>
             new Date(`${a.date}T${a.time}`).getTime() -
-            new Date(`${b.date}T${b.time}`).getTime()
+            new Date(`${b.date}T${b.time}`).getTime(),
         );
 
         setMatches(filtered);
@@ -171,20 +172,40 @@ function PlayerProfilePage() {
     fetchMatches();
   }, [userData]);
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
-    if (!file) return;
+    if (!file || !userData?.id || !userData?.uid) return;
 
-    const reader = new FileReader();
+    setUploadingAvatar(true);
+    setAvatarMsg("");
 
-    reader.onload = () => {
-      const result = reader.result as string;
-      localStorage.setItem("playerAvatar", result);
-      setAvatar(result);
-    };
+    try {
+      const downloadURL = await uploadUserAvatar(
+        userData.id,
+        userData.uid,
+        file,
+      );
 
-    reader.readAsDataURL(file);
+      setAvatar(downloadURL);
+      await refreshUserData();
+
+      setAvatarMsg("Avatar updated successfully.");
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+
+      if (error instanceof Error) {
+        setAvatarMsg(error.message);
+      } else {
+        setAvatarMsg("Error uploading avatar. Please try again.");
+      }
+    } finally {
+      setUploadingAvatar(false);
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
   };
 
   const handleConfirmPassword = async () => {
@@ -217,7 +238,7 @@ function PlayerProfilePage() {
 
       if (error.code === "auth/requires-recent-login") {
         setPasswordMsg(
-          "Please log out and log in again before changing password."
+          "Please log out and log in again before changing password.",
         );
         return;
       }
@@ -267,7 +288,7 @@ function PlayerProfilePage() {
 
   const handleLeaveTournament = async (playerTournamentId: string) => {
     const confirmLeave = window.confirm(
-      "Are you sure you want to leave this tournament?"
+      "Are you sure you want to leave this tournament?",
     );
 
     if (!confirmLeave) return;
@@ -276,7 +297,7 @@ function PlayerProfilePage() {
       await leaveTournament(playerTournamentId);
 
       setTournaments((prev) =>
-        prev.filter((tournament) => tournament.id !== playerTournamentId)
+        prev.filter((tournament) => tournament.id !== playerTournamentId),
       );
     } catch (error) {
       console.error("Error leaving tournament:", error);
@@ -308,19 +329,24 @@ function PlayerProfilePage() {
         <section className="player-profile__main">
           <div className="player-profile__header">
             <div className="player-profile__avatar-wrap">
-              <img src={avatar} alt={name} className="player-profile__avatar" />
+              <img
+                src={avatar || player1}
+                alt={name}
+                className="player-profile__avatar"
+              />
 
               <button
                 type="button"
                 className="player-profile__edit-btn"
                 onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingAvatar}
               >
-                ✏️
+                {uploadingAvatar ? "..." : "✏️"}
               </button>
 
               <input
                 type="file"
-                accept="image/*"
+                accept="image/png,image/jpeg,image/webp"
                 ref={fileInputRef}
                 style={{ display: "none" }}
                 onChange={handleAvatarChange}
@@ -366,6 +392,21 @@ function PlayerProfilePage() {
                 {visibleCategory}
               </p>
 
+              {avatarMsg && (
+                <p
+                  style={{
+                    margin: "0.35rem 0 0",
+                    fontSize: "0.8rem",
+                    fontWeight: 700,
+                    color: avatarMsg.includes("successfully")
+                      ? "#2f9e44"
+                      : "#e05252",
+                  }}
+                >
+                  {avatarMsg}
+                </p>
+              )}
+
               <div className="player-profile__links">
                 <button
                   type="button"
@@ -400,9 +441,7 @@ function PlayerProfilePage() {
             <button
               type="button"
               className={`player-profile__tab ${
-                activeTab === "tournaments"
-                  ? "player-profile__tab--active"
-                  : ""
+                activeTab === "tournaments" ? "player-profile__tab--active" : ""
               }`}
               onClick={() => setActiveTab("tournaments")}
             >
@@ -505,7 +544,7 @@ function PlayerProfilePage() {
                 <div key={tournament.id}>
                   <TournamentCard
                     categoryBadge={getCategoryBadge(
-                      tournament.categories?.[0] || visibleCategory
+                      tournament.categories?.[0] || visibleCategory,
                     )}
                     name={tournament.name}
                     info={tournament.info}
@@ -514,7 +553,7 @@ function PlayerProfilePage() {
                       navigate(
                         tournament.tournamentId
                           ? `/player/tournaments/view/${tournament.tournamentId}`
-                          : "/player/tournaments"
+                          : "/player/tournaments",
                       )
                     }
                   />
