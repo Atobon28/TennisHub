@@ -10,6 +10,7 @@ import { MatchesProvider } from "./context/MatchesContext";
 import { CoachesProvider } from "./context/CoachesContext";
 import { PlayersProvider } from "./context/PlayersContext";
 import { ProfileProvider } from "./context/ProfileContext";
+import { DashboardProvider } from "./context/DashboardContext";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -21,7 +22,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               <CoachesProvider>
                 <PlayersProvider>
                   <ProfileProvider>
-                    <App />
+                    <DashboardProvider>
+                      <App />
+                    </DashboardProvider>
                   </ProfileProvider>
                 </PlayersProvider>
               </CoachesProvider>
