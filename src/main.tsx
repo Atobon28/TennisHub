@@ -5,13 +5,16 @@ import App from "./App";
 import "./index.css";
 import { AuthProvider } from "./context/AuthContext";
 import { CourtsProvider } from "./context/CourtsContext";
+import { TournamentsProvider } from "./context/TournamentsContext";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
         <CourtsProvider>
-          <App />
+          <TournamentsProvider>
+            <App />
+          </TournamentsProvider>
         </CourtsProvider>
       </AuthProvider>
     </BrowserRouter>
