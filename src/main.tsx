@@ -7,6 +7,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { CourtsProvider } from "./context/CourtsContext";
 import { TournamentsProvider } from "./context/TournamentsContext";
 import { MatchesProvider } from "./context/MatchesContext";
+import { CoachesProvider } from "./context/CoachesContext";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -15,7 +16,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <CourtsProvider>
           <TournamentsProvider>
             <MatchesProvider>
-              <App />
+              <CoachesProvider>
+                <App />
+              </CoachesProvider>
             </MatchesProvider>
           </TournamentsProvider>
         </CourtsProvider>
