@@ -247,14 +247,24 @@ export const joinTournament = async (
     throw new Error("There are no spots available for this modality.");
   }
 
-  const registrations = await getTournamentRegistrations(tournament.id);
+interface TournamentRegistrationData {
+  id: string;
+  playerCategory?: string;
+  entryType?: EntryType;
+  needsPartner?: boolean;
+}
 
-  const usedSpots = registrations.filter((registration: any) => {
-    return (
-      registration.playerCategory === playerCategory &&
-      registration.entryType === registrationInfo.entryType
-    );
-  }).length;
+const registrations =
+  (await getTournamentRegistrations(
+    tournament.id,
+  )) as unknown as TournamentRegistrationData[];
+
+const usedSpots = registrations.filter((registration) => {
+  return (
+    registration.playerCategory === playerCategory &&
+    registration.entryType === registrationInfo.entryType
+  );
+}).length;
 
   const availableSpots = capacity - usedSpots;
 
