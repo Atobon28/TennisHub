@@ -7,7 +7,6 @@ import { useTournaments } from "../../context";
 import type {
   EntryType,
   Tournament,
-  TournamentRegistration,
 } from "../../context/TournamentsContext";
 import "../../styles/tournament-view.css";
 import court1 from "../../assets/court-1.jpg";
