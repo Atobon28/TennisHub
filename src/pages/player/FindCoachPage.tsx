@@ -1,40 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import { Icon } from "@iconify/react";
-import { getCoaches } from "../../firebase/services";
+import { useCoaches } from "../../context";
+import type { Coach } from "../../context/CoachesContext";
 import "../../styles/find-coach.css";
 import coach1 from "../../assets/coach-1.jpg";
 
-interface Coach {
-  id: string;
-  username: string;
-  pricePerHour?: string;
-  uid: string;
-  specialty?: string;
-  availableDays?: string[];
-  phone?: string;
-}
-
 function FindCoachPage() {
   const navigate = useNavigate();
-  const [coaches, setCoaches] = useState<Coach[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  const { coaches, loading, error, loadCoaches } = useCoaches();
 
   useEffect(() => {
-    const fetchCoaches = async () => {
-      try {
-        const data = await getCoaches();
-        setCoaches(data as Coach[]);
-      } catch (error) {
-        console.error("Error fetching coaches:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCoaches();
-  }, []);
+    loadCoaches();
+  }, [loadCoaches]);
 
   const isCoachComplete = (coach: Coach) => {
     return (
@@ -60,6 +40,8 @@ function FindCoachPage() {
 
           {loading ? (
             <p className="find-coach__empty">Loading coaches...</p>
+          ) : error ? (
+            <p className="find-coach__empty">{error}</p>
           ) : coaches.length === 0 ? (
             <p className="find-coach__empty">No coaches available yet.</p>
           ) : (
@@ -78,14 +60,18 @@ function FindCoachPage() {
                     }
                   >
                     <img
-                      src={coach1}
-                      alt={coach.username}
+                      src={
+                        typeof coach.photoURL === "string"
+                          ? coach.photoURL
+                          : coach1
+                      }
+                      alt={coach.username || "Coach"}
                       className="find-coach__coach-image"
                     />
 
                     <div className="find-coach__coach-info">
                       <h3 className="find-coach__coach-name">
-                        {coach.username}
+                        {coach.username || "Coach"}
                       </h3>
 
                       <p className="find-coach__coach-detail">
