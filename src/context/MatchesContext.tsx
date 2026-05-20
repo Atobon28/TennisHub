@@ -18,7 +18,9 @@ export interface Match {
   id: string;
   hostId?: string;
   hostName?: string;
+  hostUsername?: string;
   type?: "Singles" | "Doubles" | string;
+  matchType?: "singles" | "doubles" | string;
   date?: string;
   time?: string;
   court?: string;

@@ -1,87 +1,70 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import AdBanners from "../../components/player/AdBanners";
-import {
-  getMatches,
-  joinMatch,
-  leaveMatch,
-  deleteMatch,
-} from "../../firebase/services";
+import { useMatches } from "../../context";
 import { useAuth } from "../../context/useAuth";
 import "../../styles/find-matches.css";
-
-interface MatchPlayer {
-  uid: string;
-  username: string;
-}
-
-interface Match {
-  id: string;
-  court: string;
-  date: string;
-  time: string;
-  hostId: string;
-  hostUsername: string;
-  players: MatchPlayer[];
-  playerIds: string[];
-  maxPlayers: number;
-  matchType?: "singles" | "doubles";
-  createdAt?: string;
-}
 
 function MatchViewPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { userData } = useAuth();
 
-  const [match, setMatch] = useState<Match | null>(null);
-  const [loading, setLoading] = useState(true);
+  const {
+    selectedMatch,
+    loading,
+    error,
+    loadMatchById,
+    joinExistingMatch,
+    leaveExistingMatch,
+    removeMatch,
+  } = useMatches();
 
   useEffect(() => {
-    fetchMatch();
-  }, [id]);
+    if (!id) return;
 
-  const fetchMatch = async () => {
-    try {
-      const data = await getMatches();
-      const found = (data as Match[]).find((m) => m.id === id);
-      setMatch(found || null);
-    } catch (error) {
-      console.error("Error fetching match:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    loadMatchById(id);
+  }, [id, loadMatchById]);
 
   const handleJoin = async () => {
-    if (!userData?.uid || !userData?.username || !match) return;
+    if (!userData?.uid || !userData?.username || !selectedMatch) return;
 
     try {
-      await joinMatch(match.id, userData.uid, userData.username);
-      await fetchMatch();
+      await joinExistingMatch(
+        selectedMatch.id,
+        userData.uid,
+        userData.username,
+      );
+      await loadMatchById(selectedMatch.id);
     } catch (error) {
       console.error("Error joining match:", error);
     }
   };
 
   const handleLeave = async () => {
-    if (!userData?.uid || !userData?.username || !match) return;
+    if (!userData?.uid || !userData?.username || !selectedMatch) return;
 
     try {
-      if (match.hostId === userData.uid) {
-        await deleteMatch(match.id);
+      if (selectedMatch.hostId === userData.uid) {
+        await removeMatch(selectedMatch.id);
         navigate("/player/matches");
       } else {
-        await leaveMatch(match.id, userData.uid, userData.username);
-        await fetchMatch();
+        await leaveExistingMatch(
+          selectedMatch.id,
+          userData.uid,
+          userData.username,
+        );
+        await loadMatchById(selectedMatch.id);
       }
     } catch (error) {
       console.error("Error leaving match:", error);
     }
   };
 
-  const formatDate = (date: string) => {
+  const formatDate = (date?: string) => {
+    if (!date) return "Not specified";
+
     const d = new Date(date + "T00:00:00");
 
     return d.toLocaleDateString("en-US", {
@@ -96,19 +79,24 @@ function MatchViewPage() {
     return <p style={{ padding: 20, color: "#888" }}>Loading match...</p>;
   }
 
-  if (!match) {
+  if (error) {
+    return <p style={{ padding: 20, color: "#888" }}>{error}</p>;
+  }
+
+  if (!selectedMatch) {
     return <p style={{ padding: 20, color: "#888" }}>Match not found.</p>;
   }
 
-  const playersCount = match.players?.length || 0;
-  const spotsLeft = match.maxPlayers - playersCount;
-  const isFull = playersCount >= match.maxPlayers;
-  const isInMatch = match.playerIds?.includes(userData?.uid || "");
-  const isHost = match.hostId === userData?.uid;
+  const playersCount = selectedMatch.players?.length || 0;
+  const maxPlayers =
+    typeof selectedMatch.maxPlayers === "number" ? selectedMatch.maxPlayers : 0;
+  const spotsLeft = Math.max(maxPlayers - playersCount, 0);
+  const isFull = playersCount >= maxPlayers;
+  const isInMatch = selectedMatch.playerIds?.includes(userData?.uid || "");
+  const isHost = selectedMatch.hostId === userData?.uid;
 
-  // Si el match viejo no tiene matchType, lo calculamos con maxPlayers
   const matchType =
-    match.matchType || (match.maxPlayers === 2 ? "singles" : "doubles");
+    selectedMatch.matchType || (maxPlayers === 2 ? "singles" : "doubles");
 
   const matchTypeLabel = matchType === "singles" ? "Singles" : "Doubles";
   const statusLabel = isFull ? "Full match" : "Open match";
@@ -118,6 +106,7 @@ function MatchViewPage() {
       <div className="find-matches__grid">
         <section className="find-matches__main">
           <button
+            type="button"
             className="find-matches__btn find-matches__btn--leave"
             onClick={() => navigate("/player/matches")}
             style={{ marginBottom: "1rem" }}
@@ -140,15 +129,22 @@ function MatchViewPage() {
             <div className="find-matches__card-header">
               <div className="find-matches__card-info">
                 <p className="find-matches__card-court">
-                  <Icon icon="mdi:tennis-ball-outline" /> {match.court}
+                  <Icon icon="mdi:tennis-ball-outline" />{" "}
+                  {selectedMatch.court || "Not specified"}
                 </p>
 
                 <p className="find-matches__card-date">
-                  {formatDate(match.date)} — {match.time}
+                  {formatDate(selectedMatch.date)} —{" "}
+                  {selectedMatch.time || "Not specified"}
                 </p>
 
                 <p className="find-matches__card-host">
-                  Created by: <strong>{match.hostUsername}</strong>
+                  Created by:{" "}
+                  <strong>
+                    {selectedMatch.hostUsername ||
+                      selectedMatch.hostName ||
+                      "Unknown host"}
+                  </strong>
                 </p>
               </div>
 
@@ -181,7 +177,7 @@ function MatchViewPage() {
               <div>
                 <p className="find-matches__players-label">Players</p>
                 <p style={{ margin: 0, fontWeight: 700 }}>
-                  {playersCount}/{match.maxPlayers}
+                  {playersCount}/{maxPlayers}
                 </p>
               </div>
 
@@ -196,13 +192,16 @@ function MatchViewPage() {
               </div>
             </div>
 
-            <div className="find-matches__players" style={{ marginTop: "2rem" }}>
+            <div
+              className="find-matches__players"
+              style={{ marginTop: "2rem" }}
+            >
               <p className="find-matches__players-label">
                 Registered players:
               </p>
 
               <div className="find-matches__players-list">
-                {match.players?.map((player) => (
+                {selectedMatch.players?.map((player) => (
                   <span
                     key={player.uid}
                     className="find-matches__player-chip"
@@ -211,7 +210,7 @@ function MatchViewPage() {
                     }
                   >
                     {player.username}
-                    {player.uid === match.hostId && " 👑"}
+                    {player.uid === selectedMatch.hostId && " 👑"}
                   </span>
                 ))}
               </div>
@@ -229,16 +228,20 @@ function MatchViewPage() {
 
               <p style={{ marginBottom: 0 }}>
                 This is a <strong>{matchTypeLabel.toLowerCase()}</strong> match
-                at <strong>{match.court}</strong> on{" "}
-                <strong>{formatDate(match.date)}</strong> at{" "}
-                <strong>{match.time}</strong>. There are{" "}
-                <strong>{spotsLeft}</strong> spots available.
+                at <strong>{selectedMatch.court || "Not specified"}</strong> on{" "}
+                <strong>{formatDate(selectedMatch.date)}</strong> at{" "}
+                <strong>{selectedMatch.time || "Not specified"}</strong>. There
+                are <strong>{spotsLeft}</strong> spots available.
               </p>
             </div>
 
-            <div className="find-matches__card-actions" style={{ marginTop: "2rem" }}>
+            <div
+              className="find-matches__card-actions"
+              style={{ marginTop: "2rem" }}
+            >
               {isInMatch ? (
                 <button
+                  type="button"
                   className="find-matches__btn find-matches__btn--leave"
                   onClick={handleLeave}
                 >
@@ -246,6 +249,7 @@ function MatchViewPage() {
                 </button>
               ) : !isFull ? (
                 <button
+                  type="button"
                   className="find-matches__btn find-matches__btn--join"
                   onClick={handleJoin}
                 >
