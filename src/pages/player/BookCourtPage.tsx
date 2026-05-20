@@ -1,41 +1,27 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Icon } from "@iconify/react";
 import { useNavigate } from "react-router-dom";
-import { getCourts } from "../../firebase/services";
+import { useCourts } from "../../context";
 import "../../styles/book-court.css";
 import court1 from "../../assets/court-1.jpg";
 import AdBanners from "../../components/player/AdBanners";
-
-interface Court {
-  id: string;
-  name: string;
-  image: string;
-  courtType?: string;
-}
 
 const courtTypeFilters = ["All", "Grass", "Hard", "Clay"];
 
 function BookCourtPage() {
   const navigate = useNavigate();
 
-  const [courts, setCourts] = useState<Court[]>([]);
+  const { courts, loading, error, loadCourts } = useCourts();
+
   const [selectedType, setSelectedType] = useState("All");
-  const [loading, setLoading] = useState(true);
+  const hasLoadedCourts = useRef(false);
 
   useEffect(() => {
-    const fetchCourts = async () => {
-      try {
-        const data = await getCourts();
-        setCourts(data as Court[]);
-      } catch (error) {
-        console.error("Error fetching courts:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (hasLoadedCourts.current) return;
 
-    fetchCourts();
-  }, []);
+    hasLoadedCourts.current = true;
+    loadCourts();
+  }, [loadCourts]);
 
   const filteredCourts =
     selectedType === "All"
@@ -95,6 +81,8 @@ function BookCourtPage() {
 
           {loading ? (
             <p className="book-court__loading">Loading courts...</p>
+          ) : error ? (
+            <p className="book-court__loading">{error}</p>
           ) : courts.length === 0 ? (
             <p className="book-court__loading">No courts available.</p>
           ) : filteredCourts.length === 0 ? (
@@ -107,12 +95,14 @@ function BookCourtPage() {
                 <article key={court.id} className="book-court__court-card">
                   <img
                     src={court.image || court1}
-                    alt={court.name}
+                    alt={court.name || "Tennis court"}
                     className="book-court__court-image"
                   />
 
                   <div className="book-court__court-overlay">
-                    <span className="book-court__court-name">{court.name}</span>
+                    <span className="book-court__court-name">
+                      {court.name}
+                    </span>
 
                     {court.courtType && (
                       <span
@@ -126,7 +116,7 @@ function BookCourtPage() {
                           marginTop: "0.35rem",
                         }}
                       >
-                        {court.courtType}
+                        {String(court.courtType)}
                       </span>
                     )}
 

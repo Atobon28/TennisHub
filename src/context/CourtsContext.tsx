@@ -14,6 +14,7 @@ export interface Court {
   adminId?: string;
   name?: string;
   type?: string;
+  courtType?: string;
   surface?: string;
   contact?: string;
   phone?: string;
