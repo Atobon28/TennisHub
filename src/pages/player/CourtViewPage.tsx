@@ -1,18 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
-import { getCourts } from "../../firebase/services";
+import { useCourts } from "../../context";
 import "../../styles/court-view.css";
 import court1 from "../../assets/court-1.jpg";
-
-interface Court {
-  id: string;
-  name: string;
-  contact?: string;
-  address?: string;
-  image?: string;
-  courtType?: string;
-}
 
 const buildWhatsAppLink = (phone: string, courtName: string) => {
   const cleanPhone = phone.replace(/\D/g, "");
@@ -27,36 +18,35 @@ const buildWhatsAppLink = (phone: string, courtName: string) => {
 function CourtViewPage() {
   const { id } = useParams();
 
-  const [court, setCourt] = useState<Court | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { selectedCourt, loading, error, loadCourtById } = useCourts();
+  const hasLoadedCourt = useRef(false);
 
   useEffect(() => {
-    const fetchCourt = async () => {
-      try {
-        const data = await getCourts();
-        const found = (data as Court[]).find((item) => item.id === id);
-        setCourt(found || null);
-      } catch (error) {
-        console.error("Error fetching court:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (!id || hasLoadedCourt.current) return;
 
-    fetchCourt();
-  }, [id]);
+    hasLoadedCourt.current = true;
+    loadCourtById(id);
+  }, [id, loadCourtById]);
 
   if (loading) {
     return <p style={{ padding: 20, color: "#888" }}>Loading court...</p>;
   }
 
-  if (!court) {
+  if (error) {
+    return <p style={{ padding: 20, color: "#888" }}>{error}</p>;
+  }
+
+  if (!selectedCourt) {
     return <p style={{ padding: 20, color: "#888" }}>Court not found.</p>;
   }
 
-  const whatsappLink = court.contact
-    ? buildWhatsAppLink(court.contact, court.name)
-    : "";
+  const whatsappLink =
+    typeof selectedCourt.contact === "string"
+      ? buildWhatsAppLink(
+          selectedCourt.contact,
+          selectedCourt.name || "this court",
+        )
+      : "";
 
   return (
     <div className="court-view">
@@ -64,27 +54,37 @@ function CourtViewPage() {
         <section className="court-view__main">
           <div className="court-view__card">
             <img
-              src={court.image || court1}
-              alt={court.name}
+              src={
+                typeof selectedCourt.image === "string"
+                  ? selectedCourt.image
+                  : court1
+              }
+              alt={selectedCourt.name || "Tennis court"}
               className="court-view__image"
             />
 
             <div className="court-view__info">
-              <h2 className="court-view__name">{court.name}</h2>
+              <h2 className="court-view__name">{selectedCourt.name}</h2>
 
               <p className="court-view__detail">
                 <span className="court-view__label">Surface: </span>
-                {court.courtType || "Not specified"}
+                {typeof selectedCourt.courtType === "string"
+                  ? selectedCourt.courtType
+                  : "Not specified"}
               </p>
 
               <p className="court-view__detail">
                 <span className="court-view__label">Contact: </span>
-                {court.contact || "Not specified"}
+                {typeof selectedCourt.contact === "string"
+                  ? selectedCourt.contact
+                  : "Not specified"}
               </p>
 
               <p className="court-view__detail">
                 <span className="court-view__label">Address: </span>
-                {court.address || "Not specified"}
+                {typeof selectedCourt.address === "string"
+                  ? selectedCourt.address
+                  : "Not specified"}
               </p>
 
               {whatsappLink ? (
