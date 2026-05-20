@@ -1,37 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import PersonCard from "../../components/player/PersonCard";
 import { Icon } from "@iconify/react";
-import { getPlayers } from "../../firebase/services";
+import { usePlayers } from "../../context";
 import "../../styles/find-coach.css";
 import player1 from "../../assets/player-1.jpg";
 
-interface Player {
-  id: string;
-  username: string;
-  level?: number;
-  uid: string;
-}
-
 function PlayersPage() {
   const navigate = useNavigate();
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  const { players, loading, error, loadPlayers } = usePlayers();
 
   useEffect(() => {
-    const fetchPlayers = async () => {
-      try {
-        const data = await getPlayers();
-        setPlayers(data as Player[]);
-      } catch (error) {
-        console.error("Error fetching players:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPlayers();
-  }, []);
+    loadPlayers();
+  }, [loadPlayers]);
 
   return (
     <div className="find-coach">
@@ -50,6 +33,12 @@ function PlayersPage() {
             >
               Loading players...
             </p>
+          ) : error ? (
+            <p
+              style={{ color: "#888", textAlign: "center", padding: "20px 0" }}
+            >
+              {error}
+            </p>
           ) : players.length === 0 ? (
             <p
               style={{ color: "#888", textAlign: "center", padding: "20px 0" }}
@@ -65,15 +54,24 @@ function PlayersPage() {
                   style={{ cursor: "pointer" }}
                 >
                   <PersonCard
-                    name={player.username}
-                    image={player1}
-                    level={player.level}
+                    name={player.username || "Player"}
+                    image={
+                      typeof player.photoURL === "string"
+                        ? player.photoURL
+                        : player1
+                    }
+                    level={
+                      typeof player.level === "number"
+                        ? player.level
+                        : undefined
+                    }
                   />
                 </div>
               ))}
             </div>
           )}
         </section>
+
         <AdBanners />
       </div>
     </div>
