@@ -33,6 +33,10 @@ export interface Tournament {
   status?: "Open" | "Full" | "Closed";
   date?: string;
   time?: string;
+  hour?: string;
+  tournamentId?: string;
+  level?: number;
+  image?: string;
   [key: string]: unknown;
 }
 

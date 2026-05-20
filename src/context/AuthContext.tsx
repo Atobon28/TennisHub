@@ -22,6 +22,9 @@ export interface UserData {
   availableDays?: string[];
   availableSchedule?: Record<string, CoachScheduleDay>;
   phone?: string;
+  photoURL?: string;
+  description?: string;
+  specialty?: string;
 }
 
 export interface AuthContextType {

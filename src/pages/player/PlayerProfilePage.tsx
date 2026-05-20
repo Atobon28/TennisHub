@@ -2,18 +2,11 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import TournamentCard from "../../components/player/TournamentCard";
-import {
-  getPlayerTournaments,
-  getPlayerMatches,
-  leaveMatch,
-  deleteMatch,
-  logoutUser,
-  updateUser,
-  uploadUserAvatar,
-  leaveTournament,
-  changeCurrentUserPassword,
-} from "../../firebase/services";
+import { logoutUser } from "../../firebase/services";
 import { useAuth } from "../../context/useAuth";
+import { useMatches, useProfile, useTournaments } from "../../context";
+import type { Match } from "../../context/MatchesContext";
+import type { Tournament } from "../../context/TournamentsContext";
 import "../../styles/player-profile.css";
 import player1 from "../../assets/player-1.jpg";
 
@@ -69,53 +62,45 @@ const getCategoryLevel = (category: string) => {
   return null;
 };
 
-interface Tournament {
-  id: string;
-  tournamentId?: string;
-  level?: number;
-  name: string;
-  info: string;
-  categories?: string[];
-}
-
-interface MatchPlayer {
-  uid: string;
-  username: string;
-}
-
-interface Match {
-  id: string;
-  court: string;
-  date: string;
-  time: string;
-  hostId: string;
-  hostUsername: string;
-  players: MatchPlayer[];
-  playerIds: string[];
-  maxPlayers: number;
-}
-
 function PlayerProfilePage() {
   const navigate = useNavigate();
   const { userData, refreshUserData } = useAuth();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  const {
+    playerMatches,
+    loadPlayerMatches,
+    leaveExistingMatch,
+    removeMatch,
+  } = useMatches();
+
+  const {
+    playerTournaments,
+    loadPlayerTournaments,
+    unregisterFromTournament,
+  } = useTournaments();
+
+  const {
+    uploadAvatar,
+    editProfile,
+    changePassword,
+    loading: profileLoading,
+    error: profileError,
+    success: profileSuccess,
+    clearProfileMessages,
+  } = useProfile();
+
   const [activeTab, setActiveTab] = useState<"matches" | "tournaments">(
     "matches",
   );
 
-  const [avatar, setAvatar] = useState<string>(
-    (userData as any)?.photoURL || player1,
-  );
+  const [avatar, setAvatar] = useState<string>(userData?.photoURL || player1);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarMsg, setAvatarMsg] = useState("");
 
   const [playerCategory, setPlayerCategory] = useState(
     getPlayerCategory(userData?.level, userData?.category),
   );
-
-  const [tournaments, setTournaments] = useState<Tournament[]>([]);
-  const [matches, setMatches] = useState<Match[]>([]);
 
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -131,46 +116,33 @@ function PlayerProfilePage() {
 
     setPlayerCategory(realCategory);
     setTempCategory(realCategory);
-    setAvatar((userData as any)?.photoURL || player1);
+    setAvatar(userData?.photoURL || player1);
   }, [userData]);
 
   useEffect(() => {
     if (!userData?.uid) return;
 
-    const fetchTournaments = async () => {
-      try {
-        const data = await getPlayerTournaments(userData.uid);
-        setTournaments(data as Tournament[]);
-      } catch (error) {
-        console.error("Error fetching tournaments:", error);
-      }
-    };
+    loadPlayerTournaments(userData.uid);
+    loadPlayerMatches(userData.uid);
+  }, [userData?.uid, loadPlayerTournaments, loadPlayerMatches]);
 
-    const fetchMatches = async () => {
-      try {
-        const data = await getPlayerMatches(userData.uid);
-        const now = new Date();
+  const matches = playerMatches
+    .filter((match) => {
+      if (!match.date || !match.time) return false;
 
-        const filtered = (data as Match[]).filter((match) => {
-          const matchDate = new Date(`${match.date}T${match.time}`);
-          return matchDate >= now;
-        });
+      const matchDate = new Date(`${match.date}T${match.time}`);
+      const now = new Date();
 
-        filtered.sort(
-          (a, b) =>
-            new Date(`${a.date}T${a.time}`).getTime() -
-            new Date(`${b.date}T${b.time}`).getTime(),
-        );
+      return matchDate >= now;
+    })
+    .sort((a, b) => {
+      const firstDate = new Date(`${a.date}T${a.time}`).getTime();
+      const secondDate = new Date(`${b.date}T${b.time}`).getTime();
 
-        setMatches(filtered);
-      } catch (error) {
-        console.error("Error fetching matches:", error);
-      }
-    };
+      return firstDate - secondDate;
+    });
 
-    fetchTournaments();
-    fetchMatches();
-  }, [userData]);
+  const tournaments = playerTournaments as Tournament[];
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -179,13 +151,10 @@ function PlayerProfilePage() {
 
     setUploadingAvatar(true);
     setAvatarMsg("");
+    clearProfileMessages();
 
     try {
-      const downloadURL = await uploadUserAvatar(
-        userData.id,
-        userData.uid,
-        file,
-      );
+      const downloadURL = await uploadAvatar(userData.id, userData.uid, file);
 
       setAvatar(downloadURL);
       await refreshUserData();
@@ -224,8 +193,10 @@ function PlayerProfilePage() {
       return;
     }
 
+    clearProfileMessages();
+
     try {
-      await changeCurrentUserPassword(newPassword);
+      await changePassword(newPassword);
 
       setPasswordMsg("");
       setNewPassword("");
@@ -233,34 +204,31 @@ function PlayerProfilePage() {
       setShowPasswordModal(false);
 
       alert("Password updated successfully.");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error changing password:", error);
 
-      if (error.code === "auth/requires-recent-login") {
-        setPasswordMsg(
-          "Please log out and log in again before changing password.",
-        );
-        return;
+      if (profileError) {
+        setPasswordMsg(profileError);
+      } else {
+        setPasswordMsg("Error updating password. Please try again.");
       }
-
-      setPasswordMsg("Error updating password. Please try again.");
     }
   };
 
   const handleConfirmCategory = async () => {
-    if (!tempCategory) return;
+    if (!tempCategory || !userData?.id) return;
+
+    clearProfileMessages();
 
     try {
-      if (userData?.id) {
-        const numericLevel = getCategoryLevel(tempCategory);
+      const numericLevel = getCategoryLevel(tempCategory);
 
-        await updateUser(userData.id, {
-          category: tempCategory,
-          level: numericLevel,
-        });
+      await editProfile(userData.id, {
+        category: tempCategory,
+        level: numericLevel,
+      });
 
-        await refreshUserData();
-      }
+      await refreshUserData();
 
       setPlayerCategory(tempCategory);
       setTempCategory(tempCategory);
@@ -275,18 +243,20 @@ function PlayerProfilePage() {
 
     try {
       if (match.hostId === userData.uid) {
-        await deleteMatch(match.id);
+        await removeMatch(match.id);
       } else {
-        await leaveMatch(match.id, userData.uid, userData.username);
+        await leaveExistingMatch(match.id, userData.uid, userData.username);
       }
 
-      setMatches((prev) => prev.filter((item) => item.id !== match.id));
+      await loadPlayerMatches(userData.uid);
     } catch (error) {
       console.error("Error cancelling match:", error);
     }
   };
 
   const handleLeaveTournament = async (playerTournamentId: string) => {
+    if (!userData?.uid) return;
+
     const confirmLeave = window.confirm(
       "Are you sure you want to leave this tournament?",
     );
@@ -294,11 +264,8 @@ function PlayerProfilePage() {
     if (!confirmLeave) return;
 
     try {
-      await leaveTournament(playerTournamentId);
-
-      setTournaments((prev) =>
-        prev.filter((tournament) => tournament.id !== playerTournamentId),
-      );
+      await unregisterFromTournament(playerTournamentId);
+      await loadPlayerTournaments(userData.uid);
     } catch (error) {
       console.error("Error leaving tournament:", error);
     }
@@ -309,7 +276,9 @@ function PlayerProfilePage() {
     navigate("/");
   };
 
-  const formatDate = (date: string) => {
+  const formatDate = (date?: string) => {
+    if (!date) return "Not specified";
+
     const d = new Date(date + "T00:00:00");
 
     return d.toLocaleDateString("en-US", {
@@ -339,9 +308,9 @@ function PlayerProfilePage() {
                 type="button"
                 className="player-profile__edit-btn"
                 onClick={() => fileInputRef.current?.click()}
-                disabled={uploadingAvatar}
+                disabled={uploadingAvatar || profileLoading}
               >
-                {uploadingAvatar ? "..." : "✏️"}
+                {uploadingAvatar || profileLoading ? "..." : "✏️"}
               </button>
 
               <input
@@ -392,18 +361,19 @@ function PlayerProfilePage() {
                 {visibleCategory}
               </p>
 
-              {avatarMsg && (
+              {(avatarMsg || profileError || profileSuccess) && (
                 <p
                   style={{
                     margin: "0.35rem 0 0",
                     fontSize: "0.8rem",
                     fontWeight: 700,
-                    color: avatarMsg.includes("successfully")
-                      ? "#2f9e44"
-                      : "#e05252",
+                    color:
+                      avatarMsg.includes("successfully") || profileSuccess
+                        ? "#2f9e44"
+                        : "#e05252",
                   }}
                 >
-                  {avatarMsg}
+                  {avatarMsg || profileError || profileSuccess}
                 </p>
               )}
 
@@ -463,14 +433,22 @@ function PlayerProfilePage() {
                     <div key={match.id} className="player-profile__match-card">
                       <div className="player-profile__match-left">
                         <p>
-                          <strong>{match.court}</strong>
+                          <strong>{match.court || "Not specified"}</strong>
                         </p>
 
                         <p>
-                          {formatDate(match.date)} — {match.time}
+                          {formatDate(match.date)} —{" "}
+                          {match.time || "Not specified"}
                         </p>
 
-                        <p>Host: {match.hostUsername}</p>
+                        <p>
+                          Host:{" "}
+                          {typeof match.hostUsername === "string"
+                            ? match.hostUsername
+                            : typeof match.hostName === "string"
+                              ? match.hostName
+                              : "Unknown host"}
+                        </p>
 
                         <div
                           style={{
@@ -502,7 +480,7 @@ function PlayerProfilePage() {
                         </div>
 
                         <p style={{ marginTop: 4, fontSize: "0.78rem" }}>
-                          {match.players?.length || 0}/{match.maxPlayers}{" "}
+                          {match.players?.length || 0}/{match.maxPlayers || 0}{" "}
                           players
                         </p>
                       </div>
