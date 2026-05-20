@@ -1,29 +1,23 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
-import {
-  getCourts,
-  updateCourt,
-  uploadCourtImage,
-} from "../../firebase/services";
+import { useCourts } from "../../context";
 import "../../styles/admin-court-view.css";
 import court1 from "../../assets/court-1.jpg";
-
-interface Court {
-  id: string;
-  name: string;
-  contact?: string;
-  address?: string;
-  image?: string;
-  courtType?: string;
-}
 
 function AdminCourtViewPage() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [court, setCourt] = useState<Court | null>(null);
-  const [loading, setLoading] = useState(true);
+  const {
+    selectedCourt,
+    loading,
+    error: courtError,
+    loadCourtById,
+    editCourt,
+    uploadCourtPhoto,
+    clearCourtError,
+  } = useCourts();
 
   const [showModal, setShowModal] = useState(false);
   const [tempName, setTempName] = useState("");
@@ -35,23 +29,13 @@ function AdminCourtViewPage() {
 
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [formError, setFormError] = useState("");
 
   useEffect(() => {
-    fetchCourt();
-  }, [id]);
+    if (!id) return;
 
-  const fetchCourt = async () => {
-    try {
-      const data = await getCourts();
-      const found = (data as Court[]).find((item) => item.id === id);
-      setCourt(found || null);
-    } catch (error) {
-      console.error("Error fetching court:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    loadCourtById(id);
+  }, [id, loadCourtById]);
 
   const validatePhone = (phone: string) => {
     const cleanPhone = phone.replace(/\D/g, "");
@@ -59,16 +43,27 @@ function AdminCourtViewPage() {
   };
 
   const handleOpenModal = () => {
-    if (!court) return;
+    if (!selectedCourt) return;
 
-    setTempName(court.name || "");
-    setTempContact(court.contact || "");
-    setTempAddress(court.address || "");
-    setTempCourtType(court.courtType || "");
-    setTempImage(court.image || "");
+    setTempName(selectedCourt.name || "");
+    setTempContact(
+      typeof selectedCourt.contact === "string" ? selectedCourt.contact : "",
+    );
+    setTempAddress(
+      typeof selectedCourt.address === "string" ? selectedCourt.address : "",
+    );
+    setTempCourtType(
+      typeof selectedCourt.courtType === "string"
+        ? selectedCourt.courtType
+        : "",
+    );
+    setTempImage(
+      typeof selectedCourt.image === "string" ? selectedCourt.image : "",
+    );
     setImageFile(null);
     setMessage("");
-    setError("");
+    setFormError("");
+    clearCourtError();
     setShowModal(true);
   };
 
@@ -82,7 +77,7 @@ function AdminCourtViewPage() {
   };
 
   const handleSave = async () => {
-    if (!court?.id) return;
+    if (!selectedCourt?.id) return;
 
     if (
       !tempName.trim() ||
@@ -90,27 +85,29 @@ function AdminCourtViewPage() {
       !tempAddress.trim() ||
       !tempCourtType
     ) {
-      setError("Please fill in all required fields.");
+      setFormError("Please fill in all required fields.");
       return;
     }
 
     if (!validatePhone(tempContact)) {
-      setError("Please enter a valid phone number.");
+      setFormError("Please enter a valid phone number.");
       return;
     }
 
     setSaving(true);
-    setError("");
+    setFormError("");
     setMessage("");
+    clearCourtError();
 
     try {
-      let imageUrl = court.image || "";
+      let imageUrl =
+        typeof selectedCourt.image === "string" ? selectedCourt.image : "";
 
       if (imageFile) {
-        imageUrl = await uploadCourtImage(court.id, imageFile);
+        imageUrl = await uploadCourtPhoto(selectedCourt.id, imageFile);
       }
 
-      await updateCourt(court.id, {
+      await editCourt(selectedCourt.id, {
         name: tempName.trim(),
         contact: tempContact.trim(),
         address: tempAddress.trim(),
@@ -118,14 +115,7 @@ function AdminCourtViewPage() {
         image: imageUrl,
       });
 
-      setCourt({
-        ...court,
-        name: tempName.trim(),
-        contact: tempContact.trim(),
-        address: tempAddress.trim(),
-        courtType: tempCourtType,
-        image: imageUrl,
-      });
+      await loadCourtById(selectedCourt.id);
 
       setMessage("Court updated successfully.");
       setShowModal(false);
@@ -133,9 +123,9 @@ function AdminCourtViewPage() {
       console.error("Error updating court:", error);
 
       if (error instanceof Error) {
-        setError(error.message);
+        setFormError(error.message);
       } else {
-        setError("Error updating court. Please try again.");
+        setFormError("Error updating court. Please try again.");
       }
     } finally {
       setSaving(false);
@@ -146,7 +136,7 @@ function AdminCourtViewPage() {
     return <p style={{ padding: 20, color: "#888" }}>Loading court...</p>;
   }
 
-  if (!court) {
+  if (!selectedCourt) {
     return (
       <div style={{ padding: 20 }}>
         <p style={{ color: "#888" }}>Court not found.</p>
@@ -167,6 +157,8 @@ function AdminCourtViewPage() {
       </div>
     );
   }
+
+  const visibleError = formError || courtError;
 
   return (
     <div className="admin-court-view">
@@ -191,31 +183,43 @@ function AdminCourtViewPage() {
             <p className="admin-court-view__success-message">{message}</p>
           )}
 
-          {error && <p className="admin-court-view__error-message">{error}</p>}
+          {visibleError && (
+            <p className="admin-court-view__error-message">{visibleError}</p>
+          )}
 
           <div className="admin-court-view__card">
             <img
-              src={court.image || court1}
-              alt={court.name}
+              src={
+                typeof selectedCourt.image === "string"
+                  ? selectedCourt.image
+                  : court1
+              }
+              alt={selectedCourt.name || "Tennis court"}
               className="admin-court-view__image"
             />
 
             <div className="admin-court-view__info">
-              <h2 className="admin-court-view__name">{court.name}</h2>
+              <h2 className="admin-court-view__name">{selectedCourt.name}</h2>
 
               <p className="admin-court-view__detail">
                 <span className="admin-court-view__label">Type: </span>
-                {court.courtType || "Not specified"}
+                {typeof selectedCourt.courtType === "string"
+                  ? selectedCourt.courtType
+                  : "Not specified"}
               </p>
 
               <p className="admin-court-view__detail">
                 <span className="admin-court-view__label">Contact: </span>
-                {court.contact || "Not specified"}
+                {typeof selectedCourt.contact === "string"
+                  ? selectedCourt.contact
+                  : "Not specified"}
               </p>
 
               <p className="admin-court-view__detail">
                 <span className="admin-court-view__label">Address: </span>
-                {court.address || "Not specified"}
+                {typeof selectedCourt.address === "string"
+                  ? selectedCourt.address
+                  : "Not specified"}
               </p>
 
               <button
@@ -304,8 +308,10 @@ function AdminCourtViewPage() {
                 />
               )}
 
-              {error && (
-                <p className="admin-court-view__error-message">{error}</p>
+              {visibleError && (
+                <p className="admin-court-view__error-message">
+                  {visibleError}
+                </p>
               )}
             </div>
 
