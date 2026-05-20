@@ -1,20 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import { Icon } from "@iconify/react";
-import { getUserByUid } from "../../firebase/services";
+import { usePlayers } from "../../context";
 import "../../styles/find-coach.css";
 import player1 from "../../assets/player-1.jpg";
-
-interface Player {
-  id: string;
-  username: string;
-  email: string;
-  level?: number;
-  uid: string;
-  phone?: string;
-  photoURL?: string;
-}
 
 const formatPhone = (phone: string) => {
   const cleaned = phone.replace(/\D/g, "");
@@ -27,31 +17,24 @@ const formatPhone = (phone: string) => {
 
 function PlayerViewPage() {
   const { uid } = useParams();
-  const [player, setPlayer] = useState<Player | null>(null);
-  const [loading, setLoading] = useState(true);
+
+  const { selectedPlayer, loading, error, loadPlayerById } = usePlayers();
 
   useEffect(() => {
-    const fetchPlayer = async () => {
-      if (!uid) return;
+    if (!uid) return;
 
-      try {
-        const data = await getUserByUid(uid);
-        setPlayer(data as Player);
-      } catch (error) {
-        console.error("Error fetching player:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPlayer();
-  }, [uid]);
+    loadPlayerById(uid);
+  }, [uid, loadPlayerById]);
 
   if (loading) {
     return <p style={{ padding: 20, color: "#888" }}>Loading...</p>;
   }
 
-  if (!player) {
+  if (error) {
+    return <p style={{ padding: 20, color: "#888" }}>{error}</p>;
+  }
+
+  if (!selectedPlayer) {
     return <p style={{ padding: 20, color: "#888" }}>Player not found.</p>;
   }
 
@@ -88,8 +71,12 @@ function PlayerViewPage() {
               }}
             >
               <img
-                src={player.photoURL || player1}
-                alt={player.username}
+                src={
+                  typeof selectedPlayer.photoURL === "string"
+                    ? selectedPlayer.photoURL
+                    : player1
+                }
+                alt={selectedPlayer.username || "Player"}
                 style={{
                   width: 90,
                   height: 90,
@@ -100,11 +87,11 @@ function PlayerViewPage() {
 
               <div style={{ textAlign: "center" }}>
                 <h2 style={{ margin: 0, fontSize: "1.4rem", fontWeight: 800 }}>
-                  {player.username}
+                  {selectedPlayer.username || "Player"}
                 </h2>
 
                 <p style={{ margin: 0, color: "#888", fontSize: "0.9rem" }}>
-                  @{player.username}
+                  @{selectedPlayer.username || "player"}
                 </p>
               </div>
             </div>
@@ -119,17 +106,21 @@ function PlayerViewPage() {
               }}
             >
               <p style={{ margin: 0, fontSize: "0.95rem" }}>
-                <strong>Contact:</strong> {player.phone || player.email}
+                <strong>Contact:</strong>{" "}
+                {selectedPlayer.phone || selectedPlayer.email || "Not specified"}
               </p>
 
               <p style={{ margin: 0, fontSize: "0.95rem" }}>
-                <strong>Level:</strong> {player.level || "Not specified"}
+                <strong>Level:</strong>{" "}
+                {typeof selectedPlayer.level === "number"
+                  ? selectedPlayer.level
+                  : "Not specified"}
               </p>
             </div>
 
-            {player.phone && (
+            {selectedPlayer.phone && (
               <a
-                href={`https://wa.me/${formatPhone(player.phone)}`}
+                href={`https://wa.me/${formatPhone(selectedPlayer.phone)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{

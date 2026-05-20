@@ -72,7 +72,9 @@ export function PlayersProvider({ children }: { children: ReactNode }) {
 
     try {
       const data = (await getPlayers()) as Player[];
-      const player = data.find((item) => item.id === playerId) || null;
+      const coach =
+const player =
+  data.find((item) => item.id === playerId || item.uid === playerId) || null;
 
       setSelectedPlayer(player);
       return player;
