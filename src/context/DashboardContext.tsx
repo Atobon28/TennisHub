@@ -13,36 +13,22 @@ import type {
   TournamentRegistration,
 } from "./TournamentsContext";
 
-interface DashboardStats {
-  totalCourts: number;
-  totalTournaments: number;
-  activeMatches: number;
-  fullTournaments: number;
-  playersLookingForPartner: number;
-}
-
 interface DashboardContextType {
-  stats: DashboardStats;
-  latestTournaments: Tournament[];
-  latestMatches: Match[];
+  tournaments: Tournament[];
+  courts: Court[];
+  matches: Match[];
+  registrations: TournamentRegistration[];
   loading: boolean;
   error: string;
   loadAdminDashboard: (adminId: string) => Promise<void>;
   clearDashboardError: () => void;
 }
 
-const initialStats: DashboardStats = {
-  totalCourts: 0,
-  totalTournaments: 0,
-  activeMatches: 0,
-  fullTournaments: 0,
-  playersLookingForPartner: 0,
-};
-
 export const DashboardContext = createContext<DashboardContextType>({
-  stats: initialStats,
-  latestTournaments: [],
-  latestMatches: [],
+  tournaments: [],
+  courts: [],
+  matches: [],
+  registrations: [],
   loading: false,
   error: "",
   loadAdminDashboard: async () => {},
@@ -50,9 +36,13 @@ export const DashboardContext = createContext<DashboardContextType>({
 });
 
 export function DashboardProvider({ children }: { children: ReactNode }) {
-  const [stats, setStats] = useState<DashboardStats>(initialStats);
-  const [latestTournaments, setLatestTournaments] = useState<Tournament[]>([]);
-  const [latestMatches, setLatestMatches] = useState<Match[]>([]);
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [courts, setCourts] = useState<Court[]>([]);
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [registrations, setRegistrations] = useState<
+    TournamentRegistration[]
+  >([]);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -62,69 +52,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
   const getErrorMessage = (err: unknown) => {
     if (err instanceof Error) return err.message;
-    return "Something went wrong with the dashboard.";
-  };
 
-  const isTournamentFull = async (tournament: Tournament) => {
-    if (tournament.status === "Full") return true;
-    if (tournament.status === "Closed") return false;
-
-    if (!tournament.capacityByCategory) return false;
-
-    const registrations = (await getTournamentRegistrations(
-      tournament.id,
-    )) as TournamentRegistration[];
-
-    const categories = Object.keys(tournament.capacityByCategory);
-
-    for (const category of categories) {
-      const capacityInfo = tournament.capacityByCategory[category];
-
-      const singlesCapacity = capacityInfo.singlesPlayers || 0;
-      const doublesCapacity = capacityInfo.doublesPairs || 0;
-
-      const singlesUsed = registrations.filter(
-        (registration) =>
-          registration.playerCategory === category &&
-          registration.entryType === "singles",
-      ).length;
-
-      const doublesUsed = registrations.filter(
-        (registration) =>
-          registration.playerCategory === category &&
-          registration.entryType === "doubles",
-      ).length;
-
-      const hasSinglesSpots =
-        singlesCapacity > 0 && singlesUsed < singlesCapacity;
-
-      const hasDoublesSpots =
-        doublesCapacity > 0 && doublesUsed < doublesCapacity;
-
-      if (hasSinglesSpots || hasDoublesSpots) {
-        return false;
-      }
-    }
-
-    return true;
-  };
-
-  const countPlayersLookingForPartner = async (tournaments: Tournament[]) => {
-    let total = 0;
-
-    for (const tournament of tournaments) {
-      const registrations = (await getTournamentRegistrations(
-        tournament.id,
-      )) as TournamentRegistration[];
-
-      const lookingForPartner = registrations.filter(
-        (registration) => registration.needsPartner,
-      );
-
-      total += lookingForPartner.length;
-    }
-
-    return total;
+    return "Something went wrong while loading dashboard data.";
   };
 
   const loadAdminDashboard = async (adminId: string) => {
@@ -132,37 +61,52 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     setError("");
 
     try {
-      const courts = (await getAdminCourts(adminId)) as Court[];
-      const tournaments = (await getAdminTournaments(
-        adminId,
-      )) as Tournament[];
-      const matches = (await getMatches()) as Match[];
+      const [tournamentsData, courtsData, matchesData] = await Promise.all([
+        getAdminTournaments(adminId),
+        getAdminCourts(adminId),
+        getMatches(),
+      ]);
 
-      const activeMatches = matches.filter(
-        (match) => match.status !== "Cancelled",
-      );
+      const adminTournaments = tournamentsData as Tournament[];
+      const adminCourts = courtsData as Court[];
+      const allMatches = matchesData as Match[];
 
-      const fullTournamentChecks = await Promise.all(
-        tournaments.map((tournament) => isTournamentFull(tournament)),
-      );
+      const adminCourtNames = adminCourts
+        .map((court) => court.name)
+        .filter((courtName): courtName is string => Boolean(courtName));
 
-      const fullTournaments = fullTournamentChecks.filter(Boolean).length;
+      const adminMatches = allMatches.filter((match) => {
+        if (typeof match.court !== "string") return false;
 
-      const playersLookingForPartner =
-        await countPlayersLookingForPartner(tournaments);
-
-      setStats({
-        totalCourts: courts.length,
-        totalTournaments: tournaments.length,
-        activeMatches: activeMatches.length,
-        fullTournaments,
-        playersLookingForPartner,
+        return adminCourtNames.includes(match.court);
       });
 
-      setLatestTournaments(tournaments.slice(0, 5));
-      setLatestMatches(activeMatches.slice(0, 5));
+      const registrationsByTournament = await Promise.all(
+        adminTournaments.map(async (tournament) => {
+          const tournamentRegistrations =
+            (await getTournamentRegistrations(
+              tournament.id,
+            )) as unknown as TournamentRegistration[];
+
+          return tournamentRegistrations.map((registration) => ({
+            ...registration,
+            tournamentId: registration.tournamentId || tournament.id,
+          }));
+        }),
+      );
+
+      setTournaments(adminTournaments);
+      setCourts(adminCourts);
+      setMatches(adminMatches);
+      setRegistrations(registrationsByTournament.flat());
     } catch (err) {
+      console.error("Error loading admin dashboard:", err);
       setError(getErrorMessage(err));
+
+      setTournaments([]);
+      setCourts([]);
+      setMatches([]);
+      setRegistrations([]);
     } finally {
       setLoading(false);
     }
@@ -171,9 +115,10 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   return (
     <DashboardContext.Provider
       value={{
-        stats,
-        latestTournaments,
-        latestMatches,
+        tournaments,
+        courts,
+        matches,
+        registrations,
         loading,
         error,
         loadAdminDashboard,
