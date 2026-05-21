@@ -2,12 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import { useAuth } from "../../context/useAuth";
-import {
-  logoutUser,
-  updateUser,
-  changeCurrentUserPassword,
-  uploadUserAvatar,
-} from "../../firebase/services";
+import { useProfile } from "../../context";
+import { logoutUser } from "../../firebase/services";
 import "../../styles/coach-profile.css";
 import coach1 from "../../assets/coach-1.jpg";
 
@@ -67,9 +63,17 @@ function CoachProfilePage() {
   const { userData, refreshUserData } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [avatar, setAvatar] = useState<string>(
-    (userData as any)?.photoURL || coach1,
-  );
+  const {
+    uploadAvatar,
+    editProfile,
+    changePassword,
+    loading: profileLoading,
+    error: profileError,
+    success: profileSuccess,
+    clearProfileMessages,
+  } = useProfile();
+
+  const [avatar, setAvatar] = useState<string>(userData?.photoURL || coach1);
 
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarMsg, setAvatarMsg] = useState("");
@@ -104,7 +108,7 @@ function CoachProfilePage() {
   };
 
   useEffect(() => {
-    setAvatar((userData as any)?.photoURL || coach1);
+    setAvatar(userData?.photoURL || coach1);
 
     if (userData?.pricePerHour) {
       setPrice(formatCurrency(userData.pricePerHour));
@@ -149,9 +153,10 @@ function CoachProfilePage() {
 
     setUploadingAvatar(true);
     setAvatarMsg("");
+    clearProfileMessages();
 
     try {
-      const imageUrl = await uploadUserAvatar(userData.id, userData.uid, file);
+      const imageUrl = await uploadAvatar(userData.id, userData.uid, file);
 
       setAvatar(imageUrl);
 
@@ -235,7 +240,7 @@ function CoachProfilePage() {
       if (userData?.id) {
         const availableDays = allDays.filter((day) => schedule[day].enabled);
 
-        await updateUser(userData.id, {
+        await editProfile(userData.id, {
           availableDays,
           availableSchedule: schedule,
         });
@@ -267,8 +272,10 @@ function CoachProfilePage() {
       return;
     }
 
+    clearProfileMessages();
+
     try {
-      await changeCurrentUserPassword(newPassword);
+      await changePassword(newPassword);
 
       setPasswordMsg("");
       setNewPassword("");
@@ -276,17 +283,14 @@ function CoachProfilePage() {
       setShowPasswordModal(false);
 
       alert("Password updated successfully.");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error changing password:", error);
 
-      if (error.code === "auth/requires-recent-login") {
-        setPasswordMsg(
-          "Please log out and log in again before changing password.",
-        );
-        return;
+      if (profileError) {
+        setPasswordMsg(profileError);
+      } else {
+        setPasswordMsg("Error updating password. Please try again.");
       }
-
-      setPasswordMsg("Error updating password. Please try again.");
     }
   };
 
@@ -314,7 +318,7 @@ function CoachProfilePage() {
 
     try {
       if (userData?.id) {
-        await updateUser(userData.id, {
+        await editProfile(userData.id, {
           pricePerHour: String(numericPrice),
         });
 
@@ -351,9 +355,9 @@ function CoachProfilePage() {
                 type="button"
                 className="coach-profile__edit-btn"
                 onClick={() => fileInputRef.current?.click()}
-                disabled={uploadingAvatar}
+                disabled={uploadingAvatar || profileLoading}
               >
-                {uploadingAvatar ? "..." : "✏️"}
+                {uploadingAvatar || profileLoading ? "..." : "✏️"}
               </button>
 
               <input
@@ -368,18 +372,20 @@ function CoachProfilePage() {
             <div className="coach-profile__user-info">
               <h2 className="coach-profile__name">{name}</h2>
               <p className="coach-profile__username">{username}</p>
-              {avatarMsg && (
+
+              {(avatarMsg || profileError || profileSuccess) && (
                 <p
                   style={{
                     margin: "0.35rem 0 0",
                     fontSize: "0.8rem",
                     fontWeight: 700,
-                    color: avatarMsg.includes("successfully")
-                      ? "#2f9e44"
-                      : "#e05252",
+                    color:
+                      avatarMsg.includes("successfully") || profileSuccess
+                        ? "#2f9e44"
+                        : "#e05252",
                   }}
                 >
-                  {avatarMsg}
+                  {avatarMsg || profileError || profileSuccess}
                 </p>
               )}
 
