@@ -7,6 +7,7 @@ import { useCourts, useTournaments } from "../../context";
 import { useAuth } from "../../context/useAuth";
 import "../../styles/admin-tournaments.css";
 import "../../styles/create-match.css";
+import ConfirmModal from "../../components/common/ConfirmModal";
 
 const timeOptions = [
   "06:00",
@@ -68,7 +69,9 @@ function AdminTournamentsPage() {
   } = useCourts();
 
   const [showModal, setShowModal] = useState(false);
-
+  const [tournamentToDelete, setTournamentToDelete] = useState<string | null>(
+    null,
+  );
   const [newName, setNewName] = useState("");
   const [newDate, setNewDate] = useState("");
   const [newHour, setNewHour] = useState("");
@@ -161,7 +164,9 @@ function AdminTournamentsPage() {
     const capacityByCategory: CapacityByCategory = {};
 
     newCategories.forEach((category) => {
-      const singlesValue = Number(capacityInputs[category]?.singlesPlayers || 0);
+      const singlesValue = Number(
+        capacityInputs[category]?.singlesPlayers || 0,
+      );
       const doublesValue = Number(capacityInputs[category]?.doublesPairs || 0);
 
       capacityByCategory[category] = {};
@@ -180,7 +185,9 @@ function AdminTournamentsPage() {
 
   const validateCapacity = () => {
     for (const category of newCategories) {
-      const singlesValue = Number(capacityInputs[category]?.singlesPlayers || 0);
+      const singlesValue = Number(
+        capacityInputs[category]?.singlesPlayers || 0,
+      );
       const doublesValue = Number(capacityInputs[category]?.doublesPairs || 0);
 
       if (
@@ -257,15 +264,20 @@ function AdminTournamentsPage() {
     }
   };
 
-  const handleDeleteTournament = async (tournamentId: string) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this tournament?",
-    );
+  const handleDeleteTournament = (tournamentId: string) => {
+    setTournamentToDelete(tournamentId);
+  };
 
-    if (!confirmDelete) return;
+  const handleCancelDeleteTournament = () => {
+    setTournamentToDelete(null);
+  };
+
+  const handleConfirmDeleteTournament = async () => {
+    if (!tournamentToDelete) return;
 
     try {
-      await removeTournament(tournamentId);
+      await removeTournament(tournamentToDelete);
+      setTournamentToDelete(null);
     } catch (error) {
       console.error("Error deleting tournament:", error);
     }
@@ -718,6 +730,16 @@ function AdminTournamentsPage() {
           </div>
         </div>
       )}
+      <ConfirmModal
+        isOpen={Boolean(tournamentToDelete)}
+        title="Delete tournament?"
+        message="Are you sure you want to delete this tournament? This action cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        danger
+        onCancel={handleCancelDeleteTournament}
+        onConfirm={handleConfirmDeleteTournament}
+      />
     </div>
   );
 }
