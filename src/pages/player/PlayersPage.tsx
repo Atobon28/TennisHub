@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import PersonCard from "../../components/player/PersonCard";
@@ -12,9 +12,27 @@ function PlayersPage() {
 
   const { players, loading, error, loadPlayers } = usePlayers();
 
+  const [searchTerm, setSearchTerm] = useState("");
+
   useEffect(() => {
     loadPlayers();
   }, [loadPlayers]);
+
+  const filteredPlayers = players.filter((player) => {
+    const search = searchTerm.toLowerCase().trim();
+
+    if (!search) return true;
+
+    const username = player.username?.toLowerCase() || "";
+    const category = player.category?.toLowerCase() || "";
+    const level = typeof player.level === "number" ? String(player.level) : "";
+
+    return (
+      username.includes(search) ||
+      category.includes(search) ||
+      level.includes(search)
+    );
+  });
 
   return (
     <div className="find-coach">
@@ -26,6 +44,14 @@ function PlayersPage() {
             </span>
             <h2 className="find-coach__section-title">Players Nearby</h2>
           </div>
+
+          <input
+            type="text"
+            className="find-coach__search"
+            placeholder="Search by name, category or level..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
 
           {loading ? (
             <p
@@ -45,9 +71,15 @@ function PlayersPage() {
             >
               No players available yet.
             </p>
+          ) : filteredPlayers.length === 0 ? (
+            <p
+              style={{ color: "#888", textAlign: "center", padding: "20px 0" }}
+            >
+              No players match your search.
+            </p>
           ) : (
             <div className="find-coach__coaches-grid">
-              {players.map((player) => (
+              {filteredPlayers.map((player) => (
                 <div
                   key={player.id}
                   onClick={() => navigate(`/player/players/view/${player.uid}`)}
