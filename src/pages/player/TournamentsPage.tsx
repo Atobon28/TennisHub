@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import AdBanners from "../../components/player/AdBanners";
@@ -7,10 +7,22 @@ import { useTournaments } from "../../context";
 import { useAuth } from "../../context/useAuth";
 import "../../styles/tournaments-page.css";
 
-const getPlayerCategory = (
-  level?: number | null,
-  category?: string | null,
-) => {
+const categoryFilters = [
+  "All",
+  "Open",
+  "First Category",
+  "Second Category",
+  "Third Category",
+  "Fourth Category",
+  "Fifth Category",
+  "Beginner",
+  "Junior",
+  "Senior",
+];
+
+const statusFilters = ["All", "Open", "Full", "Closed"];
+
+const getPlayerCategory = (level?: number | null, category?: string | null) => {
   if (category) return category;
 
   if (level === 1) return "First Category";
@@ -47,10 +59,10 @@ function TournamentsPage() {
   const { tournaments, loading, error, loadTournaments } = useTournaments();
   const hasLoadedTournaments = useRef(false);
 
-  const playerCategory = getPlayerCategory(
-    userData?.level,
-    userData?.category,
-  );
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedStatus, setSelectedStatus] = useState("All");
+
+  const playerCategory = getPlayerCategory(userData?.level, userData?.category);
 
   useEffect(() => {
     if (hasLoadedTournaments.current) return;
@@ -58,6 +70,20 @@ function TournamentsPage() {
     hasLoadedTournaments.current = true;
     loadTournaments();
   }, [loadTournaments]);
+
+  const filteredTournaments = tournaments.filter((tournament) => {
+    const categories = tournament.categories || [];
+    const status = tournament.status || "Open";
+
+    const matchesCategory =
+      selectedCategory === "All" ||
+      categories.includes(selectedCategory) ||
+      (selectedCategory === "Open" && categories.includes("Open"));
+
+    const matchesStatus = selectedStatus === "All" || status === selectedStatus;
+
+    return matchesCategory && matchesStatus;
+  });
 
   return (
     <div className="tournaments-page">
@@ -88,6 +114,57 @@ function TournamentsPage() {
             </p>
           )}
 
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+              gap: "0.75rem",
+              marginBottom: "1.5rem",
+            }}
+          >
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              style={{
+                border: "none",
+                borderRadius: "999px",
+                padding: "0.8rem 1rem",
+                fontWeight: 800,
+                fontFamily: "inherit",
+                background: "white",
+                color: "#111",
+                boxShadow: "0 4px 12px rgba(15, 14, 12, 0.08)",
+              }}
+            >
+              {categoryFilters.map((category) => (
+                <option key={category} value={category}>
+                  Category: {category}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              style={{
+                border: "none",
+                borderRadius: "999px",
+                padding: "0.8rem 1rem",
+                fontWeight: 800,
+                fontFamily: "inherit",
+                background: "white",
+                color: "#111",
+                boxShadow: "0 4px 12px rgba(15, 14, 12, 0.08)",
+              }}
+            >
+              {statusFilters.map((status) => (
+                <option key={status} value={status}>
+                  Status: {status}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {loading ? (
             <p className="tournaments-page__loading">Loading tournaments...</p>
           ) : error ? (
@@ -96,9 +173,13 @@ function TournamentsPage() {
             <p className="tournaments-page__loading">
               No tournaments available yet.
             </p>
+          ) : filteredTournaments.length === 0 ? (
+            <p className="tournaments-page__loading">
+              No tournaments match these filters.
+            </p>
           ) : (
             <div className="tournaments-page__cards-grid">
-              {tournaments.map((tournament) => {
+              {filteredTournaments.map((tournament) => {
                 const categories = tournament.categories || [];
 
                 const canApply =
