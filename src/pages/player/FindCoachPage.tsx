@@ -4,6 +4,9 @@ import AdBanners from "../../components/player/AdBanners";
 import { Icon } from "@iconify/react";
 import { useCoaches } from "../../context";
 import type { Coach } from "../../context/CoachesContext";
+import LoadingState from "../../components/common/LoadingState";
+import EmptyState from "../../components/common/EmptyState";
+import ErrorState from "../../components/common/ErrorState";
 import "../../styles/find-coach.css";
 import coach1 from "../../assets/coach-1.jpg";
 
@@ -67,13 +70,13 @@ function FindCoachPage() {
           />
 
           {loading ? (
-            <p className="find-coach__empty">Loading coaches...</p>
+            <LoadingState message="Loading coaches..." />
           ) : error ? (
-            <p className="find-coach__empty">{error}</p>
+            <ErrorState message={error} />
           ) : coaches.length === 0 ? (
-            <p className="find-coach__empty">No coaches available yet.</p>
+            <EmptyState message="No coaches available yet." />
           ) : filteredCoaches.length === 0 ? (
-            <p className="find-coach__empty">No coaches match your search.</p>
+            <EmptyState message="No coaches match your search." />
           ) : (
             <div className="find-coach__coaches-grid">
               {filteredCoaches.map((coach) => {
