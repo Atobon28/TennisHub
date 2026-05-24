@@ -1,0 +1,45 @@
+.common-state {
+  text-align: center;
+  padding: 1rem;
+  font-weight: 700;
+  border-radius: 14px;
+}
+
+.common-state--loading,
+.common-state--empty {
+  color: #888;
+}
+
+.common-state--error {
+  color: #e05252;
+  background: #ffe8e8;
+}
+
+.common-state--success {
+  color: #2f9e44;
+  background: #e8f8ee;
+}
+
+.common-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 0.75rem 1rem;
+  font-family: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.common-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.common-btn--primary {
+  background: linear-gradient(180deg, #bfe212 0%, #6f8500 100%);
+  color: white;
+}
+
+.common-btn--danger {
+  background: #e05252;
+  color: white;
+}
