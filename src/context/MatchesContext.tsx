@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useState, type ReactNode } from "react";
+import { createContext, useCallback, useState, type ReactNode } from "react";
 import {
   createMatch,
   deleteMatch,
@@ -45,12 +45,12 @@ interface MatchesContextType {
   joinExistingMatch: (
     matchId: string,
     playerId: string,
-    playerUsername: string,
+    playerUsername: string
   ) => Promise<void>;
   leaveExistingMatch: (
     matchId: string,
     playerId: string,
-    playerUsername: string,
+    playerUsername: string
   ) => Promise<void>;
   removeMatch: (matchId: string) => Promise<void>;
   clearMatchError: () => void;
@@ -79,16 +79,16 @@ export function MatchesProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const clearMatchError = () => {
+  const clearMatchError = useCallback(() => {
     setError("");
-  };
+  }, []);
 
   const getErrorMessage = (err: unknown) => {
     if (err instanceof Error) return err.message;
     return "Something went wrong with matches.";
   };
 
-  const loadMatches = async () => {
+  const loadMatches = useCallback(async () => {
     setLoading(true);
     setError("");
 
@@ -100,9 +100,9 @@ export function MatchesProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const loadPlayerMatches = async (playerId: string) => {
+  const loadPlayerMatches = useCallback(async (playerId: string) => {
     setLoading(true);
     setError("");
 
@@ -114,9 +114,9 @@ export function MatchesProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const loadMatchById = async (matchId: string) => {
+  const loadMatchById = useCallback(async (matchId: string) => {
     setLoading(true);
     setError("");
 
@@ -132,64 +132,76 @@ export function MatchesProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const addNewMatch = async (matchData: object) => {
+  const addNewMatch = useCallback(async (matchData: object) => {
     setLoading(true);
     setError("");
 
     try {
       await createMatch(matchData);
-      await loadMatches();
+
+      const data = (await getMatches()) as Match[];
+      setMatches(data);
     } catch (err) {
       setError(getErrorMessage(err));
       throw err;
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const joinExistingMatch = async (
-    matchId: string,
-    playerId: string,
-    playerUsername: string,
-  ) => {
-    setLoading(true);
-    setError("");
+  const joinExistingMatch = useCallback(
+    async (matchId: string, playerId: string, playerUsername: string) => {
+      setLoading(true);
+      setError("");
 
-    try {
-      await joinMatch(matchId, playerId, playerUsername);
-      await loadMatches();
-      await loadPlayerMatches(playerId);
-    } catch (err) {
-      setError(getErrorMessage(err));
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
+      try {
+        await joinMatch(matchId, playerId, playerUsername);
 
-  const leaveExistingMatch = async (
-    matchId: string,
-    playerId: string,
-    playerUsername: string,
-  ) => {
-    setLoading(true);
-    setError("");
+        const [matchesData, playerMatchesData] = await Promise.all([
+          getMatches(),
+          getPlayerMatches(playerId),
+        ]);
 
-    try {
-      await leaveMatch(matchId, playerId, playerUsername);
-      await loadMatches();
-      await loadPlayerMatches(playerId);
-    } catch (err) {
-      setError(getErrorMessage(err));
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
+        setMatches(matchesData as Match[]);
+        setPlayerMatches(playerMatchesData as Match[]);
+      } catch (err) {
+        setError(getErrorMessage(err));
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
-  const removeMatch = async (matchId: string) => {
+  const leaveExistingMatch = useCallback(
+    async (matchId: string, playerId: string, playerUsername: string) => {
+      setLoading(true);
+      setError("");
+
+      try {
+        await leaveMatch(matchId, playerId, playerUsername);
+
+        const [matchesData, playerMatchesData] = await Promise.all([
+          getMatches(),
+          getPlayerMatches(playerId),
+        ]);
+
+        setMatches(matchesData as Match[]);
+        setPlayerMatches(playerMatchesData as Match[]);
+      } catch (err) {
+        setError(getErrorMessage(err));
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
+  const removeMatch = useCallback(async (matchId: string) => {
     setLoading(true);
     setError("");
 
@@ -197,11 +209,11 @@ export function MatchesProvider({ children }: { children: ReactNode }) {
       await deleteMatch(matchId);
 
       setMatches((currentMatches) =>
-        currentMatches.filter((match) => match.id !== matchId),
+        currentMatches.filter((match) => match.id !== matchId)
       );
 
       setPlayerMatches((currentMatches) =>
-        currentMatches.filter((match) => match.id !== matchId),
+        currentMatches.filter((match) => match.id !== matchId)
       );
     } catch (err) {
       setError(getErrorMessage(err));
@@ -209,7 +221,7 @@ export function MatchesProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   return (
     <MatchesContext.Provider
