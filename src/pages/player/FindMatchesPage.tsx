@@ -6,6 +6,7 @@ import { useAuth } from "../../context/useAuth";
 import { useMatches } from "../../context";
 import type { Match } from "../../context/MatchesContext";
 import "../../styles/find-matches.css";
+import ConfirmModal from "../../components/common/ConfirmModal";
 
 function FindMatchesPage() {
   const navigate = useNavigate();
@@ -23,6 +24,7 @@ function FindMatchesPage() {
 
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedType, setSelectedType] = useState("All");
+  const [matchToLeave, setMatchToLeave] = useState<Match | null>(null);
 
   useEffect(() => {
     loadMatches();
@@ -70,19 +72,31 @@ function FindMatchesPage() {
     }
   };
 
-  const handleLeave = async (e: React.MouseEvent, match: Match) => {
+  const handleLeave = (e: React.MouseEvent, match: Match) => {
     e.stopPropagation();
+    setMatchToLeave(match);
+  };
 
-    if (!userData?.uid || !userData?.username) return;
+  const handleCancelLeave = () => {
+    setMatchToLeave(null);
+  };
+
+  const handleConfirmLeave = async () => {
+    if (!matchToLeave || !userData?.uid || !userData?.username) return;
 
     try {
-      if (match.hostId === userData.uid) {
-        await removeMatch(match.id);
+      if (matchToLeave.hostId === userData.uid) {
+        await removeMatch(matchToLeave.id);
       } else {
-        await leaveExistingMatch(match.id, userData.uid, userData.username);
+        await leaveExistingMatch(
+          matchToLeave.id,
+          userData.uid,
+          userData.username,
+        );
       }
 
       await loadMatches();
+      setMatchToLeave(null);
     } catch (error) {
       console.error("Error leaving match:", error);
     }
@@ -294,6 +308,28 @@ function FindMatchesPage() {
 
         <AdBanners />
       </div>
+      <ConfirmModal
+        isOpen={Boolean(matchToLeave)}
+        title={
+          matchToLeave?.hostId === userData?.uid
+            ? "Cancel match?"
+            : "Leave match?"
+        }
+        message={
+          matchToLeave?.hostId === userData?.uid
+            ? "Are you sure you want to cancel this match? This will remove it for all players."
+            : "Are you sure you want to leave this match?"
+        }
+        confirmLabel={
+          matchToLeave?.hostId === userData?.uid
+            ? "Cancel Match"
+            : "Leave Match"
+        }
+        cancelLabel="Cancel"
+        danger
+        onCancel={handleCancelLeave}
+        onConfirm={handleConfirmLeave}
+      />
     </div>
   );
 }
