@@ -6,6 +6,7 @@ import { useAuth } from "../../context/useAuth";
 import type { Tournament } from "../../context/TournamentsContext";
 import "../../styles/admin-tournament-view.css";
 import court1 from "../../assets/court-1.jpg";
+import { useToast } from "../../context/ToastContext";
 
 const categoryOptions = [
   "First Category",
@@ -28,6 +29,7 @@ interface CapacityByCategory {
 function AdminTournamentViewPage() {
   const { id } = useParams();
   const { userData } = useAuth();
+  const { showToast } = useToast();
 
   const {
     selectedTournament,
@@ -362,11 +364,13 @@ function AdminTournamentViewPage() {
       await loadTournamentById(tournament.id);
       await loadTournamentRegistrations(tournament.id);
 
+      showToast("Tournament updated successfully.", "success");
       setSuccessMsg("Tournament updated successfully.");
       setShowModal(false);
     } catch (err) {
       console.error("Error updating tournament:", err);
       setLocalError("Error updating tournament.");
+      showToast("Error updating tournament.", "error");
     }
   };
 

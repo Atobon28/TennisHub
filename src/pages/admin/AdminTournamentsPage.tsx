@@ -8,6 +8,7 @@ import { useAuth } from "../../context/useAuth";
 import "../../styles/admin-tournaments.css";
 import "../../styles/create-match.css";
 import ConfirmModal from "../../components/common/ConfirmModal";
+import { useToast } from "../../context/ToastContext";
 
 const timeOptions = [
   "06:00",
@@ -49,6 +50,7 @@ interface CapacityByCategory {
 function AdminTournamentsPage() {
   const navigate = useNavigate();
   const { userData } = useAuth();
+  const { showToast } = useToast();
 
   const {
     adminTournaments,
@@ -256,9 +258,11 @@ function AdminTournamentsPage() {
     try {
       await createTournament(userData.uid, newTournament);
       handleClose();
+      showToast("Tournament created successfully.", "success");
     } catch (error) {
       console.error("Error adding tournament:", error);
       setFormError("Error creating tournament. Please try again.");
+      showToast("Tournament created successfully.", "success");
     } finally {
       setCreating(false);
     }
@@ -278,8 +282,10 @@ function AdminTournamentsPage() {
     try {
       await removeTournament(tournamentToDelete);
       setTournamentToDelete(null);
+      showToast("Tournament deleted successfully.", "success");
     } catch (error) {
       console.error("Error deleting tournament:", error);
+      showToast("Error deleting tournament. Please try again.", "error");
     }
   };
 

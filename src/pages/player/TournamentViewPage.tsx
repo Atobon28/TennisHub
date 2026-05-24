@@ -8,6 +8,7 @@ import type { EntryType, Tournament } from "../../context/TournamentsContext";
 import "../../styles/tournament-view.css";
 import court1 from "../../assets/court-1.jpg";
 import ConfirmModal from "../../components/common/ConfirmModal";
+import { useToast } from "../../context/ToastContext";
 
 interface PlayerTournament {
   id: string;
@@ -56,6 +57,7 @@ function TournamentViewPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { userData } = useAuth();
+  const { showToast } = useToast();
 
   const {
     selectedTournament,
@@ -240,8 +242,10 @@ function TournamentViewPage() {
 
       setJoined(true);
       setRegistrationId(existingTournament?.id || null);
+      showToast("Tournament joined successfully.", "success");
     } catch (err) {
       console.error("Error joining tournament:", err);
+      showToast("Error joining tournament.", "error");
 
       if (err instanceof Error) {
         setLocalError(err.message);
@@ -278,9 +282,11 @@ function TournamentViewPage() {
       setPartnerName("");
       setEntryType(tournamentType === "doubles" ? "doubles" : "singles");
       setShowLeaveConfirm(false);
+      showToast("Tournament left successfully.", "success");
     } catch (err) {
       console.error("Error leaving tournament:", err);
       setLocalError("Error leaving tournament.");
+      showToast("Error leaving tournament.", "error");
     } finally {
       setLeaving(false);
     }
