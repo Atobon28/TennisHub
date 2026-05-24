@@ -1,45 +1,18 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
-import {
-  getPlayerTournamentById,
-  getTournaments,
-  joinTournament,
-  leaveTournament,
-  getTournamentRegistrations,
-} from "../../firebase/services";
+import { getPlayerTournamentById } from "../../firebase/services";
 import { useAuth } from "../../context/useAuth";
+import { useTournaments } from "../../context";
+import type {
+  EntryType,
+  Tournament,
+} from "../../context/TournamentsContext";
 import "../../styles/tournament-view.css";
 import court1 from "../../assets/court-1.jpg";
 
-interface CapacityByCategory {
-  [category: string]: {
-    singlesPlayers?: number;
-    doublesPairs?: number;
-  };
-}
-
-interface Tournament {
-  id: string;
-  name: string;
-  info: string;
-  categories?: string[];
-  courts?: string[];
-  image?: string;
-  tournamentType?: string;
-  capacityByCategory?: CapacityByCategory;
-  status?: "Open" | "Full" | "Closed";
-}
-
 interface PlayerTournament {
   id: string;
-}
-
-interface TournamentRegistration {
-  id: string;
-  playerCategory?: string;
-  entryType?: "singles" | "doubles";
-  needsPartner?: boolean;
 }
 
 const getPlayerCategory = (level?: number | null, category?: string | null) => {
@@ -86,21 +59,30 @@ function TournamentViewPage() {
   const navigate = useNavigate();
   const { userData } = useAuth();
 
-  const [tournament, setTournament] = useState<Tournament | null>(null);
+  const {
+    selectedTournament,
+    registrations,
+    loading,
+    error: tournamentError,
+    loadTournamentById,
+    loadTournamentRegistrations,
+    registerInTournament,
+    unregisterFromTournament,
+    clearTournamentError,
+  } = useTournaments();
+
   const [joined, setJoined] = useState(false);
   const [registrationId, setRegistrationId] = useState<string | null>(null);
-  const [registrations, setRegistrations] = useState<TournamentRegistration[]>(
-    [],
-  );
 
-  const [entryType, setEntryType] = useState<"singles" | "doubles">("singles");
+  const [entryType, setEntryType] = useState<EntryType>("singles");
   const [hasPartner, setHasPartner] = useState("");
   const [partnerName, setPartnerName] = useState("");
 
-  const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
   const [leaving, setLeaving] = useState(false);
-  const [error, setError] = useState("");
+  const [localError, setLocalError] = useState("");
+
+  const tournament = selectedTournament as Tournament | null;
 
   const playerCategory = getPlayerCategory(userData?.level, userData?.category);
   const tournamentType = normalizeTournamentType(tournament?.tournamentType);
@@ -170,28 +152,21 @@ function TournamentViewPage() {
     const fetchTournament = async () => {
       if (!id) return;
 
-      setLoading(true);
-      setError("");
+      clearTournamentError();
+      setLocalError("");
 
       try {
-        const tournamentsData = (await getTournaments()) as Tournament[];
+        const selectedTournamentData = await loadTournamentById(id);
 
-        const selectedTournament = tournamentsData.find(
-          (item) => item.id === id,
-        );
-
-        if (!selectedTournament) {
-          setError("Tournament not found.");
+        if (!selectedTournamentData) {
+          setLocalError("Tournament not found.");
           return;
         }
 
-        setTournament(selectedTournament);
-
-        const tournamentRegistrations = await getTournamentRegistrations(id);
-        setRegistrations(tournamentRegistrations as TournamentRegistration[]);
+        await loadTournamentRegistrations(id);
 
         const selectedType = normalizeTournamentType(
-          selectedTournament.tournamentType,
+          selectedTournamentData.tournamentType,
         );
 
         setEntryType(selectedType === "doubles" ? "doubles" : "singles");
@@ -212,73 +187,67 @@ function TournamentViewPage() {
         }
       } catch (err) {
         console.error("Error loading tournament:", err);
-        setError("Error loading tournament.");
-      } finally {
-        setLoading(false);
+        setLocalError("Error loading tournament.");
       }
     };
 
     fetchTournament();
-  }, [id, userData?.uid]);
+  }, [
+    id,
+    userData?.uid,
+    loadTournamentById,
+    loadTournamentRegistrations,
+    clearTournamentError,
+  ]);
 
   const handleJoin = async () => {
     if (!tournament || !userData?.uid || !userData?.username) return;
 
     if (!canApply) {
-      setError("You are not eligible for this tournament.");
+      setLocalError("You are not eligible for this tournament.");
       return;
     }
 
     if (shouldAskPartner && !hasPartner) {
-      setError("Please select if you have a partner or not.");
+      setLocalError("Please select if you have a partner or not.");
       return;
     }
 
     if (shouldAskPartner && hasPartner === "yes" && !partnerName.trim()) {
-      setError("Please enter your partner name.");
+      setLocalError("Please enter your partner name.");
       return;
     }
 
     setJoining(true);
-    setError("");
+    setLocalError("");
+    clearTournamentError();
 
     try {
-      await joinTournament(
-        userData.uid,
-        userData.username,
-        {
-          ...tournament,
-          tournamentType,
-        },
-        {
-          entryType,
-          playerCategory,
-          hasPartner: shouldAskPartner && hasPartner === "yes",
-          partnerName:
-            shouldAskPartner && hasPartner === "yes" ? partnerName.trim() : "",
-          needsPartner: shouldAskPartner && hasPartner === "no",
-        },
-      );
+      await registerInTournament(userData.uid, userData.username, tournament, {
+        entryType,
+        playerCategory,
+        hasPartner: shouldAskPartner && hasPartner === "yes",
+        partnerName:
+          shouldAskPartner && hasPartner === "yes" ? partnerName.trim() : "",
+        needsPartner: shouldAskPartner && hasPartner === "no",
+      });
 
       const existingTournament = (await getPlayerTournamentById(
         userData.uid,
         tournament.id,
       )) as PlayerTournament | null;
 
-      const updatedRegistrations = await getTournamentRegistrations(
-        tournament.id,
-      );
+      await loadTournamentRegistrations(tournament.id);
 
-      setRegistrations(updatedRegistrations as TournamentRegistration[]);
       setJoined(true);
       setRegistrationId(existingTournament?.id || null);
     } catch (err) {
       console.error("Error joining tournament:", err);
 
       if (err instanceof Error) {
-        setError(err.message);
+        setLocalError(err.message);
       } else {
-        setError("Error joining tournament.");
+        setLocalError("Error joining tournament.");
       }
     } finally {
       setJoining(false);
@@ -295,16 +264,13 @@ function TournamentViewPage() {
     if (!confirmLeave) return;
 
     setLeaving(true);
-    setError("");
+    setLocalError("");
+    clearTournamentError();
 
     try {
-      await leaveTournament(registrationId);
+      await unregisterFromTournament(registrationId);
+      await loadTournamentRegistrations(tournament.id);
 
-      const updatedRegistrations = await getTournamentRegistrations(
-        tournament.id,
-      );
-
-      setRegistrations(updatedRegistrations as TournamentRegistration[]);
       setJoined(false);
       setRegistrationId(null);
       setHasPartner("");
@@ -312,11 +278,13 @@ function TournamentViewPage() {
       setEntryType(tournamentType === "doubles" ? "doubles" : "singles");
     } catch (err) {
       console.error("Error leaving tournament:", err);
-      setError("Error leaving tournament.");
+      setLocalError("Error leaving tournament.");
     } finally {
       setLeaving(false);
     }
   };
+
+  const visibleError = localError || tournamentError;
 
   if (loading) {
     return (
@@ -365,7 +333,11 @@ function TournamentViewPage() {
 
             <div className="tournament-view__body">
               <img
-                src={tournament.image || court1}
+                src={
+                  typeof tournament.image === "string"
+                    ? tournament.image
+                    : court1
+                }
                 alt={tournament.name}
                 className="tournament-view__image"
               />
@@ -462,7 +434,7 @@ function TournamentViewPage() {
                     <select
                       value={entryType}
                       onChange={(e) => {
-                        setEntryType(e.target.value as "singles" | "doubles");
+                        setEntryType(e.target.value as EntryType);
                         setHasPartner("");
                         setPartnerName("");
                       }}
@@ -546,7 +518,7 @@ function TournamentViewPage() {
               </div>
             )}
 
-            {error && (
+            {visibleError && (
               <p
                 style={{
                   color: "#e05252",
@@ -554,7 +526,7 @@ function TournamentViewPage() {
                   marginTop: "1rem",
                 }}
               >
-                {error}
+                {visibleError}
               </p>
             )}
 

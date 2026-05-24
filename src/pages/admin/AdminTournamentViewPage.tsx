@@ -1,13 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
-import {
-  getAdminCourts,
-  getTournaments,
-  getTournamentRegistrations,
-  updateTournament,
-} from "../../firebase/services";
+import { useCourts, useTournaments } from "../../context";
 import { useAuth } from "../../context/useAuth";
+import type { Tournament } from "../../context/TournamentsContext";
 import "../../styles/admin-tournament-view.css";
 import court1 from "../../assets/court-1.jpg";
 
@@ -29,49 +25,33 @@ interface CapacityByCategory {
   };
 }
 
-interface Tournament {
-  id: string;
-  name: string;
-  info: string;
-  date?: string;
-  hour?: string;
-  categories?: string[];
-  courts?: string[];
-  image?: string;
-  tournamentType?: string;
-  capacityByCategory?: CapacityByCategory;
-  status?: "Open" | "Full" | "Closed";
-}
-
-interface Court {
-  id: string;
-  name: string;
-}
-
-interface TournamentRegistration {
-  id: string;
-  playerUsername?: string;
-  playerCategory?: string;
-  entryType?: "singles" | "doubles";
-  hasPartner?: boolean;
-  partnerName?: string;
-  needsPartner?: boolean;
-  joinedAt?: string;
-}
-
 function AdminTournamentViewPage() {
   const { id } = useParams();
   const { userData } = useAuth();
 
-  const [tournament, setTournament] = useState<Tournament | null>(null);
-  const [registrations, setRegistrations] = useState<TournamentRegistration[]>(
-    [],
-  );
-  const [courts, setCourts] = useState<Court[]>([]);
+  const {
+    selectedTournament,
+    registrations,
+    loading: tournamentLoading,
+    error: tournamentError,
+    loadTournamentById,
+    loadTournamentRegistrations,
+    editTournament,
+    clearTournamentError,
+  } = useTournaments();
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const {
+    adminCourts,
+    loading: courtsLoading,
+    error: courtsError,
+    loadAdminCourts,
+    clearCourtError,
+  } = useCourts();
+
+  const tournament = selectedTournament as Tournament | null;
+
   const [successMsg, setSuccessMsg] = useState("");
+  const [localError, setLocalError] = useState("");
 
   const [showModal, setShowModal] = useState(false);
   const [tempName, setTempName] = useState("");
@@ -85,45 +65,46 @@ function AdminTournamentViewPage() {
     "Open",
   );
 
+  const loading = tournamentLoading || courtsLoading;
+  const error = localError || tournamentError || courtsError;
+
   useEffect(() => {
     const fetchTournamentData = async () => {
       if (!id) return;
 
-      setLoading(true);
-      setError("");
+      clearTournamentError();
+      clearCourtError();
+      setLocalError("");
 
       try {
-        const tournamentsData = (await getTournaments()) as Tournament[];
-        const selectedTournament = tournamentsData.find(
-          (item) => item.id === id,
-        );
+        const selectedTournamentData = await loadTournamentById(id);
 
-        if (!selectedTournament) {
-          setError("Tournament not found.");
+        if (!selectedTournamentData) {
+          setLocalError("Tournament not found.");
           return;
         }
 
-        const registrationsData = (await getTournamentRegistrations(
-          id,
-        )) as TournamentRegistration[];
-
-        setTournament(selectedTournament);
-        setRegistrations(registrationsData);
+        await loadTournamentRegistrations(id);
 
         if (userData?.uid) {
-          const courtsData = (await getAdminCourts(userData.uid)) as Court[];
-          setCourts(courtsData);
+          await loadAdminCourts(userData.uid);
         }
       } catch (err) {
         console.error("Error loading tournament:", err);
-        setError("Error loading tournament.");
-      } finally {
-        setLoading(false);
+        setLocalError("Error loading tournament.");
       }
     };
 
     fetchTournamentData();
-  }, [id, userData?.uid]);
+  }, [
+    id,
+    userData?.uid,
+    loadTournamentById,
+    loadTournamentRegistrations,
+    loadAdminCourts,
+    clearTournamentError,
+    clearCourtError,
+  ]);
 
   const singlesPlayers = registrations.filter(
     (registration) => registration.entryType === "singles",
@@ -186,14 +167,20 @@ function AdminTournamentViewPage() {
     if (!tournament) return;
 
     setTempName(tournament.name || "");
-    setTempDate(tournament.date || "");
-    setTempHour(tournament.hour || "");
-    setTempType(tournament.tournamentType || "singles");
+    setTempDate(typeof tournament.date === "string" ? tournament.date : "");
+    setTempHour(typeof tournament.hour === "string" ? tournament.hour : "");
+    setTempType(
+      typeof tournament.tournamentType === "string"
+        ? tournament.tournamentType
+        : "singles",
+    );
     setTempCategories(tournament.categories || []);
     setTempCourts(tournament.courts || []);
     setTempCapacity(tournament.capacityByCategory || {});
     setTempStatus(tournament.status || tournamentStatus);
-    setError("");
+    setLocalError("");
+    clearTournamentError();
+    clearCourtError();
     setSuccessMsg("");
     setShowModal(true);
   };
@@ -264,32 +251,32 @@ function AdminTournamentViewPage() {
 
   const validateEditForm = () => {
     if (!tempName.trim()) {
-      setError("Tournament name is required.");
+      setLocalError("Tournament name is required.");
       return false;
     }
 
     if (!tempDate) {
-      setError("Tournament date is required.");
+      setLocalError("Tournament date is required.");
       return false;
     }
 
     if (!tempHour.trim()) {
-      setError("Tournament hour is required.");
+      setLocalError("Tournament hour is required.");
       return false;
     }
 
     if (!tempType) {
-      setError("Tournament type is required.");
+      setLocalError("Tournament type is required.");
       return false;
     }
 
     if (tempCategories.length === 0) {
-      setError("Select at least one category.");
+      setLocalError("Select at least one category.");
       return false;
     }
 
     if (tempCourts.length === 0) {
-      setError("Select at least one court.");
+      setLocalError("Select at least one court.");
       return false;
     }
 
@@ -304,7 +291,7 @@ function AdminTournamentViewPage() {
         (tempType === "singles" || tempType === "both") &&
         singlesCapacity < usedSingles
       ) {
-        setError(
+        setLocalError(
           `Singles capacity for ${category} cannot be lower than current registrations (${usedSingles}).`,
         );
         return false;
@@ -314,7 +301,7 @@ function AdminTournamentViewPage() {
         (tempType === "doubles" || tempType === "both") &&
         doublesCapacity < usedDoubles
       ) {
-        setError(
+        setLocalError(
           `Doubles capacity for ${category} cannot be lower than current pairs (${usedDoubles}).`,
         );
         return false;
@@ -327,7 +314,9 @@ function AdminTournamentViewPage() {
   const handleSave = async () => {
     if (!tournament) return;
 
-    setError("");
+    setLocalError("");
+    clearTournamentError();
+    clearCourtError();
     setSuccessMsg("");
 
     if (!validateEditForm()) return;
@@ -358,7 +347,7 @@ function AdminTournamentViewPage() {
         ", ",
       )}`;
 
-      await updateTournament(tournament.id, {
+      await editTournament(tournament.id, {
         name: tempName.trim(),
         date: tempDate,
         hour: tempHour.trim(),
@@ -370,24 +359,14 @@ function AdminTournamentViewPage() {
         info: updatedInfo,
       });
 
-      setTournament({
-        ...tournament,
-        name: tempName.trim(),
-        date: tempDate,
-        hour: tempHour.trim(),
-        tournamentType: tempType,
-        categories: tempCategories,
-        courts: tempCourts,
-        capacityByCategory: cleanedCapacity,
-        status: tempStatus,
-        info: updatedInfo,
-      });
+      await loadTournamentById(tournament.id);
+      await loadTournamentRegistrations(tournament.id);
 
       setSuccessMsg("Tournament updated successfully.");
       setShowModal(false);
     } catch (err) {
       console.error("Error updating tournament:", err);
-      setError("Error updating tournament.");
+      setLocalError("Error updating tournament.");
     }
   };
 
@@ -463,7 +442,11 @@ function AdminTournamentViewPage() {
 
             <div className="admin-tournament-view__body">
               <img
-                src={tournament.image || court1}
+                src={
+                  typeof tournament.image === "string"
+                    ? tournament.image
+                    : court1
+                }
                 alt={tournament.name}
                 className="admin-tournament-view__image"
               />
@@ -476,12 +459,16 @@ function AdminTournamentViewPage() {
 
                 <p className="admin-tournament-view__detail">
                   <span className="admin-tournament-view__label">Date: </span>
-                  {tournament.date || "Not specified"}
+                  {typeof tournament.date === "string"
+                    ? tournament.date
+                    : "Not specified"}
                 </p>
 
                 <p className="admin-tournament-view__detail">
                   <span className="admin-tournament-view__label">Hour: </span>
-                  {tournament.hour || "Not specified"}
+                  {typeof tournament.hour === "string"
+                    ? tournament.hour
+                    : "Not specified"}
                 </p>
 
                 <p className="admin-tournament-view__detail">
@@ -525,6 +512,7 @@ function AdminTournamentViewPage() {
             </div>
 
             <button
+              type="button"
               className="admin-tournament-view__edit-btn"
               onClick={handleOpen}
             >
@@ -651,6 +639,7 @@ function AdminTournamentViewPage() {
         <div className="admin-tournament-view__modal-overlay">
           <div className="admin-tournament-view__modal">
             <button
+              type="button"
               className="admin-tournament-view__modal-close"
               onClick={() => setShowModal(false)}
             >
@@ -795,7 +784,7 @@ function AdminTournamentViewPage() {
                 Courts:
               </label>
               <div style={{ display: "grid", gap: "0.5rem" }}>
-                {courts.map((court) => (
+                {adminCourts.map((court) => (
                   <label
                     key={court.id}
                     style={{
@@ -808,10 +797,14 @@ function AdminTournamentViewPage() {
                   >
                     <input
                       type="checkbox"
-                      checked={tempCourts.includes(court.name)}
-                      onChange={() => handleCourtChange(court.name)}
+                      checked={tempCourts.includes(
+                        court.name || "Unnamed court",
+                      )}
+                      onChange={() =>
+                        handleCourtChange(court.name || "Unnamed court")
+                      }
                     />
-                    {court.name}
+                    {court.name || "Unnamed court"}
                   </label>
                 ))}
               </div>
@@ -845,6 +838,7 @@ function AdminTournamentViewPage() {
             </div>
 
             <button
+              type="button"
               className="admin-tournament-view__modal-confirm"
               onClick={handleSave}
             >

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import { useAuth } from "../../context/useAuth";
-import { createMatch, getCourts } from "../../firebase/services";
+import { useCourts, useMatches } from "../../context";
 import "../../styles/create-match.css";
 
 const timeOptions = [
@@ -24,18 +24,15 @@ const timeOptions = [
   "21:00",
 ];
 
-interface Court {
-  id: string;
-  name: string;
-}
-
 type MatchType = "singles" | "doubles";
 
 function CreateMatchPage() {
   const navigate = useNavigate();
   const { userData } = useAuth();
 
-  const [courts, setCourts] = useState<Court[]>([]);
+  const { courts, loadCourts } = useCourts();
+  const { addNewMatch, loading: matchLoading, error: matchError } = useMatches();
+
   const [court, setCourt] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
@@ -43,22 +40,12 @@ function CreateMatchPage() {
   // Esta variable guarda si el partido es sencillo o dobles
   const [matchType, setMatchType] = useState<MatchType>("singles");
 
-  const [loading, setLoading] = useState(false);
   const [created, setCreated] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchCourts = async () => {
-      try {
-        const data = await getCourts();
-        setCourts(data as Court[]);
-      } catch (error) {
-        console.error("Error fetching courts:", error);
-      }
-    };
-
-    fetchCourts();
-  }, []);
+    loadCourts();
+  }, [loadCourts]);
 
   const handleCreate = async () => {
     if (!court || !date || !time) {
@@ -66,23 +53,27 @@ function CreateMatchPage() {
       return;
     }
 
+    if (!userData?.uid || !userData?.username) {
+      setError("User not found.");
+      return;
+    }
+
     setError("");
-    setLoading(true);
 
     try {
       // Si el partido es sencillo, máximo son 2 jugadores.
       // Si es dobles, máximo son 4 jugadores.
       const maxPlayers = matchType === "singles" ? 2 : 4;
 
-      await createMatch({
+      await addNewMatch({
         court,
         date,
         time,
         matchType,
-        hostId: userData?.uid,
-        hostUsername: userData?.username,
-        players: [{ uid: userData?.uid, username: userData?.username }],
-        playerIds: [userData?.uid],
+        hostId: userData.uid,
+        hostUsername: userData.username,
+        players: [{ uid: userData.uid, username: userData.username }],
+        playerIds: [userData.uid],
         maxPlayers,
         createdAt: new Date().toISOString(),
       });
@@ -100,8 +91,6 @@ function CreateMatchPage() {
     } catch (err) {
       console.error("Error creating match:", err);
       setError("Error creating match. Please try again.");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -126,8 +115,8 @@ function CreateMatchPage() {
                   <option value="">Select the court</option>
 
                   {courts.map((c) => (
-                    <option key={c.id} value={c.name}>
-                      {c.name}
+                    <option key={c.id} value={c.name || ""}>
+                      {c.name || "Unnamed court"}
                     </option>
                   ))}
                 </select>
@@ -189,11 +178,12 @@ function CreateMatchPage() {
                 </div>
 
                 <button
+                  type="button"
                   className="create-match__btn"
                   onClick={handleCreate}
-                  disabled={loading}
+                  disabled={matchLoading}
                 >
-                  {loading ? "Creating..." : "Create Match"}
+                  {matchLoading ? "Creating..." : "Create Match"}
                 </button>
               </div>
 
@@ -203,7 +193,9 @@ function CreateMatchPage() {
                 </p>
               )}
 
-              {error && <p className="create-match__error">{error}</p>}
+              {(error || matchError) && (
+                <p className="create-match__error">{error || matchError}</p>
+              )}
             </div>
           </div>
         </section>

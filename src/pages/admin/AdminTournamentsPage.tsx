@@ -3,12 +3,7 @@ import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import TournamentCard from "../../components/player/TournamentCard";
 import { Icon } from "@iconify/react";
-import {
-  getAdminTournaments,
-  addTournament,
-  getAdminCourts,
-  deleteTournament,
-} from "../../firebase/services";
+import { useCourts, useTournaments } from "../../context";
 import { useAuth } from "../../context/useAuth";
 import "../../styles/admin-tournaments.css";
 import "../../styles/create-match.css";
@@ -43,11 +38,6 @@ const categoryOptions = [
   "Senior",
 ];
 
-interface Court {
-  id: string;
-  name: string;
-}
-
 interface CapacityByCategory {
   [category: string]: {
     singlesPlayers?: number;
@@ -55,28 +45,28 @@ interface CapacityByCategory {
   };
 }
 
-interface Tournament {
-  id: string;
-  name: string;
-  info: string;
-  date: string;
-  hour: string;
-  court?: string;
-  courts?: string[];
-  categories?: string[];
-  level?: number;
-  tournamentType?: "singles" | "doubles" | "both";
-  capacityByCategory?: CapacityByCategory;
-}
-
 function AdminTournamentsPage() {
   const navigate = useNavigate();
   const { userData } = useAuth();
 
-  const [tournaments, setTournaments] = useState<Tournament[]>([]);
-  const [courts, setCourts] = useState<Court[]>([]);
+  const {
+    adminTournaments,
+    loading: tournamentsLoading,
+    error: tournamentsError,
+    loadAdminTournaments,
+    createTournament,
+    removeTournament,
+    clearTournamentError,
+  } = useTournaments();
 
-  const [loading, setLoading] = useState(true);
+  const {
+    adminCourts,
+    loading: courtsLoading,
+    error: courtsError,
+    loadAdminCourts,
+    clearCourtError,
+  } = useCourts();
+
   const [showModal, setShowModal] = useState(false);
 
   const [newName, setNewName] = useState("");
@@ -92,12 +82,18 @@ function AdminTournamentsPage() {
     Record<string, { singlesPlayers: string; doublesPairs: string }>
   >({});
 
-  const [error, setError] = useState("");
+  const [formError, setFormError] = useState("");
   const [creating, setCreating] = useState(false);
 
+  const loading = tournamentsLoading || courtsLoading;
+  const pageError = tournamentsError || courtsError;
+
   useEffect(() => {
-    fetchData();
-  }, [userData]);
+    if (!userData?.uid) return;
+
+    loadAdminTournaments(userData.uid);
+    loadAdminCourts(userData.uid);
+  }, [userData?.uid, loadAdminTournaments, loadAdminCourts]);
 
   useEffect(() => {
     const handler = () => setShowModal(true);
@@ -106,24 +102,6 @@ function AdminTournamentsPage() {
 
     return () => window.removeEventListener("admin:addTournament", handler);
   }, []);
-
-  const fetchData = async () => {
-    if (!userData?.uid) return;
-
-    setLoading(true);
-
-    try {
-      const tournamentsData = await getAdminTournaments(userData.uid);
-      setTournaments(tournamentsData as Tournament[]);
-
-      const courtsData = await getAdminCourts(userData.uid);
-      setCourts(courtsData as Court[]);
-    } catch (error) {
-      console.error("Error fetching admin data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const getTournamentTypeLabel = (type?: string) => {
     if (type === "doubles") return "Doubles";
@@ -165,7 +143,7 @@ function AdminTournamentsPage() {
   const handleCapacityChange = (
     category: string,
     field: "singlesPlayers" | "doublesPairs",
-    value: string
+    value: string,
   ) => {
     const onlyNumbers = value.replace(/\D/g, "");
 
@@ -209,7 +187,7 @@ function AdminTournamentsPage() {
         (newTournamentType === "singles" || newTournamentType === "both") &&
         singlesValue <= 0
       ) {
-        setError(`Please enter singles player spots for ${category}.`);
+        setFormError(`Please enter singles player spots for ${category}.`);
         return false;
       }
 
@@ -217,7 +195,7 @@ function AdminTournamentsPage() {
         (newTournamentType === "doubles" || newTournamentType === "both") &&
         doublesValue <= 0
       ) {
-        setError(`Please enter doubles pair spots for ${category}.`);
+        setFormError(`Please enter doubles pair spots for ${category}.`);
         return false;
       }
     }
@@ -236,15 +214,17 @@ function AdminTournamentsPage() {
       selectedCourts.length === 0 ||
       !newTournamentType
     ) {
-      setError(
-        "Please fill in all fields, select at least one category and one court."
+      setFormError(
+        "Please fill in all fields, select at least one category and one court.",
       );
       return;
     }
 
     if (!validateCapacity()) return;
 
-    setError("");
+    setFormError("");
+    clearTournamentError();
+    clearCourtError();
     setCreating(true);
 
     const categoriesText = newCategories.join(", ");
@@ -267,13 +247,11 @@ function AdminTournamentsPage() {
     };
 
     try {
-      await addTournament(userData.uid, newTournament);
-
-      await fetchData();
+      await createTournament(userData.uid, newTournament);
       handleClose();
     } catch (error) {
       console.error("Error adding tournament:", error);
-      setError("Error creating tournament. Please try again.");
+      setFormError("Error creating tournament. Please try again.");
     } finally {
       setCreating(false);
     }
@@ -281,14 +259,13 @@ function AdminTournamentsPage() {
 
   const handleDeleteTournament = async (tournamentId: string) => {
     const confirmDelete = window.confirm(
-      "Are you sure you want to delete this tournament?"
+      "Are you sure you want to delete this tournament?",
     );
 
     if (!confirmDelete) return;
 
     try {
-      await deleteTournament(tournamentId);
-      await fetchData();
+      await removeTournament(tournamentId);
     } catch (error) {
       console.error("Error deleting tournament:", error);
     }
@@ -303,7 +280,9 @@ function AdminTournamentsPage() {
     setNewCategories([]);
     setSelectedCourts([]);
     setCapacityInputs({});
-    setError("");
+    setFormError("");
+    clearTournamentError();
+    clearCourtError();
     setCreating(false);
   };
 
@@ -343,7 +322,7 @@ function AdminTournamentsPage() {
                 fontSize: "0.85rem",
               }}
             >
-              {tournaments.length === 0
+              {adminTournaments.length === 0
                 ? "Create first tournament"
                 : "Add more tournaments"}
             </button>
@@ -351,7 +330,9 @@ function AdminTournamentsPage() {
 
           {loading ? (
             <p className="admin-tournaments__loading">Loading tournaments...</p>
-          ) : tournaments.length === 0 ? (
+          ) : pageError ? (
+            <p className="admin-tournaments__loading">{pageError}</p>
+          ) : adminTournaments.length === 0 ? (
             <div
               style={{
                 background: "white",
@@ -380,10 +361,14 @@ function AdminTournamentsPage() {
             </div>
           ) : (
             <div className="admin-tournaments__cards-grid">
-              {tournaments.map((tournament) => (
+              {adminTournaments.map((tournament) => (
                 <div key={tournament.id}>
                   <TournamentCard
-                    level={tournament.level}
+                    level={
+                      typeof tournament.level === "number"
+                        ? tournament.level
+                        : undefined
+                    }
                     name={tournament.name}
                     info={tournament.info}
                     buttonLabel="View"
@@ -464,7 +449,7 @@ function AdminTournamentsPage() {
                     value={newTournamentType}
                     onChange={(e) =>
                       setNewTournamentType(
-                        e.target.value as "singles" | "doubles" | "both"
+                        e.target.value as "singles" | "doubles" | "both",
                       )
                     }
                   >
@@ -593,7 +578,7 @@ function AdminTournamentsPage() {
                                   handleCapacityChange(
                                     category,
                                     "singlesPlayers",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                               />
@@ -619,7 +604,7 @@ function AdminTournamentsPage() {
                                   handleCapacityChange(
                                     category,
                                     "doublesPairs",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                               />
@@ -672,7 +657,7 @@ function AdminTournamentsPage() {
                   Select one or more courts:
                 </label>
 
-                {courts.length === 0 ? (
+                {adminCourts.length === 0 ? (
                   <p className="create-match__error">
                     You need to create a court first.
                   </p>
@@ -686,7 +671,7 @@ function AdminTournamentsPage() {
                       marginTop: "0.75rem",
                     }}
                   >
-                    {courts.map((court) => (
+                    {adminCourts.map((court) => (
                       <label
                         key={court.id}
                         style={{
@@ -703,23 +688,29 @@ function AdminTournamentsPage() {
                       >
                         <input
                           type="checkbox"
-                          checked={selectedCourts.includes(court.name)}
-                          onChange={() => handleCourtChange(court.name)}
+                          checked={selectedCourts.includes(
+                            court.name || "Unnamed court",
+                          )}
+                          onChange={() =>
+                            handleCourtChange(court.name || "Unnamed court")
+                          }
                         />
-                        {court.name}
+                        {court.name || "Unnamed court"}
                       </label>
                     ))}
                   </div>
                 )}
               </div>
 
-              {error && <p className="create-match__error">{error}</p>}
+              {(formError || pageError) && (
+                <p className="create-match__error">{formError || pageError}</p>
+              )}
 
               <button
                 type="button"
                 className="create-match__btn"
                 onClick={handleAdd}
-                disabled={creating || courts.length === 0}
+                disabled={creating || adminCourts.length === 0}
               >
                 {creating ? "Creating..." : "Create Tournament"}
               </button>

@@ -1,71 +1,54 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import AdBanners from "../../components/player/AdBanners";
 import { useAuth } from "../../context/useAuth";
-import {
-  getMatches,
-  joinMatch,
-  leaveMatch,
-  deleteMatch,
-} from "../../firebase/services";
+import { useMatches } from "../../context";
+import type { Match } from "../../context/MatchesContext";
 import "../../styles/find-matches.css";
-
-interface MatchPlayer {
-  uid: string;
-  username: string;
-}
-
-interface Match {
-  id: string;
-  court: string;
-  date: string;
-  time: string;
-  hostId: string;
-  hostUsername: string;
-  players: MatchPlayer[];
-  playerIds: string[];
-  maxPlayers: number;
-  createdAt: string;
-}
 
 function FindMatchesPage() {
   const navigate = useNavigate();
   const { userData } = useAuth();
-  const [matches, setMatches] = useState<Match[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  const {
+    matches,
+    loading,
+    error,
+    loadMatches,
+    joinExistingMatch,
+    leaveExistingMatch,
+    removeMatch,
+  } = useMatches();
 
   useEffect(() => {
-    fetchMatches();
-  }, []);
+    loadMatches();
+  }, [loadMatches]);
 
-  const fetchMatches = async () => {
-    try {
-      const data = await getMatches();
+  const upcomingMatches = matches
+    .filter((match) => {
+      if (!match.date || !match.time) return false;
+
+      const matchDate = new Date(`${match.date}T${match.time}`);
       const now = new Date();
-      const filtered = (data as Match[]).filter((m) => {
-        const matchDate = new Date(`${m.date}T${m.time}`);
-        return matchDate >= now;
-      });
-      filtered.sort(
-        (a, b) =>
-          new Date(`${a.date}T${a.time}`).getTime() -
-          new Date(`${b.date}T${b.time}`).getTime(),
-      );
-      setMatches(filtered);
-    } catch (error) {
-      console.error("Error fetching matches:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+
+      return matchDate >= now;
+    })
+    .sort((a, b) => {
+      const firstDate = new Date(`${a.date}T${a.time}`).getTime();
+      const secondDate = new Date(`${b.date}T${b.time}`).getTime();
+
+      return firstDate - secondDate;
+    });
 
   const handleJoin = async (e: React.MouseEvent, match: Match) => {
     e.stopPropagation();
+
     if (!userData?.uid || !userData?.username) return;
+
     try {
-      await joinMatch(match.id, userData.uid, userData.username);
-      await fetchMatches();
+      await joinExistingMatch(match.id, userData.uid, userData.username);
+      await loadMatches();
     } catch (error) {
       console.error("Error joining match:", error);
     }
@@ -73,14 +56,17 @@ function FindMatchesPage() {
 
   const handleLeave = async (e: React.MouseEvent, match: Match) => {
     e.stopPropagation();
+
     if (!userData?.uid || !userData?.username) return;
+
     try {
       if (match.hostId === userData.uid) {
-        await deleteMatch(match.id);
+        await removeMatch(match.id);
       } else {
-        await leaveMatch(match.id, userData.uid, userData.username);
+        await leaveExistingMatch(match.id, userData.uid, userData.username);
       }
-      await fetchMatches();
+
+      await loadMatches();
     } catch (error) {
       console.error("Error leaving match:", error);
     }
@@ -89,10 +75,19 @@ function FindMatchesPage() {
   const isInMatch = (match: Match) =>
     match.playerIds?.includes(userData?.uid || "");
 
-  const isFull = (match: Match) => match.players?.length >= match.maxPlayers;
+  const isFull = (match: Match) => {
+    const playersCount = match.players?.length || 0;
+    const maxPlayers =
+      typeof match.maxPlayers === "number" ? match.maxPlayers : 0;
 
-  const formatDate = (date: string) => {
+    return playersCount >= maxPlayers;
+  };
+
+  const formatDate = (date?: string) => {
+    if (!date) return "Not specified";
+
     const d = new Date(date + "T00:00:00");
+
     return d.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
@@ -116,37 +111,57 @@ function FindMatchesPage() {
 
           {loading ? (
             <p className="find-matches__empty">Loading matches...</p>
-          ) : matches.length === 0 ? (
+          ) : error ? (
+            <p className="find-matches__empty">{error}</p>
+          ) : upcomingMatches.length === 0 ? (
             <p className="find-matches__empty">No matches available yet.</p>
           ) : (
             <div className="find-matches__list">
-              {matches.map((match) => {
+              {upcomingMatches.map((match) => {
                 const full = isFull(match);
                 const inMatch = isInMatch(match);
                 const isHost = match.hostId === userData?.uid;
-                const spotsLeft =
-                  match.maxPlayers - (match.players?.length || 0);
+
+                const playersCount = match.players?.length || 0;
+                const maxPlayers =
+                  typeof match.maxPlayers === "number" ? match.maxPlayers : 0;
+                const spotsLeft = Math.max(maxPlayers - playersCount, 0);
 
                 return (
                   <div
                     key={match.id}
-                    className={`find-matches__card ${full ? "find-matches__card--full" : ""}`}
+                    className={`find-matches__card ${
+                      full ? "find-matches__card--full" : ""
+                    }`}
                     onClick={() => navigate(`/player/matches/view/${match.id}`)}
                     style={{ cursor: "pointer" }}
                   >
-                    {/* Header */}
                     <div className="find-matches__card-header">
                       <div className="find-matches__card-info">
                         <p className="find-matches__card-court">
-                          <Icon icon="mdi:tennis-ball-outline" /> {match.court}
+                          <Icon icon="mdi:tennis-ball-outline" />{" "}
+                          {typeof match.court === "string"
+                            ? match.court
+                            : "Not specified"}
                         </p>
+
                         <p className="find-matches__card-date">
-                          {formatDate(match.date)} — {match.time}
+                          {formatDate(match.date)} —{" "}
+                          {match.time || "Not specified"}
                         </p>
+
                         <p className="find-matches__card-host">
-                          Host: <strong>{match.hostUsername}</strong>
+                          Host:{" "}
+                          <strong>
+                            {typeof match.hostUsername === "string"
+                              ? match.hostUsername
+                              : typeof match.hostName === "string"
+                                ? match.hostName
+                                : "Unknown host"}
+                          </strong>
                         </p>
                       </div>
+
                       <div className="find-matches__card-spots">
                         {full ? (
                           <span className="find-matches__tag find-matches__tag--full">
@@ -160,12 +175,11 @@ function FindMatchesPage() {
                       </div>
                     </div>
 
-                    {/* Players */}
                     <div className="find-matches__players">
                       <p className="find-matches__players-label">
-                        Players ({match.players?.length || 0}/{match.maxPlayers}
-                        ):
+                        Players ({playersCount}/{maxPlayers}):
                       </p>
+
                       <div className="find-matches__players-list">
                         {match.players?.map((player) => (
                           <span
@@ -183,10 +197,10 @@ function FindMatchesPage() {
                       </div>
                     </div>
 
-                    {/* Actions */}
                     <div className="find-matches__card-actions">
                       {inMatch ? (
                         <button
+                          type="button"
                           className="find-matches__btn find-matches__btn--leave"
                           onClick={(e) => handleLeave(e, match)}
                         >
@@ -194,6 +208,7 @@ function FindMatchesPage() {
                         </button>
                       ) : !full ? (
                         <button
+                          type="button"
                           className="find-matches__btn find-matches__btn--join"
                           onClick={(e) => handleJoin(e, match)}
                         >
@@ -207,6 +222,7 @@ function FindMatchesPage() {
             </div>
           )}
         </section>
+
         <AdBanners />
       </div>
     </div>

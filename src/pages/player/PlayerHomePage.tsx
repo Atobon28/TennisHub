@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import "../../styles/player-home.css";
@@ -11,53 +11,12 @@ import CourtCard from "../../components/player/CourtCard";
 import { useAuth } from "../../context/useAuth";
 import player1 from "../../assets/player-1.jpg";
 import {
-  getTournaments,
-  getCourts,
-  getPlayers,
-  getCoaches,
-  getMatches,
-} from "../../firebase/services";
-
-interface Tournament {
-  id: string;
-  name: string;
-  info: string;
-  level?: number;
-  categories?: string[];
-}
-
-interface Court {
-  id: string;
-  name: string;
-  image: string;
-  courtType?: string;
-}
-
-interface Player {
-  id: string;
-  uid: string;
-  username: string;
-  level?: number;
-  category?: string;
-  photoURL?: string;
-}
-
-interface Coach {
-  id: string;
-  uid: string;
-  username: string;
-}
-
-interface Match {
-  id: string;
-  court: string;
-  date: string;
-  time: string;
-  hostUsername: string;
-  players: { uid: string; username: string }[];
-  playerIds: string[];
-  maxPlayers: number;
-}
+  useTournaments,
+  useCourts,
+  usePlayers,
+  useCoaches,
+  useMatches,
+} from "../../context";
 
 const classNames = [
   "player-home__court-card--large",
@@ -101,51 +60,31 @@ function PlayerHomePage() {
 
   const matchesScrollRef = useRef<HTMLDivElement | null>(null);
   const tournamentsScrollRef = useRef<HTMLDivElement | null>(null);
+  const hasLoadedHomeData = useRef(false);
 
-  const [tournaments, setTournaments] = useState<Tournament[]>([]);
-  const [courts, setCourts] = useState<Court[]>([]);
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [coaches, setCoaches] = useState<Coach[]>([]);
-  const [todayMatches, setTodayMatches] = useState<Match[]>([]);
+  const { tournaments, loadTournaments } = useTournaments();
+  const { courts, loadCourts } = useCourts();
+  const { players, loadPlayers } = usePlayers();
+  const { coaches, loadCoaches } = useCoaches();
+  const { matches, loadMatches } = useMatches();
 
   const playerCategory = getPlayerCategory(userData?.level, userData?.category);
 
   useEffect(() => {
-    const fetchAll = async () => {
-      try {
-        const [
-          tournamentsData,
-          courtsData,
-          playersData,
-          coachesData,
-          matchesData,
-        ] = await Promise.all([
-          getTournaments(),
-          getCourts(),
-          getPlayers(),
-          getCoaches(),
-          getMatches(),
-        ]);
+    if (hasLoadedHomeData.current) return;
 
-        setTournaments(tournamentsData as Tournament[]);
-        setCourts(courtsData as Court[]);
-        setPlayers(playersData as Player[]);
-        setCoaches(coachesData as Coach[]);
+    hasLoadedHomeData.current = true;
 
-        const today = new Date().toISOString().split("T")[0];
+    loadTournaments();
+    loadCourts();
+    loadPlayers();
+    loadCoaches();
+    loadMatches();
+  }, [loadTournaments, loadCourts, loadPlayers, loadCoaches, loadMatches]);
 
-        const filteredMatches = (matchesData as Match[]).filter(
-          (match) => match.date === today,
-        );
+  const today = new Date().toISOString().split("T")[0];
 
-        setTodayMatches(filteredMatches);
-      } catch (error) {
-        console.error("Error fetching player home data:", error);
-      }
-    };
-
-    fetchAll();
-  }, []);
+  const todayMatches = matches.filter((match) => match.date === today);
 
   const scroll = (
     ref: React.RefObject<HTMLDivElement | null>,
@@ -219,9 +158,17 @@ function PlayerHomePage() {
                     style={{ cursor: "pointer" }}
                   >
                     <PersonCard
-                      name={player.username}
-                      image={player.photoURL || player1}
-                      level={player.level}
+                      name={player.username || "Player"}
+                      image={
+                        typeof player.photoURL === "string"
+                          ? player.photoURL
+                          : player1
+                      }
+                      level={
+                        typeof player.level === "number"
+                          ? player.level
+                          : undefined
+                      }
                     />
                   </div>
                 ))}
@@ -259,7 +206,14 @@ function PlayerHomePage() {
                     }
                     style={{ cursor: "pointer" }}
                   >
-                    <PersonCard name={coach.username} image={court1} />
+                    <PersonCard
+                      name={coach.username || "Coach"}
+                      image={
+                        typeof coach.photoURL === "string"
+                          ? coach.photoURL
+                          : court1
+                      }
+                    />
                   </div>
                 ))}
               </div>
@@ -326,9 +280,9 @@ function PlayerHomePage() {
                 todayMatches.map((match) => (
                   <MatchCard
                     key={match.id}
-                    time={match.time}
-                    court={match.court}
-                    host={match.hostUsername}
+                    time={match.time || ""}
+                    court={match.court || ""}
+                    host={match.hostUsername || match.hostName || ""}
                     onClick={() => navigate(`/player/matches/view/${match.id}`)}
                   />
                 ))
@@ -453,9 +407,13 @@ function PlayerHomePage() {
               {courts.slice(0, 3).map((court, index) => (
                 <CourtCard
                   key={court.id}
-                  name={court.name}
-                  image={court.image || court1}
-                  courtType={court.courtType}
+                  name={court.name || "Court"}
+                  image={typeof court.image === "string" ? court.image : court1}
+                  courtType={
+                    typeof court.courtType === "string"
+                      ? court.courtType
+                      : undefined
+                  }
                   className={classNames[index]}
                   onSeeMore={() => navigate(`/player/courts/view/${court.id}`)}
                 />

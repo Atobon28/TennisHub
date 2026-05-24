@@ -2,31 +2,30 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import { Icon } from "@iconify/react";
-import { getAdminCourts, addCourt, deleteCourt } from "../../firebase/services";
+import { useCourts } from "../../context";
 import { useAuth } from "../../context/useAuth";
 import "../../styles/admin-courts.css";
 import "../../styles/create-match.css";
 import court1 from "../../assets/court-1.jpg";
-
-interface Court {
-  id: string;
-  name: string;
-  image: string;
-  contact?: string;
-  address?: string;
-  courtType?: string;
-}
 
 const courtTypeOptions = ["Grass", "Hard", "Clay"];
 
 function AdminCourtsPage() {
   const navigate = useNavigate();
   const { userData } = useAuth();
+  const {
+    adminCourts,
+    loading,
+    error: courtsError,
+    loadAdminCourts,
+    createCourt,
+    removeCourt,
+    clearCourtError,
+  } = useCourts();
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isCreatingRef = useRef(false);
 
-  const [courts, setCourts] = useState<Court[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
 
   const [newName, setNewName] = useState("");
@@ -35,12 +34,14 @@ function AdminCourtsPage() {
   const [newCourtType, setNewCourtType] = useState("");
   const [newImage, setNewImage] = useState<string | null>(null);
 
-  const [error, setError] = useState("");
+  const [formError, setFormError] = useState("");
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
-    fetchCourts();
-  }, [userData]);
+    if (!userData?.uid) return;
+
+    loadAdminCourts(userData.uid);
+  }, [userData?.uid, loadAdminCourts]);
 
   useEffect(() => {
     const handler = () => setShowModal(true);
@@ -49,21 +50,6 @@ function AdminCourtsPage() {
 
     return () => window.removeEventListener("admin:addCourt", handler);
   }, []);
-
-  const fetchCourts = async () => {
-    if (!userData?.uid) return;
-
-    setLoading(true);
-
-    try {
-      const data = await getAdminCourts(userData.uid);
-      setCourts(data as Court[]);
-    } catch (error) {
-      console.error("Error fetching courts:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const resizeImage = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -113,7 +99,7 @@ function AdminCourtsPage() {
       setNewImage(resizedImage);
     } catch (error) {
       console.error("Error resizing image:", error);
-      setError("Error uploading image. Please try another one.");
+      setFormError("Error uploading image. Please try another one.");
     }
   };
 
@@ -121,7 +107,7 @@ function AdminCourtsPage() {
     if (isCreatingRef.current || creating) return;
 
     if (!userData?.uid) {
-      setError("User not found.");
+      setFormError("User not found.");
       return;
     }
 
@@ -131,16 +117,17 @@ function AdminCourtsPage() {
       !newAddress.trim() ||
       !newCourtType
     ) {
-      setError("Please fill in all fields.");
+      setFormError("Please fill in all fields.");
       return;
     }
 
     isCreatingRef.current = true;
-    setError("");
+    setFormError("");
+    clearCourtError();
     setCreating(true);
 
     try {
-      await addCourt(userData.uid, {
+      await createCourt(userData.uid, {
         name: newName.trim(),
         contact: newContact.trim(),
         address: newAddress.trim(),
@@ -150,10 +137,9 @@ function AdminCourtsPage() {
       });
 
       handleClose();
-      await fetchCourts();
     } catch (error) {
       console.error("Error adding court:", error);
-      setError("Error creating court. Please try again.");
+      setFormError("Error creating court. Please try again.");
     } finally {
       isCreatingRef.current = false;
       setCreating(false);
@@ -162,14 +148,13 @@ function AdminCourtsPage() {
 
   const handleDeleteCourt = async (courtId: string) => {
     const confirmDelete = window.confirm(
-      "Are you sure you want to delete this court?"
+      "Are you sure you want to delete this court?",
     );
 
     if (!confirmDelete) return;
 
     try {
-      await deleteCourt(courtId);
-      await fetchCourts();
+      await removeCourt(courtId);
     } catch (error) {
       console.error("Error deleting court:", error);
     }
@@ -182,7 +167,8 @@ function AdminCourtsPage() {
     setNewAddress("");
     setNewCourtType("");
     setNewImage(null);
-    setError("");
+    setFormError("");
+    clearCourtError();
     isCreatingRef.current = false;
     setCreating(false);
   };
@@ -221,13 +207,17 @@ function AdminCourtsPage() {
                 fontSize: "0.85rem",
               }}
             >
-              {courts.length === 0 ? "Create first court" : "Add more courts"}
+              {adminCourts.length === 0
+                ? "Create first court"
+                : "Add more courts"}
             </button>
           </div>
 
           {loading ? (
             <p className="admin-courts__loading">Loading courts...</p>
-          ) : courts.length === 0 ? (
+          ) : courtsError ? (
+            <p className="admin-courts__loading">{courtsError}</p>
+          ) : adminCourts.length === 0 ? (
             <div
               style={{
                 background: "white",
@@ -256,11 +246,11 @@ function AdminCourtsPage() {
             </div>
           ) : (
             <div className="admin-courts__courts-grid">
-              {courts.map((court) => (
+              {adminCourts.map((court) => (
                 <article key={court.id} className="admin-courts__court-card">
                   <img
-                    src={court.image || court1}
-                    alt={court.name}
+                    src={typeof court.image === "string" ? court.image : court1}
+                    alt={court.name || "Tennis court"}
                     className="admin-courts__court-image"
                   />
 
@@ -281,7 +271,7 @@ function AdminCourtsPage() {
                           marginTop: "0.4rem",
                         }}
                       >
-                        {court.courtType}
+                        {String(court.courtType)}
                       </span>
                     )}
 
@@ -420,7 +410,11 @@ function AdminCourtsPage() {
                 />
               </div>
 
-              {error && <p className="create-match__error">{error}</p>}
+              {(formError || courtsError) && (
+                <p className="create-match__error">
+                  {formError || courtsError}
+                </p>
+              )}
 
               <button
                 type="button"

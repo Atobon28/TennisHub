@@ -2,83 +2,64 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import TournamentCard from "../../components/player/TournamentCard";
-import {
-  getAdminTournaments,
-  getAdminCourts,
-  logoutUser,
-  changeCurrentUserPassword,
-  uploadUserAvatar,
-} from "../../firebase/services";
+import { logoutUser } from "../../firebase/services";
 import { useAuth } from "../../context/useAuth";
+import { useCourts, useProfile, useTournaments } from "../../context";
 import "../../styles/admin-profile.css";
 import court1 from "../../assets/court-1.jpg";
-
-interface Tournament {
-  id: string;
-  name: string;
-  info: string;
-  date?: string;
-  hour?: string;
-  courts?: string[];
-  categories?: string[];
-  level?: number;
-}
-
-interface Court {
-  id: string;
-  name: string;
-  image: string;
-  contact?: string;
-  address?: string;
-  courtType?: string;
-}
 
 function AdminProfilePage() {
   const navigate = useNavigate();
   const { userData, refreshUserData } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const {
+    adminCourts,
+    loading: courtsLoading,
+    error: courtsError,
+    loadAdminCourts,
+  } = useCourts();
+
+  const {
+    adminTournaments,
+    loading: tournamentsLoading,
+    error: tournamentsError,
+    loadAdminTournaments,
+  } = useTournaments();
+
+  const {
+    uploadAvatar,
+    changePassword,
+    loading: profileLoading,
+    error: profileError,
+    success: profileSuccess,
+    clearProfileMessages,
+  } = useProfile();
+
   const [activeTab, setActiveTab] = useState<"courts" | "tournaments">(
     "courts",
   );
 
-  const [avatar, setAvatar] = useState<string>(
-    (userData as any)?.photoURL || court1,
-  );
+  const [avatar, setAvatar] = useState<string>(userData?.photoURL || court1);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarMsg, setAvatarMsg] = useState("");
-
-  const [tournaments, setTournaments] = useState<Tournament[]>([]);
-  const [courts, setCourts] = useState<Court[]>([]);
-  const [loading, setLoading] = useState(true);
 
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordMsg, setPasswordMsg] = useState("");
 
-  useEffect(() => {
-    fetchAdminProfileData();
-    setAvatar((userData as any)?.photoURL || court1);
-  }, [userData]);
+  const loading = courtsLoading || tournamentsLoading;
+  const pageError = courtsError || tournamentsError;
 
-  const fetchAdminProfileData = async () => {
+  useEffect(() => {
+    setAvatar(userData?.photoURL || court1);
+
     if (!userData?.uid) return;
 
-    setLoading(true);
-
-    try {
-      const tournamentsData = await getAdminTournaments(userData.uid);
-      setTournaments(tournamentsData as Tournament[]);
-
-      const courtsData = await getAdminCourts(userData.uid);
-      setCourts(courtsData as Court[]);
-    } catch (error) {
-      console.error("Error fetching admin profile data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    loadAdminCourts(userData.uid);
+    loadAdminTournaments(userData.uid);
+  }, [userData, loadAdminCourts, loadAdminTournaments]);
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -87,9 +68,10 @@ function AdminProfilePage() {
 
     setUploadingAvatar(true);
     setAvatarMsg("");
+    clearProfileMessages();
 
     try {
-      const imageUrl = await uploadUserAvatar(userData.id, userData.uid, file);
+      const imageUrl = await uploadAvatar(userData.id, userData.uid, file);
 
       setAvatar(imageUrl);
       await refreshUserData();
@@ -128,8 +110,10 @@ function AdminProfilePage() {
       return;
     }
 
+    clearProfileMessages();
+
     try {
-      await changeCurrentUserPassword(newPassword);
+      await changePassword(newPassword);
 
       setPasswordMsg("");
       setNewPassword("");
@@ -137,17 +121,14 @@ function AdminProfilePage() {
       setShowPasswordModal(false);
 
       alert("Password updated successfully.");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error changing password:", error);
 
-      if (error.code === "auth/requires-recent-login") {
-        setPasswordMsg(
-          "Please log out and log in again before changing password.",
-        );
-        return;
+      if (profileError) {
+        setPasswordMsg(profileError);
+      } else {
+        setPasswordMsg("Error updating password. Please try again.");
       }
-
-      setPasswordMsg("Error updating password. Please try again.");
     }
   };
 
@@ -175,9 +156,9 @@ function AdminProfilePage() {
                 type="button"
                 className="admin-profile__edit-btn"
                 onClick={() => fileInputRef.current?.click()}
-                disabled={uploadingAvatar}
+                disabled={uploadingAvatar || profileLoading}
               >
-                {uploadingAvatar ? "..." : "✏️"}
+                {uploadingAvatar || profileLoading ? "..." : "✏️"}
               </button>
 
               <input
@@ -193,18 +174,19 @@ function AdminProfilePage() {
               <h2 className="admin-profile__name">{name}</h2>
               <p className="admin-profile__username">{username}</p>
 
-              {avatarMsg && (
+              {(avatarMsg || profileError || profileSuccess) && (
                 <p
                   style={{
                     margin: "0.35rem 0 0",
                     fontSize: "0.8rem",
                     fontWeight: 700,
-                    color: avatarMsg.includes("successfully")
-                      ? "#2f9e44"
-                      : "#e05252",
+                    color:
+                      avatarMsg.includes("successfully") || profileSuccess
+                        ? "#2f9e44"
+                        : "#e05252",
                   }}
                 >
-                  {avatarMsg}
+                  {avatarMsg || profileError || profileSuccess}
                 </p>
               )}
 
@@ -253,21 +235,23 @@ function AdminProfilePage() {
           <div className="admin-profile__list">
             {loading ? (
               <p className="admin-profile__empty">Loading profile data...</p>
+            ) : pageError ? (
+              <p className="admin-profile__empty">{pageError}</p>
             ) : activeTab === "courts" ? (
-              courts.length === 0 ? (
+              adminCourts.length === 0 ? (
                 <p className="admin-profile__empty">No courts yet.</p>
               ) : (
-                courts.map((court) => (
+                adminCourts.map((court) => (
                   <div key={court.id} className="admin-profile__court-card">
                     <img
-                      src={court.image || court1}
-                      alt={court.name}
+                      src={typeof court.image === "string" ? court.image : court1}
+                      alt={court.name || "Court"}
                       className="admin-profile__court-image"
                     />
 
                     <div className="admin-profile__court-overlay">
                       <span className="admin-profile__court-name">
-                        {court.name}
+                        {court.name || "Unnamed court"}
                       </span>
 
                       {court.courtType && (
@@ -282,7 +266,7 @@ function AdminProfilePage() {
                             marginTop: "0.4rem",
                           }}
                         >
-                          {court.courtType}
+                          {String(court.courtType)}
                         </span>
                       )}
 
@@ -305,13 +289,17 @@ function AdminProfilePage() {
                   </div>
                 ))
               )
-            ) : tournaments.length === 0 ? (
+            ) : adminTournaments.length === 0 ? (
               <p className="admin-profile__empty">No tournaments yet.</p>
             ) : (
-              tournaments.map((tournament) => (
+              adminTournaments.map((tournament) => (
                 <TournamentCard
                   key={tournament.id}
-                  level={tournament.level}
+                  level={
+                    typeof tournament.level === "number"
+                      ? tournament.level
+                      : undefined
+                  }
                   name={tournament.name}
                   info={tournament.info}
                   buttonLabel="View"
