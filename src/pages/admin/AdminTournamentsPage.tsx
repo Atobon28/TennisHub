@@ -258,7 +258,7 @@ function AdminTournamentsPage() {
     try {
       await createTournament(userData.uid, newTournament);
       handleClose();
-      showToast("Tournament created successfully.", "success");
+      showToast("Error creating tournament. Please try again.", "error");
     } catch (error) {
       console.error("Error adding tournament:", error);
       setFormError("Error creating tournament. Please try again.");
