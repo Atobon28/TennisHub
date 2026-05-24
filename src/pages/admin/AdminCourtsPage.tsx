@@ -4,6 +4,7 @@ import AdBanners from "../../components/player/AdBanners";
 import { Icon } from "@iconify/react";
 import { useCourts } from "../../context";
 import { useAuth } from "../../context/useAuth";
+import { useToast } from "../../context/ToastContext";
 import ConfirmModal from "../../components/common/ConfirmModal";
 import "../../styles/admin-courts.css";
 import "../../styles/create-match.css";
@@ -14,6 +15,8 @@ const courtTypeOptions = ["Grass", "Hard", "Clay"];
 function AdminCourtsPage() {
   const navigate = useNavigate();
   const { userData } = useAuth();
+  const { showToast } = useToast();
+
   const {
     adminCourts,
     loading,
@@ -102,6 +105,7 @@ function AdminCourtsPage() {
     } catch (error) {
       console.error("Error resizing image:", error);
       setFormError("Error uploading image. Please try another one.");
+      showToast("Error uploading image.", "error");
     }
   };
 
@@ -139,9 +143,11 @@ function AdminCourtsPage() {
       });
 
       handleClose();
+      showToast("Court created successfully.", "success");
     } catch (error) {
       console.error("Error adding court:", error);
       setFormError("Error creating court. Please try again.");
+      showToast("Error creating court. Please try again.", "error");
     } finally {
       isCreatingRef.current = false;
       setCreating(false);
@@ -162,8 +168,10 @@ function AdminCourtsPage() {
     try {
       await removeCourt(courtToDelete);
       setCourtToDelete(null);
+      showToast("Court deleted successfully.", "success");
     } catch (error) {
       console.error("Error deleting court:", error);
+      showToast("Error deleting court. Please try again.", "error");
     }
   };
 

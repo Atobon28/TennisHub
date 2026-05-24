@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import { useCourts } from "../../context";
+import { useToast } from "../../context/ToastContext";
 import "../../styles/admin-court-view.css";
 import court1 from "../../assets/court-1.jpg";
 
 function AdminCourtViewPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const {
     selectedCourt,
@@ -28,7 +30,6 @@ function AdminCourtViewPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
 
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
   const [formError, setFormError] = useState("");
 
   useEffect(() => {
@@ -61,7 +62,6 @@ function AdminCourtViewPage() {
       typeof selectedCourt.image === "string" ? selectedCourt.image : "",
     );
     setImageFile(null);
-    setMessage("");
     setFormError("");
     clearCourtError();
     setShowModal(true);
@@ -96,7 +96,6 @@ function AdminCourtViewPage() {
 
     setSaving(true);
     setFormError("");
-    setMessage("");
     clearCourtError();
 
     try {
@@ -117,15 +116,17 @@ function AdminCourtViewPage() {
 
       await loadCourtById(selectedCourt.id);
 
-      setMessage("Court updated successfully.");
+      showToast("Court updated successfully.", "success");
       setShowModal(false);
     } catch (error) {
       console.error("Error updating court:", error);
 
       if (error instanceof Error) {
         setFormError(error.message);
+        showToast(error.message, "error");
       } else {
         setFormError("Error updating court. Please try again.");
+        showToast("Error updating court. Please try again.", "error");
       }
     } finally {
       setSaving(false);
@@ -178,10 +179,6 @@ function AdminCourtViewPage() {
           >
             ← Back to profile
           </button>
-
-          {message && (
-            <p className="admin-court-view__success-message">{message}</p>
-          )}
 
           {visibleError && (
             <p className="admin-court-view__error-message">{visibleError}</p>
