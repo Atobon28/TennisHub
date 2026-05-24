@@ -4,12 +4,10 @@ import AdBanners from "../../components/player/AdBanners";
 import { getPlayerTournamentById } from "../../firebase/services";
 import { useAuth } from "../../context/useAuth";
 import { useTournaments } from "../../context";
-import type {
-  EntryType,
-  Tournament,
-} from "../../context/TournamentsContext";
+import type { EntryType, Tournament } from "../../context/TournamentsContext";
 import "../../styles/tournament-view.css";
 import court1 from "../../assets/court-1.jpg";
+import ConfirmModal from "../../components/common/ConfirmModal";
 
 interface PlayerTournament {
   id: string;
@@ -81,6 +79,7 @@ function TournamentViewPage() {
   const [joining, setJoining] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [localError, setLocalError] = useState("");
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
   const tournament = selectedTournament as Tournament | null;
 
@@ -254,14 +253,16 @@ function TournamentViewPage() {
     }
   };
 
-  const handleLeave = async () => {
+  const handleLeave = () => {
+    setShowLeaveConfirm(true);
+  };
+
+  const handleCancelLeave = () => {
+    setShowLeaveConfirm(false);
+  };
+
+  const handleConfirmLeave = async () => {
     if (!registrationId || !tournament) return;
-
-    const confirmLeave = window.confirm(
-      "Are you sure you want to leave this tournament?",
-    );
-
-    if (!confirmLeave) return;
 
     setLeaving(true);
     setLocalError("");
@@ -276,6 +277,7 @@ function TournamentViewPage() {
       setHasPartner("");
       setPartnerName("");
       setEntryType(tournamentType === "doubles" ? "doubles" : "singles");
+      setShowLeaveConfirm(false);
     } catch (err) {
       console.error("Error leaving tournament:", err);
       setLocalError("Error leaving tournament.");
@@ -594,6 +596,16 @@ function TournamentViewPage() {
 
         <AdBanners />
       </div>
+      <ConfirmModal
+        isOpen={showLeaveConfirm}
+        title="Leave tournament?"
+        message="Are you sure you want to leave this tournament? Your registration will be removed."
+        confirmLabel="Leave Tournament"
+        cancelLabel="Cancel"
+        danger
+        onCancel={handleCancelLeave}
+        onConfirm={handleConfirmLeave}
+      />
     </div>
   );
 }
