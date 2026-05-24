@@ -7,10 +7,12 @@ import { useMatches } from "../../context";
 import type { Match } from "../../context/MatchesContext";
 import "../../styles/find-matches.css";
 import ConfirmModal from "../../components/common/ConfirmModal";
+import { useToast } from "../../context/ToastContext";
 
 function FindMatchesPage() {
   const navigate = useNavigate();
   const { userData } = useAuth();
+  const { showToast } = useToast();
 
   const {
     matches,
@@ -67,8 +69,10 @@ function FindMatchesPage() {
     try {
       await joinExistingMatch(match.id, userData.uid, userData.username);
       await loadMatches();
+      showToast("Match joined successfully.", "success");
     } catch (error) {
       console.error("Error joining match:", error);
+      showToast("Error joining match.", "error");
     }
   };
 
@@ -97,8 +101,20 @@ function FindMatchesPage() {
 
       await loadMatches();
       setMatchToLeave(null);
+      showToast(
+        matchToLeave.hostId === userData.uid
+          ? "Match cancelled successfully."
+          : "Match left successfully.",
+        "success",
+      );
     } catch (error) {
       console.error("Error leaving match:", error);
+      showToast(
+        matchToLeave?.hostId === userData?.uid
+          ? "Error cancelling match."
+          : "Error leaving match.",
+        "error",
+      );
     }
   };
 
