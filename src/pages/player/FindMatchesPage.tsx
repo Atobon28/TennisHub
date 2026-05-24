@@ -8,6 +8,11 @@ import type { Match } from "../../context/MatchesContext";
 import "../../styles/find-matches.css";
 import ConfirmModal from "../../components/common/ConfirmModal";
 import { useToast } from "../../context/ToastContext";
+import LoadingState from "../../components/common/LoadingState";
+import EmptyState from "../../components/common/EmptyState";
+import ErrorState from "../../components/common/ErrorState";
+import PrimaryButton from "../../components/common/PrimaryButton";
+import DangerButton from "../../components/common/DangerButton";
 
 function FindMatchesPage() {
   const navigate = useNavigate();
@@ -199,15 +204,12 @@ function FindMatchesPage() {
               <option value="Doubles">Doubles</option>
             </select>
           </div>
-
           {loading ? (
-            <p className="find-matches__empty">Loading matches...</p>
+            <LoadingState message="Loading matches..." />
           ) : error ? (
-            <p className="find-matches__empty">{error}</p>
+            <ErrorState message={error} />
           ) : upcomingMatches.length === 0 ? (
-            <p className="find-matches__empty">
-              No matches match your filters.
-            </p>
+            <EmptyState message="No matches match your filters." />
           ) : (
             <div className="find-matches__list">
               {upcomingMatches.map((match) => {
@@ -298,21 +300,19 @@ function FindMatchesPage() {
 
                     <div className="find-matches__card-actions">
                       {inMatch ? (
-                        <button
-                          type="button"
+                        <DangerButton
                           className="find-matches__btn find-matches__btn--leave"
                           onClick={(e) => handleLeave(e, match)}
                         >
                           {isHost ? "Cancel Match" : "Leave Match"}
-                        </button>
+                        </DangerButton>
                       ) : !full ? (
-                        <button
-                          type="button"
+                        <PrimaryButton
                           className="find-matches__btn find-matches__btn--join"
                           onClick={(e) => handleJoin(e, match)}
                         >
                           Join
-                        </button>
+                        </PrimaryButton>
                       ) : null}
                     </div>
                   </div>
