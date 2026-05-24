@@ -1,4 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
+import { Icon } from "@iconify/react";
 import { useAuth } from "../../context/useAuth";
 import logo from "../../assets/Logo.png";
 
@@ -51,48 +52,52 @@ function TopbarMobileAdmin() {
 
       <div
         style={{
-          width: "100%",
           display: "flex",
-          gap: "0.5rem",
-          marginTop: "0.75rem",
+          gap: "0.45rem",
+          alignItems: "center",
+          marginLeft: "auto",
         }}
       >
         <button
           type="button"
           onClick={openCreateCourt}
+          aria-label="Create court"
+          title="Create court"
           style={{
-            flex: 1,
+            width: "38px",
+            height: "38px",
             border: "none",
             borderRadius: "999px",
-            padding: "0.6rem 0.75rem",
             background: "#25292d",
             color: "white",
-            fontWeight: 800,
+            display: "grid",
+            placeItems: "center",
             cursor: "pointer",
-            fontFamily: "inherit",
-            fontSize: "0.78rem",
+            flexShrink: 0,
           }}
         >
-          + Court
+          <Icon icon="mdi:tennis-ball-outline" width={20} height={20} />
         </button>
 
         <button
           type="button"
           onClick={openCreateTournament}
+          aria-label="Create tournament"
+          title="Create tournament"
           style={{
-            flex: 1,
+            width: "38px",
+            height: "38px",
             border: "none",
             borderRadius: "999px",
-            padding: "0.6rem 0.75rem",
             background: "linear-gradient(180deg, #bfe212 0%, #6f8500 100%)",
             color: "white",
-            fontWeight: 800,
+            display: "grid",
+            placeItems: "center",
             cursor: "pointer",
-            fontFamily: "inherit",
-            fontSize: "0.78rem",
+            flexShrink: 0,
           }}
         >
-          + Tournament
+          <Icon icon="game-icons:tennis-racket" width={20} height={20} />
         </button>
       </div>
     </header>
