@@ -4,6 +4,7 @@ import AdBanners from "../../components/player/AdBanners";
 import { Icon } from "@iconify/react";
 import { useCourts } from "../../context";
 import { useAuth } from "../../context/useAuth";
+import ConfirmModal from "../../components/common/ConfirmModal";
 import "../../styles/admin-courts.css";
 import "../../styles/create-match.css";
 import court1 from "../../assets/court-1.jpg";
@@ -27,6 +28,7 @@ function AdminCourtsPage() {
   const isCreatingRef = useRef(false);
 
   const [showModal, setShowModal] = useState(false);
+  const [courtToDelete, setCourtToDelete] = useState<string | null>(null);
 
   const [newName, setNewName] = useState("");
   const [newContact, setNewContact] = useState("");
@@ -146,15 +148,20 @@ function AdminCourtsPage() {
     }
   };
 
-  const handleDeleteCourt = async (courtId: string) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this court?",
-    );
+  const handleRequestDeleteCourt = (courtId: string) => {
+    setCourtToDelete(courtId);
+  };
 
-    if (!confirmDelete) return;
+  const handleCancelDeleteCourt = () => {
+    setCourtToDelete(null);
+  };
+
+  const handleConfirmDeleteCourt = async () => {
+    if (!courtToDelete) return;
 
     try {
-      await removeCourt(courtId);
+      await removeCourt(courtToDelete);
+      setCourtToDelete(null);
     } catch (error) {
       console.error("Error deleting court:", error);
     }
@@ -295,7 +302,7 @@ function AdminCourtsPage() {
                       <button
                         type="button"
                         className="admin-courts__see-more-btn"
-                        onClick={() => handleDeleteCourt(court.id)}
+                        onClick={() => handleRequestDeleteCourt(court.id)}
                         style={{ backgroundColor: "#e05252" }}
                       >
                         Delete
@@ -428,6 +435,17 @@ function AdminCourtsPage() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={Boolean(courtToDelete)}
+        title="Delete court?"
+        message="Are you sure you want to delete this court? This action cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        danger
+        onCancel={handleCancelDeleteCourt}
+        onConfirm={handleConfirmDeleteCourt}
+      />
     </div>
   );
 }

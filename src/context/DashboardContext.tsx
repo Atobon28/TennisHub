@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useState, type ReactNode } from "react";
+import { createContext, useCallback, useState, type ReactNode } from "react";
 import {
   getAdminCourts,
   getAdminTournaments,
@@ -8,10 +8,7 @@ import {
 } from "../firebase/services";
 import type { Court } from "./CourtsContext";
 import type { Match } from "./MatchesContext";
-import type {
-  Tournament,
-  TournamentRegistration,
-} from "./TournamentsContext";
+import type { Tournament, TournamentRegistration } from "./TournamentsContext";
 
 interface DashboardContextType {
   tournaments: Tournament[];
@@ -39,16 +36,16 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [courts, setCourts] = useState<Court[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
-  const [registrations, setRegistrations] = useState<
-    TournamentRegistration[]
-  >([]);
+  const [registrations, setRegistrations] = useState<TournamentRegistration[]>(
+    [],
+  );
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const clearDashboardError = () => {
+  const clearDashboardError = useCallback(() => {
     setError("");
-  };
+  }, []);
 
   const getErrorMessage = (err: unknown) => {
     if (err instanceof Error) return err.message;
@@ -56,7 +53,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     return "Something went wrong while loading dashboard data.";
   };
 
-  const loadAdminDashboard = async (adminId: string) => {
+  const loadAdminDashboard = useCallback(async (adminId: string) => {
     setLoading(true);
     setError("");
 
@@ -83,10 +80,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
       const registrationsByTournament = await Promise.all(
         adminTournaments.map(async (tournament) => {
-          const tournamentRegistrations =
-            (await getTournamentRegistrations(
-              tournament.id,
-            )) as unknown as TournamentRegistration[];
+          const tournamentRegistrations = (await getTournamentRegistrations(
+            tournament.id,
+          )) as unknown as TournamentRegistration[];
 
           return tournamentRegistrations.map((registration) => ({
             ...registration,
@@ -110,7 +106,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   return (
     <DashboardContext.Provider
