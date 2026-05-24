@@ -4,6 +4,11 @@ import "../styles/access-pages.css";
 import loginImage from "../assets/login.jpg";
 import { loginUser, getUserByUid, logoutUser } from "../firebase/services";
 
+interface LoginUserData {
+  id: string;
+  role: string;
+}
+
 function LoginPage() {
   const navigate = useNavigate();
 
@@ -43,7 +48,10 @@ function LoginPage() {
 
     try {
       const userCredential = await loginUser(email, password);
-      const userData = (await getUserByUid(userCredential.user.uid)) as any;
+
+      const userData = (await getUserByUid(
+        userCredential.user.uid,
+      )) as LoginUserData | null;
 
       if (!userData) {
         await logoutUser();
@@ -56,7 +64,7 @@ function LoginPage() {
         await logoutUser();
 
         setError(
-          `This account is registered as ${realRole}. Please select ${realRole} to log in.`
+          `This account is registered as ${realRole}. Please select ${realRole} to log in.`,
         );
 
         return;
@@ -65,12 +73,10 @@ function LoginPage() {
       localStorage.setItem("role", realRole);
 
       navigate(getHomeRouteByRole(realRole));
-    } catch (err: any) {
-      console.error("Login error:", err);
+    } catch (error: unknown) {
+      console.error("Login error:", error);
 
-      if (!error) {
-        setError("Invalid email or password. Please try again.");
-      }
+      setError("Invalid email or password. Please try again.");
     } finally {
       setLoading(false);
     }

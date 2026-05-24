@@ -18,13 +18,16 @@ function RegisterAdminPage() {
     event.preventDefault();
     setError("");
     setLoading(true);
+
     if (password.length < 6) {
       setError("Password must be at least 6 characters.");
       setLoading(false);
       return;
     }
+
     try {
       const userCredential = await registerUser(email, password);
+
       await addUser({
         uid: userCredential.user.uid,
         email,
@@ -32,8 +35,10 @@ function RegisterAdminPage() {
         phone,
         role: "admin",
       });
+
       navigate("/login");
-    } catch (err: any) {
+    } catch (error: unknown) {
+      console.error("Register admin error:", error);
       setError("Error creating account. Please try again.");
     } finally {
       setLoading(false);
@@ -45,6 +50,7 @@ function RegisterAdminPage() {
       <section className="access-screen__left">
         <div className="access-screen__content access-screen__content--form">
           <h1 className="access-screen__title">TennisHub</h1>
+
           <h2 className="access-screen__subtitle access-screen__subtitle--login">
             Register
           </h2>
@@ -54,6 +60,7 @@ function RegisterAdminPage() {
               <label className="access-form__label" htmlFor="email">
                 Email
               </label>
+
               <input
                 id="email"
                 type="email"
@@ -68,6 +75,7 @@ function RegisterAdminPage() {
               <label className="access-form__label" htmlFor="username">
                 Username
               </label>
+
               <input
                 id="username"
                 type="text"
@@ -82,6 +90,7 @@ function RegisterAdminPage() {
               <label className="access-form__label" htmlFor="phone">
                 Phone (WhatsApp)
               </label>
+
               <input
                 id="phone"
                 type="tel"
@@ -96,6 +105,7 @@ function RegisterAdminPage() {
               <label className="access-form__label" htmlFor="password">
                 Password
               </label>
+
               <input
                 id="password"
                 type="password"
@@ -120,6 +130,7 @@ function RegisterAdminPage() {
               <span className="access-form__footer-line">
                 <span className="access-form__back-icon">‹</span>
                 <span>Already have an account?</span>
+
                 <Link to="/login" className="access-form__link">
                   Login
                 </Link>

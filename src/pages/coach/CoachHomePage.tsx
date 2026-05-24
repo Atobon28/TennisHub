@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import { useAuth } from "../../context/useAuth";
@@ -25,11 +24,12 @@ function CoachHomePage() {
   const navigate = useNavigate();
   const { userData } = useAuth();
 
-  const [availableDays, setAvailableDays] = useState<string[]>([]);
-  const [schedule, setSchedule] = useState<Record<string, ScheduleDay>>({});
-  const [price, setPrice] = useState<string>("Not configured");
-  const [avatar, setAvatar] = useState<string>(coach1);
-  const [showSetupNotice, setShowSetupNotice] = useState(false);
+  const availableDays = Array.isArray(userData?.availableDays)
+    ? userData.availableDays
+    : [];
+
+  const schedule: Record<string, ScheduleDay> =
+    userData?.availableSchedule || {};
 
   const formatCurrency = (value: string | number) => {
     const onlyNumbers = String(value).replace(/\D/g, "");
@@ -45,38 +45,17 @@ function CoachHomePage() {
     }).format(numberValue);
   };
 
-  useEffect(() => {
-    if (Array.isArray(userData?.availableDays)) {
-      setAvailableDays(userData.availableDays);
-    } else {
-      setAvailableDays([]);
-    }
+  const price = userData?.pricePerHour
+    ? formatCurrency(userData.pricePerHour)
+    : "Not configured";
 
-    if (userData?.availableSchedule) {
-      setSchedule(userData.availableSchedule);
-    } else {
-      setSchedule({});
-    }
+  const avatar =
+    (userData as { photoURL?: string } | null)?.photoURL || coach1;
 
-    if (userData?.pricePerHour) {
-      setPrice(formatCurrency(userData.pricePerHour));
-    } else {
-      setPrice("Not configured");
-    }
-
-    const savedAvatar = localStorage.getItem("coachAvatar");
-
-    if (savedAvatar) {
-      setAvatar(savedAvatar);
-    }
-
-    const needsSetup =
-      !userData?.pricePerHour ||
-      !Array.isArray(userData?.availableDays) ||
-      userData.availableDays.length === 0;
-
-    setShowSetupNotice(needsSetup);
-  }, [userData]);
+  const showSetupNotice =
+    !userData?.pricePerHour ||
+    !Array.isArray(userData?.availableDays) ||
+    userData.availableDays.length === 0;
 
   const name = userData?.username || "Coach";
   const username = userData?.username ? `@${userData.username}` : "@coach";
@@ -207,6 +186,7 @@ function CoachHomePage() {
 
                       <span className="coach-home__day-name">
                         {day}
+
                         {currentDay?.start && currentDay?.end && (
                           <span
                             style={{
