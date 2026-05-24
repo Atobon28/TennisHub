@@ -4,6 +4,9 @@ import AdBanners from "../../components/player/AdBanners";
 import PersonCard from "../../components/player/PersonCard";
 import { Icon } from "@iconify/react";
 import { usePlayers } from "../../context";
+import LoadingState from "../../components/common/LoadingState";
+import EmptyState from "../../components/common/EmptyState";
+import ErrorState from "../../components/common/ErrorState";
 import "../../styles/find-coach.css";
 import player1 from "../../assets/player-1.jpg";
 
@@ -42,6 +45,7 @@ function PlayersPage() {
             <span className="find-coach__icon-gradient-wrap">
               <Icon icon="ph:user-fill" className="find-coach__section-icon" />
             </span>
+
             <h2 className="find-coach__section-title">Players Nearby</h2>
           </div>
 
@@ -54,29 +58,13 @@ function PlayersPage() {
           />
 
           {loading ? (
-            <p
-              style={{ color: "#888", textAlign: "center", padding: "20px 0" }}
-            >
-              Loading players...
-            </p>
+            <LoadingState message="Loading players..." />
           ) : error ? (
-            <p
-              style={{ color: "#888", textAlign: "center", padding: "20px 0" }}
-            >
-              {error}
-            </p>
+            <ErrorState message={error} />
           ) : players.length === 0 ? (
-            <p
-              style={{ color: "#888", textAlign: "center", padding: "20px 0" }}
-            >
-              No players available yet.
-            </p>
+            <EmptyState message="No players available yet." />
           ) : filteredPlayers.length === 0 ? (
-            <p
-              style={{ color: "#888", textAlign: "center", padding: "20px 0" }}
-            >
-              No players match your search.
-            </p>
+            <EmptyState message="No players match your search." />
           ) : (
             <div className="find-coach__coaches-grid">
               {filteredPlayers.map((player) => (
