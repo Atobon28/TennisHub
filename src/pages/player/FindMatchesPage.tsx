@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import AdBanners from "../../components/player/AdBanners";
@@ -21,6 +21,9 @@ function FindMatchesPage() {
     removeMatch,
   } = useMatches();
 
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedType, setSelectedType] = useState("All");
+
   useEffect(() => {
     loadMatches();
   }, [loadMatches]);
@@ -33,6 +36,19 @@ function FindMatchesPage() {
       const now = new Date();
 
       return matchDate >= now;
+    })
+    .filter((match) => {
+      const matchesDate = !selectedDate || match.date === selectedDate;
+
+      const matchType =
+        typeof match.matchType === "string"
+          ? match.matchType.toLowerCase()
+          : "";
+
+      const matchesType =
+        selectedType === "All" || matchType === selectedType.toLowerCase();
+
+      return matchesDate && matchesType;
     })
     .sort((a, b) => {
       const firstDate = new Date(`${a.date}T${a.time}`).getTime();
@@ -106,7 +122,52 @@ function FindMatchesPage() {
                 className="find-matches__icon"
               />
             </span>
+
             <h2 className="find-matches__title">Available Matches</h2>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+              gap: "0.75rem",
+              marginBottom: "1.5rem",
+            }}
+          >
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              style={{
+                border: "none",
+                borderRadius: "999px",
+                padding: "0.8rem 1rem",
+                fontWeight: 700,
+                fontFamily: "inherit",
+                background: "white",
+                color: "#111",
+                boxShadow: "0 4px 12px rgba(15, 14, 12, 0.08)",
+              }}
+            />
+
+            <select
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value)}
+              style={{
+                border: "none",
+                borderRadius: "999px",
+                padding: "0.8rem 1rem",
+                fontWeight: 800,
+                fontFamily: "inherit",
+                background: "white",
+                color: "#111",
+                boxShadow: "0 4px 12px rgba(15, 14, 12, 0.08)",
+              }}
+            >
+              <option value="All">All Types</option>
+              <option value="Singles">Singles</option>
+              <option value="Doubles">Doubles</option>
+            </select>
           </div>
 
           {loading ? (
@@ -114,7 +175,9 @@ function FindMatchesPage() {
           ) : error ? (
             <p className="find-matches__empty">{error}</p>
           ) : upcomingMatches.length === 0 ? (
-            <p className="find-matches__empty">No matches available yet.</p>
+            <p className="find-matches__empty">
+              No matches match your filters.
+            </p>
           ) : (
             <div className="find-matches__list">
               {upcomingMatches.map((match) => {
@@ -160,6 +223,12 @@ function FindMatchesPage() {
                                 : "Unknown host"}
                           </strong>
                         </p>
+
+                        {match.matchType && (
+                          <p className="find-matches__card-host">
+                            Type: <strong>{match.matchType}</strong>
+                          </p>
+                        )}
                       </div>
 
                       <div className="find-matches__card-spots">
