@@ -18,31 +18,43 @@ function RegisterCoachPage() {
   const handleRegisterCoach = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    const cleanEmail = email.trim();
+    const cleanUsername = username.trim();
+    const cleanPassword = password.trim();
+    const cleanPhone = phone.replace(/\D/g, "");
+
     setError("");
     setLoading(true);
 
-    if (!email || !username || !phone || !password) {
+    if (!cleanEmail || !cleanUsername || !cleanPhone || !cleanPassword) {
       setError("Please fill in all fields.");
       setLoading(false);
       return;
     }
 
-    if (password.length < 6) {
+    if (cleanPhone.length < 10) {
+      setError("Please enter a valid WhatsApp phone number.");
+      setLoading(false);
+      return;
+    }
+
+    if (cleanPassword.length < 6) {
       setError("Password must be at least 6 characters.");
       setLoading(false);
       return;
     }
 
     try {
-      const userCredential = await registerUser(email, password);
+      const userCredential = await registerUser(cleanEmail, cleanPassword);
 
       await addUser({
         uid: userCredential.user.uid,
-        email,
-        username,
-        phone,
+        email: cleanEmail,
+        username: cleanUsername,
+        phone: cleanPhone,
         pricePerHour: "",
         availableDays: [],
+        availableSchedule: {},
         role: "coach",
       });
 
@@ -68,66 +80,79 @@ function RegisterCoachPage() {
 
           <form className="access-form" onSubmit={handleRegisterCoach}>
             <div className="access-form__group">
-              <label className="access-form__label" htmlFor="email">
+              <label className="access-form__label" htmlFor="coach-email">
                 Email
               </label>
 
               <input
-                id="email"
+                id="coach-email"
                 type="email"
                 className="access-form__input"
                 placeholder="Enter your email..."
                 value={email}
+                autoComplete="email"
+                required
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
 
             <div className="access-form__group">
-              <label className="access-form__label" htmlFor="username">
+              <label className="access-form__label" htmlFor="coach-username">
                 Username
               </label>
 
               <input
-                id="username"
+                id="coach-username"
                 type="text"
                 className="access-form__input"
                 placeholder="Enter your username..."
                 value={username}
+                autoComplete="username"
+                required
                 onChange={(e) => setUsername(e.target.value)}
               />
             </div>
 
             <div className="access-form__group">
-              <label className="access-form__label" htmlFor="phone">
+              <label className="access-form__label" htmlFor="coach-phone">
                 Phone (WhatsApp)
               </label>
 
               <input
-                id="phone"
+                id="coach-phone"
                 type="tel"
+                inputMode="numeric"
                 className="access-form__input"
                 placeholder="Example: 573122588794"
                 value={phone}
+                autoComplete="tel"
+                required
                 onChange={(e) => setPhone(e.target.value)}
               />
             </div>
 
             <div className="access-form__group">
-              <label className="access-form__label" htmlFor="password">
+              <label className="access-form__label" htmlFor="coach-password">
                 Password
               </label>
 
               <input
-                id="password"
+                id="coach-password"
                 type="password"
                 className="access-form__input"
                 placeholder="Enter your password..."
                 value={password}
+                autoComplete="new-password"
+                required
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
 
-            {error && <p className="access-form__error">{error}</p>}
+            {error && (
+              <p className="access-form__error" role="alert">
+                {error}
+              </p>
+            )}
 
             <button
               type="submit"
@@ -154,7 +179,7 @@ function RegisterCoachPage() {
       <section className="access-screen__right">
         <img
           src={registerCoachImage}
-          alt="TennisHub register coach"
+          alt="Tennis coach registration background for TennisHub"
           className="access-screen__image"
         />
       </section>

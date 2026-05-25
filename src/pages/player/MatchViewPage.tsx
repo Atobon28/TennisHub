@@ -36,6 +36,7 @@ function MatchViewPage() {
         userData.uid,
         userData.username,
       );
+
       await loadMatchById(selectedMatch.id);
     } catch (error) {
       console.error("Error joining match:", error);
@@ -49,14 +50,16 @@ function MatchViewPage() {
       if (selectedMatch.hostId === userData.uid) {
         await removeMatch(selectedMatch.id);
         navigate("/player/matches");
-      } else {
-        await leaveExistingMatch(
-          selectedMatch.id,
-          userData.uid,
-          userData.username,
-        );
-        await loadMatchById(selectedMatch.id);
+        return;
       }
+
+      await leaveExistingMatch(
+        selectedMatch.id,
+        userData.uid,
+        userData.username,
+      );
+
+      await loadMatchById(selectedMatch.id);
     } catch (error) {
       console.error("Error leaving match:", error);
     }
@@ -76,20 +79,33 @@ function MatchViewPage() {
   };
 
   if (loading) {
-    return <p style={{ padding: 20, color: "#888" }}>Loading match...</p>;
+    return (
+      <p style={{ padding: 20, color: "#555" }} role="status">
+        Loading match...
+      </p>
+    );
   }
 
   if (error) {
-    return <p style={{ padding: 20, color: "#888" }}>{error}</p>;
+    return (
+      <p style={{ padding: 20, color: "#b42318" }} role="alert">
+        {error}
+      </p>
+    );
   }
 
   if (!selectedMatch) {
-    return <p style={{ padding: 20, color: "#888" }}>Match not found.</p>;
+    return (
+      <p style={{ padding: 20, color: "#555" }} role="alert">
+        Match not found.
+      </p>
+    );
   }
 
   const playersCount = selectedMatch.players?.length || 0;
   const maxPlayers =
     typeof selectedMatch.maxPlayers === "number" ? selectedMatch.maxPlayers : 0;
+
   const spotsLeft = Math.max(maxPlayers - playersCount, 0);
   const isFull = playersCount >= maxPlayers;
   const isInMatch = selectedMatch.playerIds?.includes(userData?.uid || "");
@@ -101,6 +117,18 @@ function MatchViewPage() {
   const matchTypeLabel = matchType === "singles" ? "Singles" : "Doubles";
   const statusLabel = isFull ? "Full match" : "Open match";
 
+  const courtName =
+    typeof selectedMatch.court === "string"
+      ? selectedMatch.court
+      : "Not specified";
+
+  const hostName =
+    typeof selectedMatch.hostUsername === "string"
+      ? selectedMatch.hostUsername
+      : typeof selectedMatch.hostName === "string"
+        ? selectedMatch.hostName
+        : "Unknown host";
+
   return (
     <div className="find-matches">
       <div className="find-matches__grid">
@@ -108,6 +136,7 @@ function MatchViewPage() {
           <button
             type="button"
             className="find-matches__btn find-matches__btn--leave"
+            aria-label="Go back to matches list"
             onClick={() => navigate("/player/matches")}
             style={{ marginBottom: "1rem" }}
           >
@@ -115,7 +144,7 @@ function MatchViewPage() {
           </button>
 
           <div className="find-matches__section-title-wrap">
-            <span className="find-matches__icon-wrap">
+            <span className="find-matches__icon-wrap" aria-hidden="true">
               <Icon
                 icon="game-icons:tennis-racket"
                 className="find-matches__icon"
@@ -129,8 +158,8 @@ function MatchViewPage() {
             <div className="find-matches__card-header">
               <div className="find-matches__card-info">
                 <p className="find-matches__card-court">
-                  <Icon icon="mdi:tennis-ball-outline" />{" "}
-                  {selectedMatch.court || "Not specified"}
+                  <Icon icon="mdi:tennis-ball-outline" aria-hidden="true" />{" "}
+                  {courtName}
                 </p>
 
                 <p className="find-matches__card-date">
@@ -139,12 +168,7 @@ function MatchViewPage() {
                 </p>
 
                 <p className="find-matches__card-host">
-                  Created by:{" "}
-                  <strong>
-                    {selectedMatch.hostUsername ||
-                      selectedMatch.hostName ||
-                      "Unknown host"}
-                  </strong>
+                  Created by: <strong>{hostName}</strong>
                 </p>
               </div>
 
@@ -202,16 +226,18 @@ function MatchViewPage() {
 
               <div className="find-matches__players-list">
                 {selectedMatch.players?.map((player) => (
-                  <span
+                  <button
                     key={player.uid}
+                    type="button"
                     className="find-matches__player-chip"
+                    aria-label={`Open ${player.username} profile`}
                     onClick={() =>
                       navigate(`/player/players/view/${player.uid}`)
                     }
                   >
                     {player.username}
                     {player.uid === selectedMatch.hostId && " 👑"}
-                  </span>
+                  </button>
                 ))}
               </div>
             </div>
@@ -228,7 +254,7 @@ function MatchViewPage() {
 
               <p style={{ marginBottom: 0 }}>
                 This is a <strong>{matchTypeLabel.toLowerCase()}</strong> match
-                at <strong>{selectedMatch.court || "Not specified"}</strong> on{" "}
+                at <strong>{courtName}</strong> on{" "}
                 <strong>{formatDate(selectedMatch.date)}</strong> at{" "}
                 <strong>{selectedMatch.time || "Not specified"}</strong>. There
                 are <strong>{spotsLeft}</strong> spots available.
@@ -243,6 +269,9 @@ function MatchViewPage() {
                 <button
                   type="button"
                   className="find-matches__btn find-matches__btn--leave"
+                  aria-label={
+                    isHost ? `Cancel match at ${courtName}` : `Leave match at ${courtName}`
+                  }
                   onClick={handleLeave}
                 >
                   {isHost ? "Cancel Match" : "Leave Match"}
@@ -251,14 +280,16 @@ function MatchViewPage() {
                 <button
                   type="button"
                   className="find-matches__btn find-matches__btn--join"
+                  aria-label={`Join match at ${courtName}`}
                   onClick={handleJoin}
                 >
                   Join Match
                 </button>
               ) : (
                 <p
+                  role="status"
                   style={{
-                    color: "#e05252",
+                    color: "#b42318",
                     fontWeight: 700,
                     fontSize: "0.9rem",
                   }}

@@ -76,7 +76,6 @@ function CoachProfilePage() {
   } = useProfile();
 
   const [avatar, setAvatar] = useState<string>(userData?.photoURL || coach1);
-
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarMsg, setAvatarMsg] = useState("");
 
@@ -161,7 +160,6 @@ function CoachProfilePage() {
       const imageUrl = await uploadAvatar(userData.id, userData.uid, file);
 
       setAvatar(imageUrl);
-
       await refreshUserData();
 
       setAvatarMsg("Avatar updated successfully.");
@@ -282,12 +280,14 @@ function CoachProfilePage() {
     try {
       await changePassword(newPassword);
 
-      setPasswordMsg("");
-      setNewPassword("");
-      setConfirmPassword("");
-      setShowPasswordModal(false);
+      setPasswordMsg("Password updated successfully.");
+setNewPassword("");
+setConfirmPassword("");
 
-      alert("Password updated successfully.");
+setTimeout(() => {
+  setShowPasswordModal(false);
+  setPasswordMsg("");
+}, 1200);
     } catch (error) {
       console.error("Error changing password:", error);
 
@@ -354,11 +354,16 @@ function CoachProfilePage() {
         <section className="coach-profile__main">
           <div className="coach-profile__header">
             <div className="coach-profile__avatar-wrap">
-              <img src={avatar} alt={name} className="coach-profile__avatar" />
+              <img
+                src={avatar || coach1}
+                alt={`${name} coach profile avatar`}
+                className="coach-profile__avatar"
+              />
 
               <button
                 type="button"
                 className="coach-profile__edit-btn"
+                aria-label="Upload coach avatar"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadingAvatar || profileLoading}
               >
@@ -380,14 +385,15 @@ function CoachProfilePage() {
 
               {(avatarMsg || profileError || profileSuccess) && (
                 <p
+                  role="status"
                   style={{
                     margin: "0.35rem 0 0",
                     fontSize: "0.8rem",
                     fontWeight: 700,
                     color:
                       avatarMsg.includes("successfully") || profileSuccess
-                        ? "#2f9e44"
-                        : "#e05252",
+                        ? "#1f7a3a"
+                        : "#b42318",
                   }}
                 >
                   {avatarMsg || profileError || profileSuccess}
@@ -459,7 +465,7 @@ function CoachProfilePage() {
                   }}
                 >
                   <img
-                    src={avatar}
+                    src={avatar || coach1}
                     alt=""
                     className="coach-profile__day-icon"
                   />
@@ -482,6 +488,11 @@ function CoachProfilePage() {
                             ? "coach-profile__check-circle--active"
                             : ""
                         }`}
+                        aria-label={
+                          isSelected
+                            ? `Disable availability for ${day}`
+                            : `Enable availability for ${day}`
+                        }
                         onClick={() => toggleDay(day)}
                       >
                         {isSelected ? "✓" : ""}
@@ -500,6 +511,7 @@ function CoachProfilePage() {
                       >
                         <div>
                           <label
+                            htmlFor={`coach-${day}-start`}
                             style={{
                               display: "block",
                               fontSize: "0.78rem",
@@ -512,6 +524,7 @@ function CoachProfilePage() {
                           </label>
 
                           <select
+                            id={`coach-${day}-start`}
                             value={currentDay.start}
                             onChange={(e) =>
                               handleHourChange(day, "start", e.target.value)
@@ -530,6 +543,7 @@ function CoachProfilePage() {
 
                         <div>
                           <label
+                            htmlFor={`coach-${day}-end`}
                             style={{
                               display: "block",
                               fontSize: "0.78rem",
@@ -542,6 +556,7 @@ function CoachProfilePage() {
                           </label>
 
                           <select
+                            id={`coach-${day}-end`}
                             value={currentDay.end}
                             onChange={(e) =>
                               handleHourChange(day, "end", e.target.value)
@@ -567,8 +582,9 @@ function CoachProfilePage() {
 
           {scheduleError && (
             <p
+              role="alert"
               style={{
-                color: "#e05252",
+                color: "#b42318",
                 fontWeight: 800,
                 marginTop: "0.75rem",
               }}
@@ -579,7 +595,9 @@ function CoachProfilePage() {
 
           <div className="coach-profile__save-wrap">
             {saved && (
-              <span className="coach-profile__saved-msg">✓ Profile saved!</span>
+              <span className="coach-profile__saved-msg" role="status">
+                ✓ Profile saved!
+              </span>
             )}
 
             <button
@@ -601,6 +619,7 @@ function CoachProfilePage() {
             <button
               type="button"
               className="coach-profile__modal-close"
+              aria-label="Close change password modal"
               onClick={() => {
                 setShowPasswordModal(false);
                 setPasswordMsg("");
@@ -616,11 +635,15 @@ function CoachProfilePage() {
             <div className="coach-profile__modal-section">
               <h3 className="coach-profile__modal-subtitle">Password</h3>
 
-              <label className="coach-profile__modal-label">
+              <label
+                className="coach-profile__modal-label"
+                htmlFor="new-coach-password"
+              >
                 New Password:
               </label>
 
               <input
+                id="new-coach-password"
                 type="password"
                 className="coach-profile__modal-input"
                 placeholder="New Password..."
@@ -628,11 +651,15 @@ function CoachProfilePage() {
                 onChange={(e) => setNewPassword(e.target.value)}
               />
 
-              <label className="coach-profile__modal-label">
+              <label
+                className="coach-profile__modal-label"
+                htmlFor="confirm-coach-password"
+              >
                 Confirm Password:
               </label>
 
               <input
+                id="confirm-coach-password"
                 type="password"
                 className="coach-profile__modal-input"
                 placeholder="Confirm Password..."
@@ -641,7 +668,9 @@ function CoachProfilePage() {
               />
 
               {passwordMsg && (
-                <p className="coach-profile__modal-error">{passwordMsg}</p>
+                <p className="coach-profile__modal-error" role="alert">
+                  {passwordMsg}
+                </p>
               )}
             </div>
 
@@ -662,6 +691,7 @@ function CoachProfilePage() {
             <button
               type="button"
               className="coach-profile__modal-close"
+              aria-label="Close change price modal"
               onClick={() => {
                 setShowPriceModal(false);
                 setNewPrice("");
@@ -676,11 +706,15 @@ function CoachProfilePage() {
             <div className="coach-profile__modal-section">
               <h3 className="coach-profile__modal-subtitle">Price per hour</h3>
 
-              <label className="coach-profile__modal-label">
+              <label
+                className="coach-profile__modal-label"
+                htmlFor="coach-price"
+              >
                 New Price COP:
               </label>
 
               <input
+                id="coach-price"
                 type="text"
                 inputMode="numeric"
                 pattern="[0-9]*"
@@ -703,7 +737,9 @@ function CoachProfilePage() {
               )}
 
               {priceMsg && (
-                <p className="coach-profile__modal-error">{priceMsg}</p>
+                <p className="coach-profile__modal-error" role="alert">
+                  {priceMsg}
+                </p>
               )}
             </div>
 

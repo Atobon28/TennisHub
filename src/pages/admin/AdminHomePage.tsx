@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import { useDashboard } from "../../context";
@@ -26,87 +26,106 @@ function AdminHomePage() {
     loadAdminDashboard(userData.uid);
   }, [userData?.uid, loadAdminDashboard]);
 
-  const getTournamentBadge = (tournament: (typeof tournaments)[number]) => {
-    if (tournament.tournamentType === "doubles") return "D";
-    if (tournament.tournamentType === "both") return "S/D";
+  const getTournamentBadge = useCallback(
+    (tournament: (typeof tournaments)[number]) => {
+      if (tournament.tournamentType === "doubles") return "D";
+      if (tournament.tournamentType === "both") return "S/D";
 
-    return tournament.level || "S";
-  };
-
-  const isTournamentFull = (tournament: (typeof tournaments)[number]) => {
-    if (tournament.status === "Full") return true;
-
-    if (!tournament.capacityByCategory) return false;
-
-    const tournamentRegistrations = registrations.filter(
-      (registration) => registration.tournamentId === tournament.id,
-    );
-
-    const totalSingles = Object.values(tournament.capacityByCategory).reduce(
-      (total, category) => total + (category.singlesPlayers || 0),
-      0,
-    );
-
-    const totalPairs = Object.values(tournament.capacityByCategory).reduce(
-      (total, category) => total + (category.doublesPairs || 0),
-      0,
-    );
-
-    const usedSingles = tournamentRegistrations.filter(
-      (registration) => registration.entryType === "singles",
-    ).length;
-
-    const usedPairs = tournamentRegistrations.filter(
-      (registration) => registration.entryType === "doubles",
-    ).length;
-
-    return (
-      (totalSingles > 0 && usedSingles >= totalSingles) ||
-      (totalPairs > 0 && usedPairs >= totalPairs)
-    );
-  };
-
-  const activeMatches = matches.filter((match) => {
-    if (!match.date) return false;
-
-    const today = new Date().toISOString().split("T")[0];
-    return match.date >= today;
-  });
-
-  const fullTournaments = tournaments.filter(isTournamentFull);
-
-  const playersLookingForPartner = registrations.filter(
-    (registration) => registration.needsPartner,
+      return tournament.level || "S";
+    },
+    [],
   );
+
+  const isTournamentFull = useCallback(
+    (tournament: (typeof tournaments)[number]) => {
+      if (tournament.status === "Full") return true;
+
+      if (!tournament.capacityByCategory) return false;
+
+      const tournamentRegistrations = registrations.filter(
+        (registration) => registration.tournamentId === tournament.id,
+      );
+
+      const totalSingles = Object.values(tournament.capacityByCategory).reduce(
+        (total, category) => total + (category.singlesPlayers || 0),
+        0,
+      );
+
+      const totalPairs = Object.values(tournament.capacityByCategory).reduce(
+        (total, category) => total + (category.doublesPairs || 0),
+        0,
+      );
+
+      const usedSingles = tournamentRegistrations.filter(
+        (registration) => registration.entryType === "singles",
+      ).length;
+
+      const usedPairs = tournamentRegistrations.filter(
+        (registration) => registration.entryType === "doubles",
+      ).length;
+
+      return (
+        (totalSingles > 0 && usedSingles >= totalSingles) ||
+        (totalPairs > 0 && usedPairs >= totalPairs)
+      );
+    },
+    [registrations],
+  );
+
+  const today = useMemo(() => new Date().toISOString().split("T")[0], []);
+
+  const activeMatches = useMemo(() => {
+    return matches.filter((match) => {
+      if (!match.date) return false;
+
+      return match.date >= today;
+    });
+  }, [matches, today]);
+
+  const fullTournaments = useMemo(() => {
+    return tournaments.filter(isTournamentFull);
+  }, [tournaments, isTournamentFull]);
+
+  const playersLookingForPartner = useMemo(() => {
+    return registrations.filter((registration) => registration.needsPartner);
+  }, [registrations]);
 
   const playersInMyTournaments = registrations.length;
 
-  const recentTournaments = [...tournaments]
-    .sort((a, b) => {
-      const dateA =
-        typeof a.createdAt === "string" ? new Date(a.createdAt).getTime() : 0;
-      const dateB =
-        typeof b.createdAt === "string" ? new Date(b.createdAt).getTime() : 0;
+  const recentTournaments = useMemo(() => {
+    return [...tournaments]
+      .sort((a, b) => {
+        const dateA =
+          typeof a.createdAt === "string" ? new Date(a.createdAt).getTime() : 0;
+        const dateB =
+          typeof b.createdAt === "string" ? new Date(b.createdAt).getTime() : 0;
 
-      return dateB - dateA;
-    })
-    .slice(0, 3);
+        return dateB - dateA;
+      })
+      .slice(0, 3);
+  }, [tournaments]);
 
-  const recentMatches = [...matches]
-    .sort((a, b) => {
-      const dateA = new Date(`${a.date || ""} ${a.time || ""}`).getTime();
-      const dateB = new Date(`${b.date || ""} ${b.time || ""}`).getTime();
+  const recentMatches = useMemo(() => {
+    return [...matches]
+      .sort((a, b) => {
+        const dateA = new Date(`${a.date || ""} ${a.time || ""}`).getTime();
+        const dateB = new Date(`${b.date || ""} ${b.time || ""}`).getTime();
 
-      return dateB - dateA;
-    })
-    .slice(0, 3);
+        return dateB - dateA;
+      })
+      .slice(0, 3);
+  }, [matches]);
+
+  const visibleCourts = useMemo(() => courts.slice(0, 4), [courts]);
 
   if (loading) {
     return (
       <div className="admin-home">
         <div className="admin-home__grid">
           <section className="admin-home__main">
-            <p className="admin-home__loading">Loading dashboard...</p>
+            <p className="admin-home__loading" role="status">
+              Loading dashboard...
+            </p>
           </section>
 
           <AdBanners />
@@ -121,7 +140,10 @@ function AdminHomePage() {
         <section className="admin-home__main">
           <div className="admin-home__section-header">
             <div className="admin-home__section-title-wrap">
-              <span className="admin-home__icon-gradient-wrap">
+              <span
+                className="admin-home__icon-gradient-wrap"
+                aria-hidden="true"
+              >
                 <span>📊</span>
               </span>
 
@@ -129,7 +151,11 @@ function AdminHomePage() {
             </div>
           </div>
 
-          {error && <p className="admin-home__loading">{error}</p>}
+          {error && (
+            <p className="admin-home__loading" role="alert">
+              {error}
+            </p>
+          )}
 
           <div className="admin-home__metrics-grid">
             <article className="admin-home__metric-card">
@@ -183,7 +209,10 @@ function AdminHomePage() {
 
           <div className="admin-home__section-header">
             <div className="admin-home__section-title-wrap">
-              <span className="admin-home__icon-gradient-wrap">
+              <span
+                className="admin-home__icon-gradient-wrap"
+                aria-hidden="true"
+              >
                 <span>🎾</span>
               </span>
 
@@ -193,6 +222,7 @@ function AdminHomePage() {
             <button
               type="button"
               className="admin-home__more-btn"
+              aria-label="See more tournaments"
               onClick={() => navigate("/admin/tournaments")}
             >
               See more...
@@ -201,13 +231,14 @@ function AdminHomePage() {
 
           {recentTournaments.length === 0 ? (
             <div className="admin-home__empty-state">
-              <p className="admin-home__loading">
+              <p className="admin-home__loading" role="status">
                 You have not created tournaments yet.
               </p>
 
               <button
                 type="button"
                 className="admin-home__primary-btn"
+                aria-label="Create first tournament"
                 onClick={() => navigate("/admin/tournaments")}
               >
                 Create first tournament
@@ -220,7 +251,12 @@ function AdminHomePage() {
                   key={tournament.id}
                   className="admin-home__tournament-card"
                 >
-                  <div className="admin-home__level-badge">
+                  <div
+                    className="admin-home__level-badge"
+                    aria-label={`Tournament badge ${getTournamentBadge(
+                      tournament,
+                    )}`}
+                  >
                     {getTournamentBadge(tournament)}
                   </div>
 
@@ -231,6 +267,7 @@ function AdminHomePage() {
                   <button
                     type="button"
                     className="admin-home__view-btn"
+                    aria-label={`View ${tournament.name} tournament`}
                     onClick={() =>
                       navigate(`/admin/tournaments/view/${tournament.id}`)
                     }
@@ -244,7 +281,10 @@ function AdminHomePage() {
 
           <div className="admin-home__section-header">
             <div className="admin-home__section-title-wrap">
-              <span className="admin-home__icon-gradient-wrap">
+              <span
+                className="admin-home__icon-gradient-wrap"
+                aria-hidden="true"
+              >
                 <span>⚡</span>
               </span>
 
@@ -254,46 +294,54 @@ function AdminHomePage() {
 
           {recentMatches.length === 0 ? (
             <div className="admin-home__empty-state">
-              <p className="admin-home__loading">
+              <p className="admin-home__loading" role="status">
                 No matches have been created in your courts yet.
               </p>
             </div>
           ) : (
             <div className="admin-home__recent-list">
-              {recentMatches.map((match) => (
-                <article key={match.id} className="admin-home__recent-card">
-                  <h3 className="admin-home__card-name">
-                    {typeof match.court === "string"
-                      ? match.court
-                      : "Not specified"}
-                  </h3>
+              {recentMatches.map((match) => {
+                const courtName =
+                  typeof match.court === "string"
+                    ? match.court
+                    : "Not specified";
 
-                  <p className="admin-home__card-info">
-                    {match.date || "Not specified"}{" "}
-                    {match.time ? `- ${match.time}` : ""}
-                  </p>
+                const hostName =
+                  typeof match.hostUsername === "string"
+                    ? match.hostUsername
+                    : typeof match.hostName === "string"
+                      ? match.hostName
+                      : "Not specified";
 
-                  <p className="admin-home__card-info">
-                    Host:{" "}
-                    {typeof match.hostUsername === "string"
-                      ? match.hostUsername
-                      : typeof match.hostName === "string"
-                        ? match.hostName
-                        : "Not specified"}
-                  </p>
+                return (
+                  <article key={match.id} className="admin-home__recent-card">
+                    <h3 className="admin-home__card-name">{courtName}</h3>
 
-                  <p className="admin-home__card-info">
-                    Players: {match.players?.length || 0}/
-                    {match.maxPlayers || "?"}
-                  </p>
-                </article>
-              ))}
+                    <p className="admin-home__card-info">
+                      {match.date || "Not specified"}{" "}
+                      {match.time ? `- ${match.time}` : ""}
+                    </p>
+
+                    <p className="admin-home__card-info">
+                      Host: {hostName}
+                    </p>
+
+                    <p className="admin-home__card-info">
+                      Players: {match.players?.length || 0}/
+                      {match.maxPlayers || "?"}
+                    </p>
+                  </article>
+                );
+              })}
             </div>
           )}
 
           <div className="admin-home__section-header">
             <div className="admin-home__section-title-wrap">
-              <span className="admin-home__icon-gradient-wrap admin-home__icon-gradient-wrap--orange">
+              <span
+                className="admin-home__icon-gradient-wrap admin-home__icon-gradient-wrap--orange"
+                aria-hidden="true"
+              >
                 <span>🔥</span>
               </span>
 
@@ -303,6 +351,7 @@ function AdminHomePage() {
             <button
               type="button"
               className="admin-home__more-btn"
+              aria-label="See more courts"
               onClick={() => navigate("/admin/courts")}
             >
               See more...
@@ -311,13 +360,14 @@ function AdminHomePage() {
 
           {courts.length === 0 ? (
             <div className="admin-home__empty-state">
-              <p className="admin-home__loading">
+              <p className="admin-home__loading" role="status">
                 You have not created courts yet.
               </p>
 
               <button
                 type="button"
                 className="admin-home__primary-btn"
+                aria-label="Create first court"
                 onClick={() => navigate("/admin/courts")}
               >
                 Create first court
@@ -325,35 +375,48 @@ function AdminHomePage() {
             </div>
           ) : (
             <div className="admin-home__courts-grid">
-              {courts.slice(0, 4).map((court) => (
-                <article key={court.id} className="admin-home__court-card">
-                  <img
-                    src={typeof court.image === "string" ? court.image : court1}
-                    alt={court.name || "Court"}
-                    className="admin-home__court-image"
-                  />
+              {visibleCourts.map((court) => {
+                const courtName = court.name || "Unnamed court";
+                const courtImage =
+                  typeof court.image === "string" ? court.image : court1;
 
-                  <div className="admin-home__court-overlay">
-                    <span className="admin-home__court-name">
-                      {court.name || "Unnamed court"}
-                    </span>
+                return (
+                  <article key={court.id} className="admin-home__court-card">
+                    <img
+                      src={courtImage || court1}
+                      alt={`${courtName} court`}
+                      className="admin-home__court-image"
+                      onError={(event) => {
+                        event.currentTarget.src = court1;
+                      }}
+                    />
 
-                    {court.courtType && (
-                      <span className="admin-home__court-type">
-                        {String(court.courtType)}
+                    <div className="admin-home__court-overlay">
+                      <span className="admin-home__court-name">
+                        {courtName}
                       </span>
-                    )}
 
-                    <button
-                      type="button"
-                      className="admin-home__see-more-btn"
-                      onClick={() => navigate(`/admin/courts/view/${court.id}`)}
-                    >
-                      See more
-                    </button>
-                  </div>
-                </article>
-              ))}
+                      {court.courtType && (
+                        <span
+                          className="admin-home__court-type"
+                          aria-label={`Court type: ${String(court.courtType)}`}
+                        >
+                          {String(court.courtType)}
+                        </span>
+                      )}
+
+                      <button
+                        type="button"
+                        className="admin-home__see-more-btn"
+                        aria-label={`See more details for ${courtName}`}
+                        onClick={() => navigate(`/admin/courts/view/${court.id}`)}
+                      >
+                        See more
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>

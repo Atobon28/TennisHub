@@ -5,7 +5,6 @@ import loginImage from "../assets/login.jpg";
 import { loginUser, getUserByUid, logoutUser } from "../firebase/services";
 
 interface LoginUserData {
-  id: string;
   role: string;
 }
 
@@ -48,7 +47,6 @@ function LoginPage() {
 
     try {
       const userCredential = await loginUser(email, password);
-
       const userData = (await getUserByUid(
         userCredential.user.uid,
       )) as LoginUserData | null;
@@ -73,9 +71,8 @@ function LoginPage() {
       localStorage.setItem("role", realRole);
 
       navigate(getHomeRouteByRole(realRole));
-    } catch (error: unknown) {
-      console.error("Login error:", error);
-
+    } catch (err) {
+      console.error("Login error:", err);
       setError("Invalid email or password. Please try again.");
     } finally {
       setLoading(false);
@@ -104,6 +101,8 @@ function LoginPage() {
                 className="access-form__input"
                 placeholder="Enter your email..."
                 value={email}
+                autoComplete="email"
+                required
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
@@ -119,11 +118,17 @@ function LoginPage() {
                 className="access-form__input"
                 placeholder="Enter your password..."
                 value={password}
+                autoComplete="current-password"
+                required
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
 
-            {error && <p className="access-form__error">{error}</p>}
+            {error && (
+              <p className="access-form__error" role="alert">
+                {error}
+              </p>
+            )}
 
             <button
               type="submit"
@@ -160,7 +165,7 @@ function LoginPage() {
       <section className="access-screen__right">
         <img
           src={loginImage}
-          alt="TennisHub login"
+          alt="Tennis player on court used as TennisHub login background"
           className="access-screen__image"
         />
       </section>

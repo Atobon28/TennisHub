@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
+import ConfirmModal from "../../components/common/ConfirmModal";
 import { Icon } from "@iconify/react";
 import { useCourts } from "../../context";
 import { useAuth } from "../../context/useAuth";
@@ -15,7 +16,6 @@ const courtTypeOptions = ["Grass", "Hard", "Clay"];
 function AdminCourtsPage() {
   const navigate = useNavigate();
   const { userData } = useAuth();
-  const { showToast } = useToast();
 
   const {
     adminCourts,
@@ -41,6 +41,7 @@ function AdminCourtsPage() {
 
   const [formError, setFormError] = useState("");
   const [creating, setCreating] = useState(false);
+  const [courtToDelete, setCourtToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     if (!userData?.uid) return;
@@ -74,7 +75,7 @@ function AdminCourtsPage() {
           const ctx = canvas.getContext("2d");
 
           if (!ctx) {
-            reject("Canvas error");
+            reject(new Error("Canvas error"));
             return;
           }
 
@@ -102,6 +103,7 @@ function AdminCourtsPage() {
     try {
       const resizedImage = await resizeImage(file);
       setNewImage(resizedImage);
+      setFormError("");
     } catch (error) {
       console.error("Error resizing image:", error);
       setFormError("Error uploading image. Please try another one.");
@@ -127,6 +129,13 @@ function AdminCourtsPage() {
       return;
     }
 
+    const cleanContact = newContact.replace(/\D/g, "");
+
+    if (cleanContact.length < 10) {
+      setFormError("Please enter a valid contact phone number.");
+      return;
+    }
+
     isCreatingRef.current = true;
     setFormError("");
     clearCourtError();
@@ -135,7 +144,7 @@ function AdminCourtsPage() {
     try {
       await createCourt(userData.uid, {
         name: newName.trim(),
-        contact: newContact.trim(),
+        contact: cleanContact,
         address: newAddress.trim(),
         courtType: newCourtType,
         image: newImage || court1,
@@ -154,7 +163,7 @@ function AdminCourtsPage() {
     }
   };
 
-  const handleRequestDeleteCourt = (courtId: string) => {
+  const handleDeleteCourt = (courtId: string) => {
     setCourtToDelete(courtId);
   };
 
@@ -167,11 +176,10 @@ function AdminCourtsPage() {
 
     try {
       await removeCourt(courtToDelete);
-      setCourtToDelete(null);
-      showToast("Court deleted successfully.", "success");
     } catch (error) {
       console.error("Error deleting court:", error);
-      showToast("Error deleting court. Please try again.", "error");
+    } finally {
+      setCourtToDelete(null);
     }
   };
 
@@ -186,6 +194,10 @@ function AdminCourtsPage() {
     clearCourtError();
     isCreatingRef.current = false;
     setCreating(false);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   return (
@@ -201,7 +213,10 @@ function AdminCourtsPage() {
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <span className="admin-courts__icon-gradient-wrap">
+              <span
+                className="admin-courts__icon-gradient-wrap"
+                aria-hidden="true"
+              >
                 <Icon
                   icon="mingcute:fire-fill"
                   className="admin-courts__section-icon"
@@ -214,6 +229,11 @@ function AdminCourtsPage() {
             <button
               type="button"
               className="create-match__btn"
+              aria-label={
+                adminCourts.length === 0
+                  ? "Create first court"
+                  : "Add more courts"
+              }
               onClick={() => setShowModal(true)}
               style={{
                 width: "auto",
@@ -229,9 +249,13 @@ function AdminCourtsPage() {
           </div>
 
           {loading ? (
-            <p className="admin-courts__loading">Loading courts...</p>
+            <p className="admin-courts__loading" role="status">
+              Loading courts...
+            </p>
           ) : courtsError ? (
-            <p className="admin-courts__loading">{courtsError}</p>
+            <p className="admin-courts__loading" role="alert">
+              {courtsError}
+            </p>
           ) : adminCourts.length === 0 ? (
             <div
               style={{
@@ -249,6 +273,7 @@ function AdminCourtsPage() {
               <button
                 type="button"
                 className="create-match__btn"
+                aria-label="Create first court"
                 onClick={() => setShowModal(true)}
                 style={{
                   marginTop: "0.75rem",
@@ -261,64 +286,74 @@ function AdminCourtsPage() {
             </div>
           ) : (
             <div className="admin-courts__courts-grid">
-              {adminCourts.map((court) => (
-                <article key={court.id} className="admin-courts__court-card">
-                  <img
-                    src={typeof court.image === "string" ? court.image : court1}
-                    alt={court.name || "Tennis court"}
-                    className="admin-courts__court-image"
-                  />
+              {adminCourts.map((court) => {
+                const courtName = court.name || "Tennis court";
 
-                  <div className="admin-courts__court-overlay">
-                    <span className="admin-courts__court-name">
-                      {court.name}
-                    </span>
+                return (
+                  <article key={court.id} className="admin-courts__court-card">
+                    <img
+                      src={typeof court.image === "string" ? court.image : court1}
+                      alt={`${courtName} court`}
+                      className="admin-courts__court-image"
+                      onError={(event) => {
+                        event.currentTarget.src = court1;
+                      }}
+                    />
 
-                    {court.courtType && (
-                      <span
+                    <div className="admin-courts__court-overlay">
+                      <span className="admin-courts__court-name">
+                        {courtName}
+                      </span>
+
+                      {court.courtType && (
+                        <span
+                          aria-label={`Court type: ${String(court.courtType)}`}
+                          style={{
+                            backgroundColor: "rgba(255,255,255,0.9)",
+                            color: "#111",
+                            padding: "0.25rem 0.7rem",
+                            borderRadius: "999px",
+                            fontSize: "0.8rem",
+                            fontWeight: 700,
+                            marginTop: "0.4rem",
+                          }}
+                        >
+                          {String(court.courtType)}
+                        </span>
+                      )}
+
+                      <div
                         style={{
-                          backgroundColor: "rgba(255,255,255,0.9)",
-                          color: "#111",
-                          padding: "0.25rem 0.7rem",
-                          borderRadius: "999px",
-                          fontSize: "0.8rem",
-                          fontWeight: 700,
-                          marginTop: "0.4rem",
+                          display: "flex",
+                          gap: "0.5rem",
+                          marginTop: "0.75rem",
                         }}
                       >
-                        {String(court.courtType)}
-                      </span>
-                    )}
+                        <button
+                          type="button"
+                          className="admin-courts__see-more-btn"
+                          aria-label={`See more details for ${courtName}`}
+                          onClick={() =>
+                            navigate(`/admin/courts/view/${court.id}`)
+                          }
+                        >
+                          See more
+                        </button>
 
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: "0.5rem",
-                        marginTop: "0.75rem",
-                      }}
-                    >
-                      <button
-                        type="button"
-                        className="admin-courts__see-more-btn"
-                        onClick={() =>
-                          navigate(`/admin/courts/view/${court.id}`)
-                        }
-                      >
-                        See more
-                      </button>
-
-                      <button
-                        type="button"
-                        className="admin-courts__see-more-btn"
-                        onClick={() => handleRequestDeleteCourt(court.id)}
-                        style={{ backgroundColor: "#e05252" }}
-                      >
-                        Delete
-                      </button>
+                        <button
+                          type="button"
+                          className="admin-courts__see-more-btn"
+                          aria-label={`Delete ${courtName}`}
+                          onClick={() => handleDeleteCourt(court.id)}
+                          style={{ backgroundColor: "#c92a2a" }}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </article>
-              ))}
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>
@@ -332,6 +367,7 @@ function AdminCourtsPage() {
             <button
               type="button"
               className="admin-courts__modal-close"
+              aria-label="Close create court modal"
               onClick={handleClose}
             >
               ✕
@@ -343,22 +379,35 @@ function AdminCourtsPage() {
               <div className="create-match__section">
                 <h3 className="create-match__section-title">Court Info</h3>
 
-                <label className="create-match__label">Name:</label>
+                <label className="create-match__label" htmlFor="court-name">
+                  Name:
+                </label>
+
                 <div className="create-match__select-wrap">
                   <input
+                    id="court-name"
                     type="text"
                     className="create-match__select"
                     placeholder="Court name..."
                     value={newName}
+                    required
                     onChange={(e) => setNewName(e.target.value)}
                   />
                 </div>
 
-                <label className="create-match__label">Court Type:</label>
+                <label
+                  className="create-match__label"
+                  htmlFor="court-surface-type"
+                >
+                  Court Type:
+                </label>
+
                 <div className="create-match__select-wrap">
                   <select
+                    id="court-surface-type"
                     className="create-match__select"
                     value={newCourtType}
+                    required
                     onChange={(e) => setNewCourtType(e.target.value)}
                   >
                     <option value="">Select court type</option>
@@ -371,24 +420,38 @@ function AdminCourtsPage() {
                   </select>
                 </div>
 
-                <label className="create-match__label">Contact Phone:</label>
+                <label
+                  className="create-match__label"
+                  htmlFor="court-contact-phone"
+                >
+                  Contact Phone:
+                </label>
+
                 <div className="create-match__select-wrap">
                   <input
-                    type="text"
+                    id="court-contact-phone"
+                    type="tel"
+                    inputMode="numeric"
                     className="create-match__select"
                     placeholder="Contact phone..."
                     value={newContact}
+                    required
                     onChange={(e) => setNewContact(e.target.value)}
                   />
                 </div>
 
-                <label className="create-match__label">Address:</label>
+                <label className="create-match__label" htmlFor="court-address">
+                  Address:
+                </label>
+
                 <div className="create-match__select-wrap">
                   <input
+                    id="court-address"
                     type="text"
                     className="create-match__select"
                     placeholder="Address..."
                     value={newAddress}
+                    required
                     onChange={(e) => setNewAddress(e.target.value)}
                   />
                 </div>
@@ -397,26 +460,34 @@ function AdminCourtsPage() {
               <div className="create-match__section">
                 <h3 className="create-match__section-title">Photo</h3>
 
-                <label className="create-match__label">Court Photo:</label>
+                <label className="create-match__label" htmlFor="court-photo">
+                  Court Photo:
+                </label>
 
-                <div
+                <button
+                  type="button"
                   className="admin-courts__modal-photo"
+                  aria-label="Upload court photo"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   {newImage ? (
                     <img
                       src={newImage}
-                      alt="preview"
+                      alt="New court preview"
                       className="admin-courts__modal-photo-preview"
+                      onError={(event) => {
+                        event.currentTarget.src = court1;
+                      }}
                     />
                   ) : (
                     <span className="admin-courts__modal-photo-placeholder">
                       Click to upload photo...
                     </span>
                   )}
-                </div>
+                </button>
 
                 <input
+                  id="court-photo"
                   type="file"
                   accept="image/*"
                   ref={fileInputRef}
@@ -426,7 +497,7 @@ function AdminCourtsPage() {
               </div>
 
               {(formError || courtsError) && (
-                <p className="create-match__error">
+                <p className="create-match__error" role="alert">
                   {formError || courtsError}
                 </p>
               )}
@@ -434,6 +505,7 @@ function AdminCourtsPage() {
               <button
                 type="button"
                 className="create-match__btn"
+                aria-label="Create court"
                 onClick={handleAdd}
                 disabled={creating}
               >
@@ -448,7 +520,7 @@ function AdminCourtsPage() {
         isOpen={Boolean(courtToDelete)}
         title="Delete court?"
         message="Are you sure you want to delete this court? This action cannot be undone."
-        confirmLabel="Delete"
+        confirmLabel="Delete Court"
         cancelLabel="Cancel"
         danger
         onCancel={handleCancelDeleteCourt}

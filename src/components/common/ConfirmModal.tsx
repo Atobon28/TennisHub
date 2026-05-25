@@ -24,9 +24,16 @@ function ConfirmModal({
   if (!isOpen) return null;
 
   return (
-    <div className="confirm-modal__overlay">
+    <div
+      className="confirm-modal__overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="confirm-modal-title"
+    >
       <div className="confirm-modal">
-        <h2 className="confirm-modal__title">{title}</h2>
+        <h2 id="confirm-modal-title" className="confirm-modal__title">
+          {title}
+        </h2>
 
         <p className="confirm-modal__message">{message}</p>
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
+import ConfirmModal from "../../components/common/ConfirmModal";
 import { getPlayerTournamentById } from "../../firebase/services";
 import { useAuth } from "../../context/useAuth";
 import { useTournaments } from "../../context";
@@ -81,6 +82,7 @@ function TournamentViewPage() {
   const [joining, setJoining] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [localError, setLocalError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
   const tournament = selectedTournament as Tournament | null;
@@ -155,6 +157,7 @@ function TournamentViewPage() {
 
       clearTournamentError();
       setLocalError("");
+      setSuccessMessage("");
 
       try {
         const selectedTournamentData = await loadTournamentById(id);
@@ -221,6 +224,7 @@ function TournamentViewPage() {
 
     setJoining(true);
     setLocalError("");
+    setSuccessMessage("");
     clearTournamentError();
 
     try {
@@ -242,7 +246,7 @@ function TournamentViewPage() {
 
       setJoined(true);
       setRegistrationId(existingTournament?.id || null);
-      showToast("Tournament joined successfully.", "success");
+      setSuccessMessage("Tournament joined successfully.");
     } catch (err) {
       console.error("Error joining tournament:", err);
       showToast("Error joining tournament.", "error");
@@ -270,6 +274,7 @@ function TournamentViewPage() {
 
     setLeaving(true);
     setLocalError("");
+    setSuccessMessage("");
     clearTournamentError();
 
     try {
@@ -282,7 +287,7 @@ function TournamentViewPage() {
       setPartnerName("");
       setEntryType(tournamentType === "doubles" ? "doubles" : "singles");
       setShowLeaveConfirm(false);
-      showToast("Tournament left successfully.", "success");
+      setSuccessMessage("Tournament left successfully.");
     } catch (err) {
       console.error("Error leaving tournament:", err);
       setLocalError("Error leaving tournament.");
@@ -293,13 +298,16 @@ function TournamentViewPage() {
   };
 
   const visibleError = localError || tournamentError;
+  const tournamentName = tournament?.name || "Tournament";
+  const tournamentImage =
+    typeof tournament?.image === "string" ? tournament.image : court1;
 
   if (loading) {
     return (
       <div className="tournament-view">
         <div className="tournament-view__grid">
           <section className="tournament-view__main">
-            <p>Loading tournament...</p>
+            <p role="status">Loading tournament...</p>
           </section>
 
           <AdBanners />
@@ -319,6 +327,7 @@ function TournamentViewPage() {
               <button
                 type="button"
                 className="tournament-view__join-btn"
+                aria-label="Back to tournaments"
                 onClick={() => navigate("/player/tournaments")}
               >
                 Back to tournaments
@@ -337,17 +346,16 @@ function TournamentViewPage() {
       <div className="tournament-view__grid">
         <section className="tournament-view__main">
           <div className="tournament-view__card">
-            <h2 className="tournament-view__title">{tournament.name}</h2>
+            <h2 className="tournament-view__title">{tournamentName}</h2>
 
             <div className="tournament-view__body">
               <img
-                src={
-                  typeof tournament.image === "string"
-                    ? tournament.image
-                    : court1
-                }
-                alt={tournament.name}
+                src={tournamentImage || court1}
+                alt={`${tournamentName} tournament image`}
                 className="tournament-view__image"
+                onError={(event) => {
+                  event.currentTarget.src = court1;
+                }}
               />
 
               <div className="tournament-view__info">
@@ -430,6 +438,7 @@ function TournamentViewPage() {
                 {shouldAskEntryType && (
                   <div>
                     <label
+                      htmlFor="tournament-entry-type"
                       style={{
                         display: "block",
                         fontWeight: 800,
@@ -440,6 +449,7 @@ function TournamentViewPage() {
                     </label>
 
                     <select
+                      id="tournament-entry-type"
                       value={entryType}
                       onChange={(e) => {
                         setEntryType(e.target.value as EntryType);
@@ -464,6 +474,7 @@ function TournamentViewPage() {
                 {shouldAskPartner && (
                   <div>
                     <label
+                      htmlFor="tournament-partner-option"
                       style={{
                         display: "block",
                         fontWeight: 800,
@@ -474,6 +485,7 @@ function TournamentViewPage() {
                     </label>
 
                     <select
+                      id="tournament-partner-option"
                       value={hasPartner}
                       onChange={(e) => {
                         setHasPartner(e.target.value);
@@ -498,6 +510,7 @@ function TournamentViewPage() {
                 {shouldAskPartner && hasPartner === "yes" && (
                   <div>
                     <label
+                      htmlFor="tournament-partner-name"
                       style={{
                         display: "block",
                         fontWeight: 800,
@@ -508,6 +521,7 @@ function TournamentViewPage() {
                     </label>
 
                     <input
+                      id="tournament-partner-name"
                       type="text"
                       value={partnerName}
                       onChange={(e) => setPartnerName(e.target.value)}
@@ -526,11 +540,25 @@ function TournamentViewPage() {
               </div>
             )}
 
+            {successMessage && (
+              <p
+                role="status"
+                style={{
+                  color: "#1f7a3a",
+                  fontWeight: 900,
+                  marginTop: "1rem",
+                }}
+              >
+                ✓ {successMessage}
+              </p>
+            )}
+
             {visibleError && (
               <p
+                role="alert"
                 style={{
-                  color: "#e05252",
-                  fontWeight: 800,
+                  color: "#b42318",
+                  fontWeight: 900,
                   marginTop: "1rem",
                 }}
               >
@@ -547,10 +575,11 @@ function TournamentViewPage() {
                 <button
                   type="button"
                   className="tournament-view__join-btn"
+                  aria-label={`Leave ${tournamentName} tournament`}
                   onClick={handleLeave}
                   disabled={leaving}
                   style={{
-                    background: "#e05252",
+                    background: "#b42318",
                     marginTop: "0.75rem",
                   }}
                 >
@@ -561,6 +590,7 @@ function TournamentViewPage() {
               <button
                 type="button"
                 className="tournament-view__join-btn"
+                aria-label={`Join ${tournamentName}`}
                 onClick={handleJoin}
                 disabled={
                   joining ||
@@ -573,7 +603,7 @@ function TournamentViewPage() {
                     !canApply ||
                     availableSpots <= 0 ||
                     tournamentStatus === "Closed"
-                      ? 0.5
+                      ? 0.55
                       : 1,
                   cursor:
                     !canApply ||
@@ -602,6 +632,7 @@ function TournamentViewPage() {
 
         <AdBanners />
       </div>
+
       <ConfirmModal
         isOpen={showLeaveConfirm}
         title="Leave tournament?"

@@ -1,39 +1,59 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Icon } from "@iconify/react";
 import { useNavigate } from "react-router-dom";
-import { useCourts } from "../../context";
+import { getCourts } from "../../firebase/services";
 import "../../styles/book-court.css";
 import court1 from "../../assets/court-1.jpg";
 import AdBanners from "../../components/player/AdBanners";
+
+interface Court {
+  id: string;
+  name: string;
+  image?: string;
+  courtType?: string;
+}
 
 const courtTypeFilters = ["All", "Grass", "Hard", "Clay"];
 
 function BookCourtPage() {
   const navigate = useNavigate();
 
-  const { courts, loading, error, loadCourts } = useCourts();
-
+  const [courts, setCourts] = useState<Court[]>([]);
   const [selectedType, setSelectedType] = useState("All");
-  const hasLoadedCourts = useRef(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const fetchCourts = useCallback(async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const data = await getCourts();
+      setCourts(data as Court[]);
+    } catch (error) {
+      console.error("Error fetching courts:", error);
+      setError("Error loading courts. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (hasLoadedCourts.current) return;
+    fetchCourts();
+  }, [fetchCourts]);
 
-    hasLoadedCourts.current = true;
-    loadCourts();
-  }, [loadCourts]);
+  const filteredCourts = useMemo(() => {
+    if (selectedType === "All") return courts;
 
-  const filteredCourts =
-    selectedType === "All"
-      ? courts
-      : courts.filter((court) => court.courtType === selectedType);
+    return courts.filter((court) => court.courtType === selectedType);
+  }, [courts, selectedType]);
 
   return (
     <div className="book-court">
       <div className="book-court__grid">
         <section className="book-court__main">
           <div className="book-court__section-title-wrap">
-            <span className="book-court__icon-gradient-wrap">
+            <span className="book-court__icon-gradient-wrap" aria-hidden="true">
               <Icon
                 icon="mingcute:fire-fill"
                 className="book-court__section-icon"
@@ -44,6 +64,7 @@ function BookCourtPage() {
           </div>
 
           <div
+            aria-label="Court surface filters"
             style={{
               display: "flex",
               gap: "0.75rem",
@@ -51,87 +72,108 @@ function BookCourtPage() {
               marginBottom: "1.5rem",
             }}
           >
-            {courtTypeFilters.map((type) => (
-              <button
-                key={type}
-                type="button"
-                onClick={() => setSelectedType(type)}
-                style={{
-                  border: "none",
-                  borderRadius: "999px",
-                  padding: "0.65rem 1rem",
-                  fontWeight: 800,
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  background:
-                    selectedType === type
+            {courtTypeFilters.map((type) => {
+              const isSelected = selectedType === type;
+
+              return (
+                <button
+                  key={type}
+                  type="button"
+                  aria-pressed={isSelected}
+                  aria-label={`Filter courts by ${type}`}
+                  onClick={() => setSelectedType(type)}
+                  style={{
+                    border: isSelected
+                      ? "2px solid #111111"
+                      : "1px solid #dddddd",
+                    borderRadius: "999px",
+                    padding: "0.65rem 1rem",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    background: isSelected
                       ? "linear-gradient(180deg, #bfe212 0%, #6f8500 100%)"
                       : "#ffffff",
-                  color: selectedType === type ? "#ffffff" : "#111111",
-                  boxShadow:
-                    selectedType === type
+                    color: isSelected ? "#111111" : "#111111",
+                    boxShadow: isSelected
                       ? "0 8px 18px rgba(15, 14, 12, 0.16)"
                       : "0 4px 12px rgba(15, 14, 12, 0.08)",
-                }}
-              >
-                {type}
-              </button>
-            ))}
+                  }}
+                >
+                  {isSelected ? `✓ ${type}` : type}
+                </button>
+              );
+            })}
           </div>
 
           {loading ? (
-            <p className="book-court__loading">Loading courts...</p>
+            <p className="book-court__loading" role="status">
+              Loading courts...
+            </p>
           ) : error ? (
-            <p className="book-court__loading">{error}</p>
+            <p className="book-court__loading" role="alert">
+              {error}
+            </p>
           ) : courts.length === 0 ? (
-            <p className="book-court__loading">No courts available.</p>
+            <p className="book-court__loading" role="status">
+              No courts available.
+            </p>
           ) : filteredCourts.length === 0 ? (
-            <p className="book-court__loading">
+            <p className="book-court__loading" role="status">
               No courts found for this surface.
             </p>
           ) : (
             <div className="book-court__courts-grid">
-              {filteredCourts.map((court) => (
-                <article key={court.id} className="book-court__court-card">
-                  <img
-                    src={court.image || court1}
-                    alt={court.name || "Tennis court"}
-                    className="book-court__court-image"
-                  />
+              {filteredCourts.map((court) => {
+                const courtName = court.name || "Tennis court";
 
-                  <div className="book-court__court-overlay">
-                    <span className="book-court__court-name">
-                      {court.name}
-                    </span>
+                return (
+                  <article key={court.id} className="book-court__court-card">
+                    <img
+                      src={court.image || court1}
+                      alt={`${courtName} court`}
+                      className="book-court__court-image"
+                      onError={(event) => {
+                        event.currentTarget.src = court1;
+                      }}
+                    />
 
-                    {court.courtType && (
-                      <span
-                        style={{
-                          backgroundColor: "rgba(255, 255, 255, 0.92)",
-                          color: "#111",
-                          padding: "0.25rem 0.75rem",
-                          borderRadius: "999px",
-                          fontSize: "0.78rem",
-                          fontWeight: 800,
-                          marginTop: "0.35rem",
-                        }}
-                      >
-                        {String(court.courtType)}
+                    <div className="book-court__court-overlay">
+                      <span className="book-court__court-name">
+                        {courtName}
                       </span>
-                    )}
 
-                    <button
-                      type="button"
-                      className="book-court__see-more-btn"
-                      onClick={() =>
-                        navigate(`/player/courts/view/${court.id}`)
-                      }
-                    >
-                      See more
-                    </button>
-                  </div>
-                </article>
-              ))}
+                      {court.courtType && (
+                        <span
+                          aria-label={`Court type: ${court.courtType}`}
+                          style={{
+                            backgroundColor: "rgba(255, 255, 255, 0.92)",
+                            color: "#111",
+                            padding: "0.25rem 0.75rem",
+                            borderRadius: "999px",
+                            fontSize: "0.78rem",
+                            fontWeight: 800,
+                            marginTop: "0.35rem",
+                          }}
+                        >
+                          {court.courtType}
+                        </span>
+                      )}
+
+                      <button
+                        type="button"
+                        className="book-court__see-more-btn"
+                        aria-label={`See more details for ${courtName}`}
+                        onClick={() =>
+                          navigate(`/player/courts/view/${court.id}`)
+                        }
+                      >
+                        See more
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>

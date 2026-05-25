@@ -7,6 +7,7 @@ import { useAuth } from "../../context/useAuth";
 import { useMatches, useProfile, useTournaments } from "../../context";
 import type { Match } from "../../context/MatchesContext";
 import type { Tournament } from "../../context/TournamentsContext";
+import ConfirmModal from "../../components/common/ConfirmModal";
 import "../../styles/player-profile.css";
 import player1 from "../../assets/player-1.jpg";
 import { useToast } from "../../context/ToastContext";
@@ -105,6 +106,9 @@ function PlayerProfilePage() {
   const [passwordMsg, setPasswordMsg] = useState("");
 
   const [tempCategory, setTempCategory] = useState(playerCategory);
+  const [leaveTournamentId, setLeaveTournamentId] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     const realCategory = getPlayerCategory(userData?.level, userData?.category);
@@ -196,12 +200,14 @@ function PlayerProfilePage() {
     try {
       await changePassword(newPassword);
 
-      setPasswordMsg("");
-      setNewPassword("");
-      setConfirmPassword("");
-      setShowPasswordModal(false);
+      setPasswordMsg("Password updated successfully.");
+setNewPassword("");
+setConfirmPassword("");
 
-      alert("Password updated successfully.");
+setTimeout(() => {
+  setShowPasswordModal(false);
+  setPasswordMsg("");
+}, 1200);
     } catch (error) {
       console.error("Error changing password:", error);
 
@@ -252,20 +258,24 @@ function PlayerProfilePage() {
     }
   };
 
-  const handleLeaveTournament = async (playerTournamentId: string) => {
-    if (!userData?.uid) return;
+  const handleLeaveTournament = (playerTournamentId: string) => {
+    setLeaveTournamentId(playerTournamentId);
+  };
 
-    const confirmLeave = window.confirm(
-      "Are you sure you want to leave this tournament?",
-    );
+  const handleCancelLeaveTournament = () => {
+    setLeaveTournamentId(null);
+  };
 
-    if (!confirmLeave) return;
+  const handleConfirmLeaveTournament = async () => {
+    if (!userData?.uid || !leaveTournamentId) return;
 
     try {
-      await unregisterFromTournament(playerTournamentId);
+      await unregisterFromTournament(leaveTournamentId);
       await loadPlayerTournaments(userData.uid);
     } catch (error) {
       console.error("Error leaving tournament:", error);
+    } finally {
+      setLeaveTournamentId(null);
     }
   };
 
@@ -298,13 +308,14 @@ function PlayerProfilePage() {
             <div className="player-profile__avatar-wrap">
               <img
                 src={avatar || player1}
-                alt={name}
+                alt={`${name} profile avatar`}
                 className="player-profile__avatar"
               />
 
               <button
                 type="button"
                 className="player-profile__edit-btn"
+                aria-label="Upload player avatar"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadingAvatar || profileLoading}
               >
@@ -332,6 +343,7 @@ function PlayerProfilePage() {
                   <button
                     type="button"
                     className="player-profile__level-badge player-profile__level-badge--clickable"
+                    aria-label="Change player category"
                     onClick={() => {
                       setTempCategory(visibleCategory);
                       setShowCategoryModal(true);
@@ -353,7 +365,7 @@ function PlayerProfilePage() {
                   margin: "0.35rem 0 0",
                   fontSize: "0.85rem",
                   fontWeight: 700,
-                  color: "#666",
+                  color: "#555",
                 }}
               >
                 {visibleCategory}
@@ -361,14 +373,15 @@ function PlayerProfilePage() {
 
               {(avatarMsg || profileError || profileSuccess) && (
                 <p
+                  role="status"
                   style={{
                     margin: "0.35rem 0 0",
                     fontSize: "0.8rem",
                     fontWeight: 700,
                     color:
                       avatarMsg.includes("successfully") || profileSuccess
-                        ? "#2f9e44"
-                        : "#e05252",
+                        ? "#1f7a3a"
+                        : "#b42318",
                   }}
                 >
                   {avatarMsg || profileError || profileSuccess}
@@ -401,6 +414,7 @@ function PlayerProfilePage() {
               className={`player-profile__tab ${
                 activeTab === "matches" ? "player-profile__tab--active" : ""
               }`}
+              aria-label="Show my matches"
               onClick={() => setActiveTab("matches")}
             >
               My Matches
@@ -411,6 +425,7 @@ function PlayerProfilePage() {
               className={`player-profile__tab ${
                 activeTab === "tournaments" ? "player-profile__tab--active" : ""
               }`}
+              aria-label="Show my tournaments"
               onClick={() => setActiveTab("tournaments")}
             >
               My Tournaments
@@ -457,23 +472,27 @@ function PlayerProfilePage() {
                           }}
                         >
                           {match.players?.map((player) => (
-                            <span
+                            <button
                               key={player.uid}
+                              type="button"
+                              aria-label={`Open ${player.username} profile`}
                               onClick={() =>
                                 navigate(`/player/players/view/${player.uid}`)
                               }
                               style={{
                                 background: "rgba(0,0,0,0.2)",
+                                border: "none",
                                 borderRadius: "999px",
                                 padding: "2px 10px",
                                 fontSize: "0.75rem",
                                 cursor: "pointer",
                                 fontWeight: 600,
+                                fontFamily: "inherit",
                               }}
                             >
                               {player.username}
                               {player.uid === match.hostId ? " 👑" : ""}
-                            </span>
+                            </button>
                           ))}
                         </div>
 
@@ -490,10 +509,13 @@ function PlayerProfilePage() {
 
                         <button
                           type="button"
+                          aria-label={
+                            isHost ? "Cancel this match" : "Leave this match"
+                          }
                           onClick={() => handleCancelMatch(match)}
                           style={{
                             marginTop: 8,
-                            background: "#e05252",
+                            background: "#c92a2a",
                             color: "white",
                             border: "none",
                             borderRadius: "999px",
@@ -536,6 +558,7 @@ function PlayerProfilePage() {
 
                   <button
                     type="button"
+                    aria-label={`Leave ${tournament.name} tournament`}
                     onClick={() => handleLeaveTournament(tournament.id)}
                     style={{
                       marginTop: "0.75rem",
@@ -543,7 +566,7 @@ function PlayerProfilePage() {
                       border: "none",
                       borderRadius: "999px",
                       padding: "0.75rem 1rem",
-                      background: "#e05252",
+                      background: "#c92a2a",
                       color: "white",
                       fontWeight: 800,
                       cursor: "pointer",
@@ -567,6 +590,7 @@ function PlayerProfilePage() {
             <button
               type="button"
               className="player-profile__modal-close"
+              aria-label="Close change password modal"
               onClick={() => {
                 setShowPasswordModal(false);
                 setPasswordMsg("");
@@ -582,11 +606,15 @@ function PlayerProfilePage() {
             <div className="player-profile__modal-section">
               <h3 className="player-profile__modal-subtitle">Password</h3>
 
-              <label className="player-profile__modal-label">
+              <label
+                className="player-profile__modal-label"
+                htmlFor="new-player-password"
+              >
                 New Password:
               </label>
 
               <input
+                id="new-player-password"
                 type="password"
                 className="player-profile__modal-input"
                 placeholder="New Password..."
@@ -594,11 +622,15 @@ function PlayerProfilePage() {
                 onChange={(e) => setNewPassword(e.target.value)}
               />
 
-              <label className="player-profile__modal-label">
+              <label
+                className="player-profile__modal-label"
+                htmlFor="confirm-player-password"
+              >
                 Confirm Password:
               </label>
 
               <input
+                id="confirm-player-password"
                 type="password"
                 className="player-profile__modal-input"
                 placeholder="Confirm Password..."
@@ -628,6 +660,7 @@ function PlayerProfilePage() {
             <button
               type="button"
               className="player-profile__modal-close"
+              aria-label="Close change category modal"
               onClick={() => setShowCategoryModal(false)}
             >
               ✕
@@ -636,11 +669,15 @@ function PlayerProfilePage() {
             <h2 className="player-profile__modal-title">Change Category</h2>
 
             <div className="player-profile__modal-section">
-              <label className="player-profile__modal-label">
+              <label
+                className="player-profile__modal-label"
+                htmlFor="player-category"
+              >
                 Select your category:
               </label>
 
               <select
+                id="player-category"
                 className="player-profile__modal-input"
                 value={tempCategory}
                 onChange={(e) => setTempCategory(e.target.value)}
@@ -663,6 +700,17 @@ function PlayerProfilePage() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={Boolean(leaveTournamentId)}
+        title="Leave tournament?"
+        message="Are you sure you want to leave this tournament? Your registration will be removed."
+        confirmLabel="Leave Tournament"
+        cancelLabel="Cancel"
+        danger
+        onCancel={handleCancelLeaveTournament}
+        onConfirm={handleConfirmLeaveTournament}
+      />
     </div>
   );
 }

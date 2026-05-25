@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import { useAuth } from "../../context/useAuth";
@@ -24,14 +25,7 @@ function CoachHomePage() {
   const navigate = useNavigate();
   const { userData } = useAuth();
 
-  const availableDays = Array.isArray(userData?.availableDays)
-    ? userData.availableDays
-    : [];
-
-  const schedule: Record<string, ScheduleDay> =
-    userData?.availableSchedule || {};
-
-  const formatCurrency = (value: string | number) => {
+  const formatCurrency = useCallback((value: string | number) => {
     const onlyNumbers = String(value).replace(/\D/g, "");
 
     if (!onlyNumbers) return "Not configured";
@@ -43,19 +37,32 @@ function CoachHomePage() {
       currency: "COP",
       maximumFractionDigits: 0,
     }).format(numberValue);
-  };
+  }, []);
+
+  const availableDays = Array.isArray(userData?.availableDays)
+    ? userData.availableDays
+    : [];
+
+  const schedule = (userData?.availableSchedule || {}) as Record<
+    string,
+    ScheduleDay
+  >;
 
   const price = userData?.pricePerHour
     ? formatCurrency(userData.pricePerHour)
     : "Not configured";
 
   const avatar =
-    (userData as { photoURL?: string } | null)?.photoURL || coach1;
+    typeof userData?.photoURL === "string" ? userData.photoURL : coach1;
 
-  const showSetupNotice =
-    !userData?.pricePerHour ||
-    !Array.isArray(userData?.availableDays) ||
-    userData.availableDays.length === 0;
+  const showSetupNotice = !userData?.pricePerHour || availableDays.length === 0;
+
+  const visibleScheduleDays = allDays
+    .filter((day) => availableDays.includes(day))
+    .map((day) => ({
+      day,
+      schedule: schedule[day],
+    }));
 
   const name = userData?.username || "Coach";
   const username = userData?.username ? `@${userData.username}` : "@coach";
@@ -66,6 +73,7 @@ function CoachHomePage() {
         <section className="coach-home__main">
           {showSetupNotice && (
             <div
+              role="status"
               style={{
                 background: "#25292d",
                 color: "white",
@@ -90,7 +98,7 @@ function CoachHomePage() {
               <p
                 style={{
                   margin: "0 0 1rem",
-                  color: "rgba(255,255,255,0.78)",
+                  color: "#f1f1f1",
                   fontWeight: 600,
                   lineHeight: 1.45,
                 }}
@@ -101,6 +109,7 @@ function CoachHomePage() {
 
               <button
                 type="button"
+                aria-label="Configure coach profile"
                 onClick={() => navigate("/coach/profile")}
                 style={{
                   border: "none",
@@ -108,7 +117,7 @@ function CoachHomePage() {
                   padding: "0.75rem 1.1rem",
                   background:
                     "linear-gradient(180deg, #bfe212 0%, #6f8500 100%)",
-                  color: "white",
+                  color: "#111111",
                   fontWeight: 900,
                   cursor: "pointer",
                   fontFamily: "inherit",
@@ -136,7 +145,14 @@ function CoachHomePage() {
 
           <div className="coach-home__profile-card">
             <div className="coach-home__profile-top">
-              <img src={avatar} alt={name} className="coach-home__avatar" />
+              <img
+                src={avatar || coach1}
+                alt={`${name} coach profile photo`}
+                className="coach-home__avatar"
+                onError={(event) => {
+                  event.currentTarget.src = coach1;
+                }}
+              />
 
               <div>
                 <h2 className="coach-home__coach-name">{name}</h2>
@@ -160,54 +176,56 @@ function CoachHomePage() {
           </div>
 
           <div className="coach-home__schedule">
-            {availableDays.length === 0 ? (
+            {visibleScheduleDays.length === 0 ? (
               <p
+                role="status"
                 style={{
-                  color: "#777",
-                  fontWeight: 700,
+                  color: "#555",
+                  fontWeight: 800,
                   padding: "1rem 0",
                 }}
               >
                 No available days selected.
               </p>
             ) : (
-              allDays
-                .filter((day) => availableDays.includes(day))
-                .map((day) => {
-                  const currentDay = schedule[day];
+              visibleScheduleDays.map(({ day, schedule: currentDay }) => (
+                <div key={day} className="coach-home__day-row">
+                  <img
+                    src={avatar || coach1}
+                    alt=""
+                    aria-hidden="true"
+                    className="coach-home__day-icon"
+                    onError={(event) => {
+                      event.currentTarget.src = coach1;
+                    }}
+                  />
 
-                  return (
-                    <div key={day} className="coach-home__day-row">
-                      <img
-                        src={avatar}
-                        alt=""
-                        className="coach-home__day-icon"
-                      />
+                  <span className="coach-home__day-name">
+                    {day}
 
-                      <span className="coach-home__day-name">
-                        {day}
-
-                        {currentDay?.start && currentDay?.end && (
-                          <span
-                            style={{
-                              display: "block",
-                              fontSize: "0.75rem",
-                              color: "#777",
-                              fontWeight: 700,
-                              marginTop: "0.2rem",
-                            }}
-                          >
-                            {currentDay.start} - {currentDay.end}
-                          </span>
-                        )}
+                    {currentDay?.start && currentDay?.end && (
+                      <span
+                        style={{
+                          display: "block",
+                          fontSize: "0.75rem",
+                          color: "#555",
+                          fontWeight: 800,
+                          marginTop: "0.2rem",
+                        }}
+                      >
+                        {currentDay.start} - {currentDay.end}
                       </span>
+                    )}
+                  </span>
 
-                      <span className="coach-home__check-circle coach-home__check-circle--active">
-                        ✓
-                      </span>
-                    </div>
-                  );
-                })
+                  <span
+                    className="coach-home__check-circle coach-home__check-circle--active"
+                    aria-label={`${day} available`}
+                  >
+                    ✓
+                  </span>
+                </div>
+              ))
             )}
           </div>
         </section>

@@ -216,3 +216,51 @@
     font-size: 1.2rem;
   }
 }
+
+.find-matches__card-click {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* ── ACCESSIBILITY CONTRAST FIXES ── */
+
+.find-matches__empty,
+.find-matches__card-date,
+.find-matches__card-host,
+.find-matches__players-label {
+  color: #d1d1d1;
+}
+
+.find-matches__tag--open {
+  color: #111111;
+  font-weight: 900;
+}
+
+.find-matches__tag--full {
+  background-color: #b42318;
+  color: #ffffff;
+  font-weight: 900;
+}
+
+.find-matches__btn--join {
+  color: #111111;
+}
+
+.find-matches__btn--leave {
+  background: #b42318;
+  color: #ffffff;
+}
+
+.find-matches__card-click:focus-visible,
+.find-matches__player-chip:focus-visible,
+.find-matches__btn:focus-visible {
+  outline: 3px solid #bfe212;
+  outline-offset: 3px;
+}

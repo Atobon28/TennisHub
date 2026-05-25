@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import { useCourts, useTournaments } from "../../context";
@@ -59,7 +59,9 @@ function AdminTournamentViewPage() {
   const [tempName, setTempName] = useState("");
   const [tempDate, setTempDate] = useState("");
   const [tempHour, setTempHour] = useState("");
-  const [tempType, setTempType] = useState("singles");
+  const [tempType, setTempType] = useState<"singles" | "doubles" | "both">(
+    "singles",
+  );
   const [tempCategories, setTempCategories] = useState<string[]>([]);
   const [tempCourts, setTempCourts] = useState<string[]>([]);
   const [tempCapacity, setTempCapacity] = useState<CapacityByCategory>({});
@@ -108,32 +110,48 @@ function AdminTournamentViewPage() {
     clearCourtError,
   ]);
 
-  const singlesPlayers = registrations.filter(
-    (registration) => registration.entryType === "singles",
+  const singlesPlayers = useMemo(
+    () =>
+      registrations.filter(
+        (registration) => registration.entryType === "singles",
+      ),
+    [registrations],
   );
 
-  const doublesPairs = registrations.filter(
-    (registration) => registration.entryType === "doubles",
+  const doublesPairs = useMemo(
+    () =>
+      registrations.filter(
+        (registration) => registration.entryType === "doubles",
+      ),
+    [registrations],
   );
 
-  const playersLookingForPartner = registrations.filter(
-    (registration) =>
-      registration.entryType === "doubles" && registration.needsPartner,
+  const playersLookingForPartner = useMemo(
+    () =>
+      registrations.filter(
+        (registration) =>
+          registration.entryType === "doubles" && registration.needsPartner,
+      ),
+    [registrations],
   );
 
-  const totalSinglesSpots = tournament?.capacityByCategory
-    ? Object.values(tournament.capacityByCategory).reduce(
-        (total, category) => total + (category.singlesPlayers || 0),
-        0,
-      )
-    : 0;
+const totalSinglesSpots = useMemo(() => {
+  if (!tournament?.capacityByCategory) return 0;
 
-  const totalDoublesPairs = tournament?.capacityByCategory
-    ? Object.values(tournament.capacityByCategory).reduce(
-        (total, category) => total + (category.doublesPairs || 0),
-        0,
-      )
-    : 0;
+  return Object.values(tournament.capacityByCategory).reduce(
+    (total, category) => total + (category.singlesPlayers || 0),
+    0,
+  );
+}, [tournament]);
+
+const totalDoublesPairs = useMemo(() => {
+  if (!tournament?.capacityByCategory) return 0;
+
+  return Object.values(tournament.capacityByCategory).reduce(
+    (total, category) => total + (category.doublesPairs || 0),
+    0,
+  );
+}, [tournament]);
 
   const usedSinglesSpots = singlesPlayers.length;
   const usedDoublesPairs = doublesPairs.length;
@@ -165,6 +183,12 @@ function AdminTournamentViewPage() {
     });
   };
 
+  const getTypeLabel = (type?: string) => {
+    if (type === "both") return "Singles and Doubles";
+    if (type === "doubles") return "Doubles";
+    return "Singles";
+  };
+
   const handleOpen = () => {
     if (!tournament) return;
 
@@ -172,7 +196,8 @@ function AdminTournamentViewPage() {
     setTempDate(typeof tournament.date === "string" ? tournament.date : "");
     setTempHour(typeof tournament.hour === "string" ? tournament.hour : "");
     setTempType(
-      typeof tournament.tournamentType === "string"
+      tournament.tournamentType === "doubles" ||
+        tournament.tournamentType === "both"
         ? tournament.tournamentType
         : "singles",
     );
@@ -185,6 +210,13 @@ function AdminTournamentViewPage() {
     clearCourtError();
     setSuccessMsg("");
     setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setLocalError("");
+    clearTournamentError();
+    clearCourtError();
   };
 
   const handleCategoryChange = (category: string) => {
@@ -224,7 +256,7 @@ function AdminTournamentViewPage() {
     field: "singlesPlayers" | "doublesPairs",
     value: string,
   ) => {
-    const numericValue = Number(value);
+    const numericValue = Number(value.replace(/\D/g, ""));
 
     setTempCapacity((prev) => ({
       ...prev,
@@ -264,6 +296,14 @@ function AdminTournamentViewPage() {
 
     if (!tempHour.trim()) {
       setLocalError("Tournament hour is required.");
+      return false;
+    }
+
+    const selectedDateTime = new Date(`${tempDate}T${tempHour}`);
+    const now = new Date();
+
+    if (selectedDateTime < now) {
+      setLocalError("Please select a future date and hour for the tournament.");
       return false;
     }
 
@@ -339,15 +379,11 @@ function AdminTournamentViewPage() {
         };
       });
 
-      const updatedInfo = `${tempDate} - ${tempHour} - Type: ${
-        tempType === "both"
-          ? "Singles and Doubles"
-          : tempType === "doubles"
-            ? "Doubles"
-            : "Singles"
-      } - Courts: ${tempCourts.join(", ")} - Categories: ${tempCategories.join(
+      const updatedInfo = `${tempDate} - ${tempHour} - Type: ${getTypeLabel(
+        tempType,
+      )} - Courts: ${tempCourts.join(
         ", ",
-      )}`;
+      )} - Categories: ${tempCategories.join(", ")}`;
 
       await editTournament(tournament.id, {
         name: tempName.trim(),
@@ -379,7 +415,7 @@ function AdminTournamentViewPage() {
       <div className="admin-tournament-view">
         <div className="admin-tournament-view__grid">
           <section className="admin-tournament-view__main">
-            <p>Loading tournament...</p>
+            <p role="status">Loading tournament...</p>
           </section>
 
           <AdBanners />
@@ -397,7 +433,8 @@ function AdminTournamentViewPage() {
               <h2 className="admin-tournament-view__title">
                 Tournament not found
               </h2>
-              {error && <p>{error}</p>}
+
+              {error && <p role="alert">{error}</p>}
             </div>
           </section>
 
@@ -407,30 +444,36 @@ function AdminTournamentViewPage() {
     );
   }
 
+  const tournamentName = tournament.name || "Tournament";
+  const tournamentImage =
+    typeof tournament.image === "string" ? tournament.image : court1;
+
   return (
     <div className="admin-tournament-view">
       <div className="admin-tournament-view__grid">
         <section className="admin-tournament-view__main">
           {successMsg && (
             <p
+              role="status"
               style={{
                 background: "#e8f8ee",
-                color: "#2f9e44",
+                color: "#1f7a3a",
                 borderRadius: "12px",
                 padding: "0.8rem 1rem",
                 fontWeight: 800,
                 marginBottom: "1rem",
               }}
             >
-              {successMsg}
+              ✓ {successMsg}
             </p>
           )}
 
           {error && (
             <p
+              role="alert"
               style={{
                 background: "#ffe8e8",
-                color: "#e05252",
+                color: "#b42318",
                 borderRadius: "12px",
                 padding: "0.8rem 1rem",
                 fontWeight: 800,
@@ -442,17 +485,16 @@ function AdminTournamentViewPage() {
           )}
 
           <div className="admin-tournament-view__card">
-            <h2 className="admin-tournament-view__title">{tournament.name}</h2>
+            <h2 className="admin-tournament-view__title">{tournamentName}</h2>
 
             <div className="admin-tournament-view__body">
               <img
-                src={
-                  typeof tournament.image === "string"
-                    ? tournament.image
-                    : court1
-                }
-                alt={tournament.name}
+                src={tournamentImage || court1}
+                alt={`${tournamentName} tournament image`}
                 className="admin-tournament-view__image"
+                onError={(event) => {
+                  event.currentTarget.src = court1;
+                }}
               />
 
               <div className="admin-tournament-view__info">
@@ -477,7 +519,7 @@ function AdminTournamentViewPage() {
 
                 <p className="admin-tournament-view__detail">
                   <span className="admin-tournament-view__label">Type: </span>
-                  {tournament.tournamentType || "Singles"}
+                  {getTypeLabel(tournament.tournamentType)}
                 </p>
 
                 <p className="admin-tournament-view__detail">
@@ -518,6 +560,7 @@ function AdminTournamentViewPage() {
             <button
               type="button"
               className="admin-tournament-view__edit-btn"
+              aria-label={`Edit ${tournamentName}`}
               onClick={handleOpen}
             >
               Edit Tournament
@@ -569,6 +612,7 @@ function AdminTournamentViewPage() {
                   <p>
                     <strong>{player.playerUsername || "Unknown player"}</strong>
                   </p>
+
                   <p>Category: {player.playerCategory || "Not specified"}</p>
                   <p>Joined: {formatDate(player.joinedAt)}</p>
                 </div>
@@ -596,7 +640,9 @@ function AdminTournamentViewPage() {
                       ? ` + ${pair.partnerName}`
                       : ""}
                   </p>
+
                   <p>Category: {pair.playerCategory || "Not specified"}</p>
+
                   <p>
                     Partner status:{" "}
                     {pair.needsPartner
@@ -605,6 +651,7 @@ function AdminTournamentViewPage() {
                         ? "Has partner"
                         : "Not specified"}
                   </p>
+
                   <p>Joined: {formatDate(pair.joinedAt)}</p>
                 </div>
               ))
@@ -622,12 +669,14 @@ function AdminTournamentViewPage() {
                     padding: "0.85rem",
                     borderRadius: "12px",
                     background: "#fff4df",
+                    border: "1px solid #f2c46d",
                     marginTop: "0.75rem",
                   }}
                 >
                   <p>
                     <strong>{player.playerUsername || "Unknown player"}</strong>
                   </p>
+
                   <p>Category: {player.playerCategory || "Not specified"}</p>
                   <p>Joined: {formatDate(player.joinedAt)}</p>
                 </div>
@@ -645,7 +694,8 @@ function AdminTournamentViewPage() {
             <button
               type="button"
               className="admin-tournament-view__modal-close"
-              onClick={() => setShowModal(false)}
+              aria-label="Close edit tournament modal"
+              onClick={handleCloseModal}
             >
               ✕
             </button>
@@ -655,170 +705,251 @@ function AdminTournamentViewPage() {
             </h2>
 
             <div className="admin-tournament-view__modal-section">
-              <label className="admin-tournament-view__modal-label">
+              <label
+                className="admin-tournament-view__modal-label"
+                htmlFor="edit-tournament-name"
+              >
                 Name:
               </label>
+
               <input
+                id="edit-tournament-name"
                 type="text"
                 className="admin-tournament-view__modal-input"
                 value={tempName}
+                required
                 onChange={(e) => setTempName(e.target.value)}
               />
 
-              <label className="admin-tournament-view__modal-label">
+              <label
+                className="admin-tournament-view__modal-label"
+                htmlFor="edit-tournament-date"
+              >
                 Date:
               </label>
+
               <input
+                id="edit-tournament-date"
                 type="date"
                 className="admin-tournament-view__modal-input"
                 value={tempDate}
+                required
                 onChange={(e) => setTempDate(e.target.value)}
               />
 
-              <label className="admin-tournament-view__modal-label">
+              <label
+                className="admin-tournament-view__modal-label"
+                htmlFor="edit-tournament-hour"
+              >
                 Hour:
               </label>
+
               <input
-                type="text"
+                id="edit-tournament-hour"
+                type="time"
                 className="admin-tournament-view__modal-input"
                 value={tempHour}
+                required
                 onChange={(e) => setTempHour(e.target.value)}
               />
 
-              <label className="admin-tournament-view__modal-label">
+              <label
+                className="admin-tournament-view__modal-label"
+                htmlFor="edit-tournament-type"
+              >
                 Tournament Type:
               </label>
+
               <select
+                id="edit-tournament-type"
                 className="admin-tournament-view__modal-input"
                 value={tempType}
-                onChange={(e) => setTempType(e.target.value)}
+                required
+                onChange={(e) =>
+                  setTempType(e.target.value as "singles" | "doubles" | "both")
+                }
               >
                 <option value="singles">Singles</option>
                 <option value="doubles">Doubles</option>
                 <option value="both">Singles and Doubles</option>
               </select>
 
-              <label className="admin-tournament-view__modal-label">
-                Categories:
-              </label>
+              <p className="admin-tournament-view__modal-label">Categories:</p>
+
               <div style={{ display: "grid", gap: "0.5rem" }}>
-                {categoryOptions.map((category) => (
-                  <label
-                    key={category}
-                    style={{
-                      display: "flex",
-                      gap: "0.5rem",
-                      alignItems: "center",
-                      color: "white",
-                      fontWeight: 700,
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={tempCategories.includes(category)}
-                      onChange={() => handleCategoryChange(category)}
-                    />
-                    {category}
-                  </label>
-                ))}
+                {categoryOptions.map((category) => {
+                  const isSelected = tempCategories.includes(category);
+                  const categoryId = `edit-category-${category
+                    .toLowerCase()
+                    .replace(/\s+/g, "-")}`;
+
+                  return (
+                    <label
+                      key={category}
+                      htmlFor={categoryId}
+                      style={{
+                        display: "flex",
+                        gap: "0.5rem",
+                        alignItems: "center",
+                        color: "white",
+                        fontWeight: 700,
+                        border: isSelected
+                          ? "2px solid #bfe212"
+                          : "2px solid transparent",
+                        borderRadius: "10px",
+                        padding: "0.45rem",
+                      }}
+                    >
+                      <input
+                        id={categoryId}
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => handleCategoryChange(category)}
+                      />
+                      {isSelected ? `✓ ${category}` : category}
+                    </label>
+                  );
+                })}
               </div>
 
               {tempCategories.length > 0 && (
                 <div style={{ display: "grid", gap: "1rem" }}>
-                  <label className="admin-tournament-view__modal-label">
+                  <p className="admin-tournament-view__modal-label">
                     Capacity by Category:
-                  </label>
+                  </p>
 
-                  {tempCategories.map((category) => (
-                    <div
-                      key={category}
-                      style={{
-                        background: "#3a3a3a",
-                        borderRadius: "12px",
-                        padding: "1rem",
-                        display: "grid",
-                        gap: "0.75rem",
-                      }}
-                    >
-                      <strong style={{ color: "white" }}>{category}</strong>
+                  {tempCategories.map((category) => {
+                    const categorySlug = category
+                      .toLowerCase()
+                      .replace(/\s+/g, "-");
 
-                      {(tempType === "singles" || tempType === "both") && (
-                        <input
-                          type="number"
-                          min={getUsedSinglesByCategory(category)}
-                          className="admin-tournament-view__modal-input"
-                          value={tempCapacity[category]?.singlesPlayers || 0}
-                          onChange={(e) =>
-                            handleCapacityChange(
-                              category,
-                              "singlesPlayers",
-                              e.target.value,
-                            )
-                          }
-                          placeholder={`Singles minimum: ${getUsedSinglesByCategory(
-                            category,
-                          )}`}
-                        />
-                      )}
+                    return (
+                      <div
+                        key={category}
+                        style={{
+                          background: "#3a3a3a",
+                          borderRadius: "12px",
+                          padding: "1rem",
+                          display: "grid",
+                          gap: "0.75rem",
+                        }}
+                      >
+                        <strong style={{ color: "white" }}>{category}</strong>
 
-                      {(tempType === "doubles" || tempType === "both") && (
-                        <input
-                          type="number"
-                          min={getUsedDoublesByCategory(category)}
-                          className="admin-tournament-view__modal-input"
-                          value={tempCapacity[category]?.doublesPairs || 0}
-                          onChange={(e) =>
-                            handleCapacityChange(
-                              category,
-                              "doublesPairs",
-                              e.target.value,
-                            )
-                          }
-                          placeholder={`Doubles minimum: ${getUsedDoublesByCategory(
-                            category,
-                          )}`}
-                        />
-                      )}
-                    </div>
-                  ))}
+                        {(tempType === "singles" || tempType === "both") && (
+                          <>
+                            <label
+                              className="admin-tournament-view__modal-label"
+                              htmlFor={`${categorySlug}-edit-singles-capacity`}
+                            >
+                              Singles capacity:
+                            </label>
+
+                            <input
+                              id={`${categorySlug}-edit-singles-capacity`}
+                              type="text"
+                              inputMode="numeric"
+                              className="admin-tournament-view__modal-input"
+                              value={tempCapacity[category]?.singlesPlayers || 0}
+                              required
+                              onChange={(e) =>
+                                handleCapacityChange(
+                                  category,
+                                  "singlesPlayers",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder={`Singles minimum: ${getUsedSinglesByCategory(
+                                category,
+                              )}`}
+                            />
+                          </>
+                        )}
+
+                        {(tempType === "doubles" || tempType === "both") && (
+                          <>
+                            <label
+                              className="admin-tournament-view__modal-label"
+                              htmlFor={`${categorySlug}-edit-doubles-capacity`}
+                            >
+                              Doubles capacity:
+                            </label>
+
+                            <input
+                              id={`${categorySlug}-edit-doubles-capacity`}
+                              type="text"
+                              inputMode="numeric"
+                              className="admin-tournament-view__modal-input"
+                              value={tempCapacity[category]?.doublesPairs || 0}
+                              required
+                              onChange={(e) =>
+                                handleCapacityChange(
+                                  category,
+                                  "doublesPairs",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder={`Doubles minimum: ${getUsedDoublesByCategory(
+                                category,
+                              )}`}
+                            />
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 
-              <label className="admin-tournament-view__modal-label">
-                Courts:
-              </label>
+              <p className="admin-tournament-view__modal-label">Courts:</p>
+
               <div style={{ display: "grid", gap: "0.5rem" }}>
-                {adminCourts.map((court) => (
-                  <label
-                    key={court.id}
-                    style={{
-                      display: "flex",
-                      gap: "0.5rem",
-                      alignItems: "center",
-                      color: "white",
-                      fontWeight: 700,
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={tempCourts.includes(
-                        court.name || "Unnamed court",
-                      )}
-                      onChange={() =>
-                        handleCourtChange(court.name || "Unnamed court")
-                      }
-                    />
-                    {court.name || "Unnamed court"}
-                  </label>
-                ))}
+                {adminCourts.map((court) => {
+                  const courtName = court.name || "Unnamed court";
+                  const isSelected = tempCourts.includes(courtName);
+                  const courtId = `edit-tournament-court-${court.id}`;
+
+                  return (
+                    <label
+                      key={court.id}
+                      htmlFor={courtId}
+                      style={{
+                        display: "flex",
+                        gap: "0.5rem",
+                        alignItems: "center",
+                        color: "white",
+                        fontWeight: 700,
+                        border: isSelected
+                          ? "2px solid #bfe212"
+                          : "2px solid transparent",
+                        borderRadius: "10px",
+                        padding: "0.45rem",
+                      }}
+                    >
+                      <input
+                        id={courtId}
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => handleCourtChange(courtName)}
+                      />
+                      {isSelected ? `✓ ${courtName}` : courtName}
+                    </label>
+                  );
+                })}
               </div>
 
-              <label className="admin-tournament-view__modal-label">
+              <label
+                className="admin-tournament-view__modal-label"
+                htmlFor="edit-tournament-status"
+              >
                 Status:
               </label>
+
               <select
+                id="edit-tournament-status"
                 className="admin-tournament-view__modal-input"
                 value={tempStatus}
+                required
                 onChange={(e) =>
                   setTempStatus(e.target.value as "Open" | "Full" | "Closed")
                 }
@@ -830,8 +961,9 @@ function AdminTournamentViewPage() {
 
               {error && (
                 <p
+                  role="alert"
                   style={{
-                    color: "#e05252",
+                    color: "#ffb4b4",
                     fontWeight: 800,
                     margin: 0,
                   }}
@@ -844,6 +976,7 @@ function AdminTournamentViewPage() {
             <button
               type="button"
               className="admin-tournament-view__modal-confirm"
+              aria-label={`Save changes for ${tournamentName}`}
               onClick={handleSave}
             >
               Save Changes
