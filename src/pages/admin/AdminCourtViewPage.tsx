@@ -67,6 +67,14 @@ function AdminCourtViewPage() {
     setShowModal(true);
   };
 
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setImageFile(null);
+    setTempImage("");
+    setFormError("");
+    clearCourtError();
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
@@ -112,7 +120,7 @@ function AdminCourtViewPage() {
         contact: tempContact.trim(),
         address: tempAddress.trim(),
         courtType: tempCourtType,
-        image: imageUrl,
+        image: imageUrl || court1,
       });
 
       await loadCourtById(selectedCourt.id);
@@ -133,16 +141,23 @@ function AdminCourtViewPage() {
   };
 
   if (loading) {
-    return <p style={{ padding: 20, color: "#888" }}>Loading court...</p>;
+    return (
+      <p style={{ padding: 20, color: "#555" }} role="status">
+        Loading court...
+      </p>
+    );
   }
 
   if (!selectedCourt) {
     return (
       <div style={{ padding: 20 }}>
-        <p style={{ color: "#888" }}>Court not found.</p>
+        <p style={{ color: "#555" }} role="alert">
+          Court not found.
+        </p>
 
         <button
           type="button"
+          aria-label="Back to admin profile"
           onClick={() => navigate("/admin/profile")}
           style={{
             border: "none",
@@ -159,6 +174,9 @@ function AdminCourtViewPage() {
   }
 
   const visibleError = formError || courtError;
+  const courtName = selectedCourt.name || "Tennis court";
+  const courtImage =
+    typeof selectedCourt.image === "string" ? selectedCourt.image : court1;
 
   return (
     <div className="admin-court-view">
@@ -166,6 +184,7 @@ function AdminCourtViewPage() {
         <section className="admin-court-view__main">
           <button
             type="button"
+            aria-label="Back to admin profile"
             onClick={() => navigate("/admin/profile")}
             style={{
               border: "none",
@@ -180,26 +199,29 @@ function AdminCourtViewPage() {
           </button>
 
           {message && (
-            <p className="admin-court-view__success-message">{message}</p>
+            <p className="admin-court-view__success-message" role="status">
+              ✓ {message}
+            </p>
           )}
 
           {visibleError && (
-            <p className="admin-court-view__error-message">{visibleError}</p>
+            <p className="admin-court-view__error-message" role="alert">
+              {visibleError}
+            </p>
           )}
 
           <div className="admin-court-view__card">
             <img
-              src={
-                typeof selectedCourt.image === "string"
-                  ? selectedCourt.image
-                  : court1
-              }
-              alt={selectedCourt.name || "Tennis court"}
+              src={courtImage || court1}
+              alt={`${courtName} court`}
               className="admin-court-view__image"
+              onError={(event) => {
+                event.currentTarget.src = court1;
+              }}
             />
 
             <div className="admin-court-view__info">
-              <h2 className="admin-court-view__name">{selectedCourt.name}</h2>
+              <h2 className="admin-court-view__name">{courtName}</h2>
 
               <p className="admin-court-view__detail">
                 <span className="admin-court-view__label">Type: </span>
@@ -225,6 +247,7 @@ function AdminCourtViewPage() {
               <button
                 type="button"
                 className="admin-court-view__edit-btn"
+                aria-label={`Edit ${courtName}`}
                 onClick={handleOpenModal}
               >
                 Edit Court
@@ -242,7 +265,8 @@ function AdminCourtViewPage() {
             <button
               type="button"
               className="admin-court-view__modal-close"
-              onClick={() => setShowModal(false)}
+              aria-label="Close edit court modal"
+              onClick={handleCloseModal}
               disabled={saving}
             >
               ✕
@@ -251,20 +275,34 @@ function AdminCourtViewPage() {
             <h2 className="admin-court-view__modal-title">Edit Court</h2>
 
             <div className="admin-court-view__modal-section">
-              <label className="admin-court-view__modal-label">Name:</label>
+              <label
+                className="admin-court-view__modal-label"
+                htmlFor="edit-court-name"
+              >
+                Name:
+              </label>
+
               <input
+                id="edit-court-name"
                 type="text"
                 className="admin-court-view__modal-input"
                 value={tempName}
+                required
                 onChange={(e) => setTempName(e.target.value)}
               />
 
-              <label className="admin-court-view__modal-label">
+              <label
+                className="admin-court-view__modal-label"
+                htmlFor="edit-court-type"
+              >
                 Court Type:
               </label>
+
               <select
+                id="edit-court-type"
                 className="admin-court-view__modal-input"
                 value={tempCourtType}
+                required
                 onChange={(e) => setTempCourtType(e.target.value)}
               >
                 <option value="">Select court type</option>
@@ -273,27 +311,49 @@ function AdminCourtViewPage() {
                 <option value="Clay">Clay</option>
               </select>
 
-              <label className="admin-court-view__modal-label">Contact:</label>
+              <label
+                className="admin-court-view__modal-label"
+                htmlFor="edit-court-contact"
+              >
+                Contact:
+              </label>
+
               <input
-                type="text"
+                id="edit-court-contact"
+                type="tel"
+                inputMode="numeric"
                 className="admin-court-view__modal-input"
                 value={tempContact}
+                required
                 onChange={(e) => setTempContact(e.target.value)}
                 placeholder="Example: 3001234567"
               />
 
-              <label className="admin-court-view__modal-label">Address:</label>
+              <label
+                className="admin-court-view__modal-label"
+                htmlFor="edit-court-address"
+              >
+                Address:
+              </label>
+
               <input
+                id="edit-court-address"
                 type="text"
                 className="admin-court-view__modal-input"
                 value={tempAddress}
+                required
                 onChange={(e) => setTempAddress(e.target.value)}
               />
 
-              <label className="admin-court-view__modal-label">
+              <label
+                className="admin-court-view__modal-label"
+                htmlFor="edit-court-image"
+              >
                 Court Image:
               </label>
+
               <input
+                id="edit-court-image"
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
                 className="admin-court-view__modal-input"
@@ -302,14 +362,17 @@ function AdminCourtViewPage() {
 
               {tempImage && (
                 <img
-                  src={tempImage}
-                  alt="Court preview"
+                  src={tempImage || court1}
+                  alt={`${tempName || courtName} preview`}
                   className="admin-court-view__preview-image"
+                  onError={(event) => {
+                    event.currentTarget.src = court1;
+                  }}
                 />
               )}
 
               {visibleError && (
-                <p className="admin-court-view__error-message">
+                <p className="admin-court-view__error-message" role="alert">
                   {visibleError}
                 </p>
               )}
@@ -318,6 +381,7 @@ function AdminCourtViewPage() {
             <button
               type="button"
               className="admin-court-view__modal-confirm"
+              aria-label={`Save changes for ${courtName}`}
               onClick={handleSave}
               disabled={saving}
             >

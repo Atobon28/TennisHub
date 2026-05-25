@@ -39,30 +39,41 @@ function RegisterPage() {
   const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    const cleanEmail = email.trim();
+    const cleanUsername = username.trim();
+    const cleanPhone = phone.replace(/\D/g, "");
+    const cleanPassword = password.trim();
+
     setError("");
     setLoading(true);
 
-    if (!email || !username || !phone || !password || !category) {
+    if (!cleanEmail || !cleanUsername || !cleanPhone || !cleanPassword || !category) {
       setError("Please fill in all fields.");
       setLoading(false);
       return;
     }
 
-    if (password.length < 6) {
+    if (cleanPhone.length < 10) {
+      setError("Please enter a valid WhatsApp phone number.");
+      setLoading(false);
+      return;
+    }
+
+    if (cleanPassword.length < 6) {
       setError("Password must be at least 6 characters.");
       setLoading(false);
       return;
     }
 
     try {
-      const userCredential = await registerUser(email, password);
+      const userCredential = await registerUser(cleanEmail, cleanPassword);
       const numericLevel = getCategoryLevel(category);
 
       await addUser({
         uid: userCredential.user.uid,
-        email,
-        username,
-        phone,
+        email: cleanEmail,
+        username: cleanUsername,
+        phone: cleanPhone,
         category,
         level: numericLevel,
         role: "player",
@@ -100,6 +111,8 @@ function RegisterPage() {
                 className="access-form__input"
                 placeholder="Enter your email..."
                 value={email}
+                autoComplete="email"
+                required
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
@@ -115,6 +128,8 @@ function RegisterPage() {
                 className="access-form__input"
                 placeholder="Enter your username..."
                 value={username}
+                autoComplete="username"
+                required
                 onChange={(e) => setUsername(e.target.value)}
               />
             </div>
@@ -127,9 +142,12 @@ function RegisterPage() {
               <input
                 id="phone"
                 type="tel"
+                inputMode="numeric"
                 className="access-form__input"
                 placeholder="Example: 3122588794"
                 value={phone}
+                autoComplete="tel"
+                required
                 onChange={(e) => setPhone(e.target.value)}
               />
             </div>
@@ -143,6 +161,7 @@ function RegisterPage() {
                 id="category"
                 className="access-form__input"
                 value={category}
+                required
                 onChange={(e) => setCategory(e.target.value)}
               >
                 <option value="">Select your category</option>
@@ -166,11 +185,17 @@ function RegisterPage() {
                 className="access-form__input"
                 placeholder="Enter your password..."
                 value={password}
+                autoComplete="new-password"
+                required
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
 
-            {error && <p className="access-form__error">{error}</p>}
+            {error && (
+              <p className="access-form__error" role="alert">
+                {error}
+              </p>
+            )}
 
             <button
               type="submit"
@@ -197,7 +222,7 @@ function RegisterPage() {
       <section className="access-screen__right">
         <img
           src={registerImage}
-          alt="TennisHub register"
+          alt="Tennis player on court used as TennisHub player registration background"
           className="access-screen__image"
         />
       </section>

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import AdBanners from "../../components/player/AdBanners";
@@ -25,24 +25,29 @@ function FindMatchesPage() {
     loadMatches();
   }, [loadMatches]);
 
-  const upcomingMatches = matches
-    .filter((match) => {
-      if (!match.date || !match.time) return false;
+  const upcomingMatches = useMemo(() => {
+    return matches
+      .filter((match) => {
+        if (!match.date || !match.time) return false;
 
-      const matchDate = new Date(`${match.date}T${match.time}`);
-      const now = new Date();
+        const matchDate = new Date(`${match.date}T${match.time}`);
+        const now = new Date();
 
-      return matchDate >= now;
-    })
-    .sort((a, b) => {
-      const firstDate = new Date(`${a.date}T${a.time}`).getTime();
-      const secondDate = new Date(`${b.date}T${b.time}`).getTime();
+        return matchDate >= now;
+      })
+      .sort((a, b) => {
+        const firstDate = new Date(`${a.date}T${a.time}`).getTime();
+        const secondDate = new Date(`${b.date}T${b.time}`).getTime();
 
-      return firstDate - secondDate;
-    });
+        return firstDate - secondDate;
+      });
+  }, [matches]);
 
-  const handleJoin = async (e: React.MouseEvent, match: Match) => {
-    e.stopPropagation();
+  const handleJoin = async (
+    event: React.MouseEvent<HTMLButtonElement>,
+    match: Match,
+  ) => {
+    event.stopPropagation();
 
     if (!userData?.uid || !userData?.username) return;
 
@@ -54,8 +59,11 @@ function FindMatchesPage() {
     }
   };
 
-  const handleLeave = async (e: React.MouseEvent, match: Match) => {
-    e.stopPropagation();
+  const handleLeave = async (
+    event: React.MouseEvent<HTMLButtonElement>,
+    match: Match,
+  ) => {
+    event.stopPropagation();
 
     if (!userData?.uid || !userData?.username) return;
 
@@ -100,19 +108,22 @@ function FindMatchesPage() {
       <div className="find-matches__grid">
         <section className="find-matches__main">
           <div className="find-matches__section-title-wrap">
-            <span className="find-matches__icon-wrap">
+            <span className="find-matches__icon-wrap" aria-hidden="true">
               <Icon
                 icon="game-icons:tennis-racket"
                 className="find-matches__icon"
               />
             </span>
+
             <h2 className="find-matches__title">Available Matches</h2>
           </div>
 
           {loading ? (
             <p className="find-matches__empty">Loading matches...</p>
           ) : error ? (
-            <p className="find-matches__empty">{error}</p>
+            <p className="find-matches__empty" role="alert">
+              {error}
+            </p>
           ) : upcomingMatches.length === 0 ? (
             <p className="find-matches__empty">No matches available yet.</p>
           ) : (
@@ -127,53 +138,68 @@ function FindMatchesPage() {
                   typeof match.maxPlayers === "number" ? match.maxPlayers : 0;
                 const spotsLeft = Math.max(maxPlayers - playersCount, 0);
 
+                const courtName =
+                  typeof match.court === "string"
+                    ? match.court
+                    : "Not specified";
+
+                const hostName =
+                  typeof match.hostUsername === "string"
+                    ? match.hostUsername
+                    : typeof match.hostName === "string"
+                      ? match.hostName
+                      : "Unknown host";
+
                 return (
-                  <div
+                  <article
                     key={match.id}
                     className={`find-matches__card ${
                       full ? "find-matches__card--full" : ""
                     }`}
-                    onClick={() => navigate(`/player/matches/view/${match.id}`)}
-                    style={{ cursor: "pointer" }}
                   >
-                    <div className="find-matches__card-header">
-                      <div className="find-matches__card-info">
-                        <p className="find-matches__card-court">
-                          <Icon icon="mdi:tennis-ball-outline" />{" "}
-                          {typeof match.court === "string"
-                            ? match.court
-                            : "Not specified"}
-                        </p>
+                    <button
+                      type="button"
+                      className="find-matches__card-click"
+                      aria-label={`View match at ${courtName} on ${formatDate(
+                        match.date,
+                      )} at ${match.time || "not specified"}`}
+                      onClick={() =>
+                        navigate(`/player/matches/view/${match.id}`)
+                      }
+                    >
+                      <div className="find-matches__card-header">
+                        <div className="find-matches__card-info">
+                          <p className="find-matches__card-court">
+                            <Icon
+                              icon="mdi:tennis-ball-outline"
+                              aria-hidden="true"
+                            />{" "}
+                            {courtName}
+                          </p>
 
-                        <p className="find-matches__card-date">
-                          {formatDate(match.date)} —{" "}
-                          {match.time || "Not specified"}
-                        </p>
+                          <p className="find-matches__card-date">
+                            {formatDate(match.date)} —{" "}
+                            {match.time || "Not specified"}
+                          </p>
 
-                        <p className="find-matches__card-host">
-                          Host:{" "}
-                          <strong>
-                            {typeof match.hostUsername === "string"
-                              ? match.hostUsername
-                              : typeof match.hostName === "string"
-                                ? match.hostName
-                                : "Unknown host"}
-                          </strong>
-                        </p>
+                          <p className="find-matches__card-host">
+                            Host: <strong>{hostName}</strong>
+                          </p>
+                        </div>
+
+                        <div className="find-matches__card-spots">
+                          {full ? (
+                            <span className="find-matches__tag find-matches__tag--full">
+                              Full
+                            </span>
+                          ) : (
+                            <span className="find-matches__tag find-matches__tag--open">
+                              {spotsLeft} spot{spotsLeft !== 1 ? "s" : ""} left
+                            </span>
+                          )}
+                        </div>
                       </div>
-
-                      <div className="find-matches__card-spots">
-                        {full ? (
-                          <span className="find-matches__tag find-matches__tag--full">
-                            Full
-                          </span>
-                        ) : (
-                          <span className="find-matches__tag find-matches__tag--open">
-                            {spotsLeft} spot{spotsLeft !== 1 ? "s" : ""} left
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                    </button>
 
                     <div className="find-matches__players">
                       <p className="find-matches__players-label">
@@ -182,17 +208,18 @@ function FindMatchesPage() {
 
                       <div className="find-matches__players-list">
                         {match.players?.map((player) => (
-                          <span
+                          <button
                             key={player.uid}
+                            type="button"
                             className="find-matches__player-chip"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/player/players/view/${player.uid}`);
-                            }}
+                            aria-label={`Open ${player.username} profile`}
+                            onClick={() =>
+                              navigate(`/player/players/view/${player.uid}`)
+                            }
                           >
                             {player.username}
                             {player.uid === match.hostId && " 👑"}
-                          </span>
+                          </button>
                         ))}
                       </div>
                     </div>
@@ -202,7 +229,12 @@ function FindMatchesPage() {
                         <button
                           type="button"
                           className="find-matches__btn find-matches__btn--leave"
-                          onClick={(e) => handleLeave(e, match)}
+                          aria-label={
+                            isHost
+                              ? `Cancel match at ${courtName}`
+                              : `Leave match at ${courtName}`
+                          }
+                          onClick={(event) => handleLeave(event, match)}
                         >
                           {isHost ? "Cancel Match" : "Leave Match"}
                         </button>
@@ -210,13 +242,14 @@ function FindMatchesPage() {
                         <button
                           type="button"
                           className="find-matches__btn find-matches__btn--join"
-                          onClick={(e) => handleJoin(e, match)}
+                          aria-label={`Join match at ${courtName}`}
+                          onClick={(event) => handleJoin(event, match)}
                         >
                           Join
                         </button>
                       ) : null}
                     </div>
-                  </div>
+                  </article>
                 );
               })}
             </div>

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import TournamentCard from "../../components/player/TournamentCard";
+import ConfirmModal from "../../components/common/ConfirmModal";
 import { Icon } from "@iconify/react";
 import { useCourts, useTournaments } from "../../context";
 import { useAuth } from "../../context/useAuth";
@@ -84,6 +85,9 @@ function AdminTournamentsPage() {
 
   const [formError, setFormError] = useState("");
   const [creating, setCreating] = useState(false);
+  const [tournamentToDelete, setTournamentToDelete] = useState<string | null>(
+    null,
+  );
 
   const loading = tournamentsLoading || courtsLoading;
   const pageError = tournamentsError || courtsError;
@@ -220,6 +224,14 @@ function AdminTournamentsPage() {
       return;
     }
 
+    const selectedDateTime = new Date(`${newDate}T${newHour}`);
+    const now = new Date();
+
+    if (selectedDateTime < now) {
+      setFormError("Please select a future date and hour for the tournament.");
+      return;
+    }
+
     if (!validateCapacity()) return;
 
     setFormError("");
@@ -257,17 +269,23 @@ function AdminTournamentsPage() {
     }
   };
 
-  const handleDeleteTournament = async (tournamentId: string) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this tournament?",
-    );
+  const handleDeleteTournament = (tournamentId: string) => {
+    setTournamentToDelete(tournamentId);
+  };
 
-    if (!confirmDelete) return;
+  const handleCancelDeleteTournament = () => {
+    setTournamentToDelete(null);
+  };
+
+  const handleConfirmDeleteTournament = async () => {
+    if (!tournamentToDelete) return;
 
     try {
-      await removeTournament(tournamentId);
+      await removeTournament(tournamentToDelete);
     } catch (error) {
       console.error("Error deleting tournament:", error);
+    } finally {
+      setTournamentToDelete(null);
     }
   };
 
@@ -299,7 +317,10 @@ function AdminTournamentsPage() {
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <span className="admin-tournaments__icon-gradient-wrap">
+              <span
+                className="admin-tournaments__icon-gradient-wrap"
+                aria-hidden="true"
+              >
                 <Icon
                   icon="game-icons:tennis-racket"
                   className="admin-tournaments__section-icon"
@@ -314,6 +335,11 @@ function AdminTournamentsPage() {
             <button
               type="button"
               className="create-match__btn"
+              aria-label={
+                adminTournaments.length === 0
+                  ? "Create first tournament"
+                  : "Add more tournaments"
+              }
               onClick={() => setShowModal(true)}
               style={{
                 width: "auto",
@@ -329,9 +355,13 @@ function AdminTournamentsPage() {
           </div>
 
           {loading ? (
-            <p className="admin-tournaments__loading">Loading tournaments...</p>
+            <p className="admin-tournaments__loading" role="status">
+              Loading tournaments...
+            </p>
           ) : pageError ? (
-            <p className="admin-tournaments__loading">{pageError}</p>
+            <p className="admin-tournaments__loading" role="alert">
+              {pageError}
+            </p>
           ) : adminTournaments.length === 0 ? (
             <div
               style={{
@@ -349,6 +379,7 @@ function AdminTournamentsPage() {
               <button
                 type="button"
                 className="create-match__btn"
+                aria-label="Create first tournament"
                 onClick={() => setShowModal(true)}
                 style={{
                   marginTop: "0.75rem",
@@ -380,10 +411,11 @@ function AdminTournamentsPage() {
                   <button
                     type="button"
                     className="create-match__btn"
+                    aria-label={`Delete ${tournament.name} tournament`}
                     onClick={() => handleDeleteTournament(tournament.id)}
                     style={{
                       marginTop: "0.75rem",
-                      backgroundColor: "#e05252",
+                      backgroundColor: "#c92a2a",
                       width: "100%",
                     }}
                   >
@@ -412,6 +444,7 @@ function AdminTournamentsPage() {
             <button
               type="button"
               className="admin-tournaments__modal-close"
+              aria-label="Close create tournament modal"
               onClick={handleClose}
               style={{
                 position: "sticky",
@@ -431,22 +464,38 @@ function AdminTournamentsPage() {
                   1. Tournament Info
                 </h3>
 
-                <label className="create-match__label">Name:</label>
+                <label
+                  className="create-match__label"
+                  htmlFor="tournament-name"
+                >
+                  Name:
+                </label>
+
                 <div className="create-match__select-wrap">
                   <input
+                    id="tournament-name"
                     type="text"
                     className="create-match__select"
                     placeholder="Tournament name..."
                     value={newName}
+                    required
                     onChange={(e) => setNewName(e.target.value)}
                   />
                 </div>
 
-                <label className="create-match__label">Tournament Type:</label>
+                <label
+                  className="create-match__label"
+                  htmlFor="tournament-type"
+                >
+                  Tournament Type:
+                </label>
+
                 <div className="create-match__select-wrap">
                   <select
+                    id="tournament-type"
                     className="create-match__select"
                     value={newTournamentType}
+                    required
                     onChange={(e) =>
                       setNewTournamentType(
                         e.target.value as "singles" | "doubles" | "both",
@@ -465,9 +514,9 @@ function AdminTournamentsPage() {
                   2. Allowed Categories
                 </h3>
 
-                <label className="create-match__label">
+                <p className="create-match__label">
                   Select one or more categories:
-                </label>
+                </p>
 
                 <div
                   style={{
@@ -477,29 +526,41 @@ function AdminTournamentsPage() {
                     marginTop: "0.75rem",
                   }}
                 >
-                  {categoryOptions.map((category) => (
-                    <label
-                      key={category}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.5rem",
-                        backgroundColor: "#25292d",
-                        color: "white",
-                        padding: "0.75rem",
-                        borderRadius: "12px",
-                        cursor: "pointer",
-                        fontWeight: 700,
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={newCategories.includes(category)}
-                        onChange={() => handleCategoryChange(category)}
-                      />
-                      {category}
-                    </label>
-                  ))}
+                  {categoryOptions.map((category) => {
+                    const isSelected = newCategories.includes(category);
+                    const categoryId = `category-${category
+                      .toLowerCase()
+                      .replace(/\s+/g, "-")}`;
+
+                    return (
+                      <label
+                        key={category}
+                        htmlFor={categoryId}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.5rem",
+                          backgroundColor: isSelected ? "#111111" : "#25292d",
+                          color: "white",
+                          padding: "0.75rem",
+                          borderRadius: "12px",
+                          cursor: "pointer",
+                          fontWeight: 700,
+                          border: isSelected
+                            ? "3px solid #bfe212"
+                            : "3px solid transparent",
+                        }}
+                      >
+                        <input
+                          id={categoryId}
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleCategoryChange(category)}
+                        />
+                        {isSelected ? `✓ ${category}` : category}
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -528,91 +589,108 @@ function AdminTournamentsPage() {
                       gap: "1rem",
                     }}
                   >
-                    {newCategories.map((category) => (
-                      <div
-                        key={category}
-                        style={{
-                          border: "1px solid rgba(0,0,0,0.12)",
-                          borderRadius: "16px",
-                          padding: "1rem",
-                          backgroundColor: "#f8f8f8",
-                        }}
-                      >
-                        <h4
-                          style={{
-                            margin: "0 0 0.75rem",
-                            fontSize: "1rem",
-                            fontWeight: 900,
-                            color: "#111",
-                          }}
-                        >
-                          {category}
-                        </h4>
+                    {newCategories.map((category) => {
+                      const categorySlug = category
+                        .toLowerCase()
+                        .replace(/\s+/g, "-");
 
+                      return (
                         <div
+                          key={category}
                           style={{
-                            display: "grid",
-                            gridTemplateColumns:
-                              newTournamentType === "both"
-                                ? "repeat(auto-fit, minmax(180px, 1fr))"
-                                : "1fr",
-                            gap: "0.75rem",
+                            border: "1px solid rgba(0,0,0,0.12)",
+                            borderRadius: "16px",
+                            padding: "1rem",
+                            backgroundColor: "#f8f8f8",
                           }}
                         >
-                          {(newTournamentType === "singles" ||
-                            newTournamentType === "both") && (
-                            <div>
-                              <label className="create-match__label">
-                                Singles player spots:
-                              </label>
+                          <h4
+                            style={{
+                              margin: "0 0 0.75rem",
+                              fontSize: "1rem",
+                              fontWeight: 900,
+                              color: "#111",
+                            }}
+                          >
+                            {category}
+                          </h4>
 
-                              <input
-                                type="text"
-                                inputMode="numeric"
-                                className="create-match__select"
-                                placeholder="Example: 16"
-                                value={
-                                  capacityInputs[category]?.singlesPlayers || ""
-                                }
-                                onChange={(e) =>
-                                  handleCapacityChange(
-                                    category,
-                                    "singlesPlayers",
-                                    e.target.value,
-                                  )
-                                }
-                              />
-                            </div>
-                          )}
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns:
+                                newTournamentType === "both"
+                                  ? "repeat(auto-fit, minmax(180px, 1fr))"
+                                  : "1fr",
+                              gap: "0.75rem",
+                            }}
+                          >
+                            {(newTournamentType === "singles" ||
+                              newTournamentType === "both") && (
+                              <div>
+                                <label
+                                  className="create-match__label"
+                                  htmlFor={`${categorySlug}-singles-spots`}
+                                >
+                                  Singles player spots:
+                                </label>
 
-                          {(newTournamentType === "doubles" ||
-                            newTournamentType === "both") && (
-                            <div>
-                              <label className="create-match__label">
-                                Doubles pair spots:
-                              </label>
+                                <input
+                                  id={`${categorySlug}-singles-spots`}
+                                  type="text"
+                                  inputMode="numeric"
+                                  className="create-match__select"
+                                  placeholder="Example: 16"
+                                  value={
+                                    capacityInputs[category]?.singlesPlayers ||
+                                    ""
+                                  }
+                                  required
+                                  onChange={(e) =>
+                                    handleCapacityChange(
+                                      category,
+                                      "singlesPlayers",
+                                      e.target.value,
+                                    )
+                                  }
+                                />
+                              </div>
+                            )}
 
-                              <input
-                                type="text"
-                                inputMode="numeric"
-                                className="create-match__select"
-                                placeholder="Example: 8"
-                                value={
-                                  capacityInputs[category]?.doublesPairs || ""
-                                }
-                                onChange={(e) =>
-                                  handleCapacityChange(
-                                    category,
-                                    "doublesPairs",
-                                    e.target.value,
-                                  )
-                                }
-                              />
-                            </div>
-                          )}
+                            {(newTournamentType === "doubles" ||
+                              newTournamentType === "both") && (
+                              <div>
+                                <label
+                                  className="create-match__label"
+                                  htmlFor={`${categorySlug}-doubles-spots`}
+                                >
+                                  Doubles pair spots:
+                                </label>
+
+                                <input
+                                  id={`${categorySlug}-doubles-spots`}
+                                  type="text"
+                                  inputMode="numeric"
+                                  className="create-match__select"
+                                  placeholder="Example: 8"
+                                  value={
+                                    capacityInputs[category]?.doublesPairs || ""
+                                  }
+                                  required
+                                  onChange={(e) =>
+                                    handleCapacityChange(
+                                      category,
+                                      "doublesPairs",
+                                      e.target.value,
+                                    )
+                                  }
+                                />
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -622,21 +700,31 @@ function AdminTournamentsPage() {
                   4. Date and Hour
                 </h3>
 
-                <label className="create-match__label">Date:</label>
+                <label className="create-match__label" htmlFor="tournament-date">
+                  Date:
+                </label>
+
                 <div className="create-match__select-wrap">
                   <input
+                    id="tournament-date"
                     type="date"
                     className="create-match__select create-match__date-input"
                     value={newDate}
+                    required
                     onChange={(e) => setNewDate(e.target.value)}
                   />
                 </div>
 
-                <label className="create-match__label">Hour:</label>
+                <label className="create-match__label" htmlFor="tournament-hour">
+                  Hour:
+                </label>
+
                 <div className="create-match__select-wrap">
                   <select
+                    id="tournament-hour"
                     className="create-match__select"
                     value={newHour}
+                    required
                     onChange={(e) => setNewHour(e.target.value)}
                   >
                     <option value="">Select hour</option>
@@ -653,12 +741,12 @@ function AdminTournamentsPage() {
               <div className="create-match__section">
                 <h3 className="create-match__section-title">5. Courts</h3>
 
-                <label className="create-match__label">
+                <p className="create-match__label">
                   Select one or more courts:
-                </label>
+                </p>
 
                 {adminCourts.length === 0 ? (
-                  <p className="create-match__error">
+                  <p className="create-match__error" role="alert">
                     You need to create a court first.
                   </p>
                 ) : (
@@ -671,44 +759,56 @@ function AdminTournamentsPage() {
                       marginTop: "0.75rem",
                     }}
                   >
-                    {adminCourts.map((court) => (
-                      <label
-                        key={court.id}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "0.5rem",
-                          backgroundColor: "#25292d",
-                          color: "white",
-                          padding: "0.75rem",
-                          borderRadius: "12px",
-                          cursor: "pointer",
-                          fontWeight: 700,
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedCourts.includes(
-                            court.name || "Unnamed court",
-                          )}
-                          onChange={() =>
-                            handleCourtChange(court.name || "Unnamed court")
-                          }
-                        />
-                        {court.name || "Unnamed court"}
-                      </label>
-                    ))}
+                    {adminCourts.map((court) => {
+                      const courtName = court.name || "Unnamed court";
+                      const isSelected = selectedCourts.includes(courtName);
+                      const courtId = `court-${court.id}`;
+
+                      return (
+                        <label
+                          key={court.id}
+                          htmlFor={courtId}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.5rem",
+                            backgroundColor: isSelected
+                              ? "#111111"
+                              : "#25292d",
+                            color: "white",
+                            padding: "0.75rem",
+                            borderRadius: "12px",
+                            cursor: "pointer",
+                            fontWeight: 700,
+                            border: isSelected
+                              ? "3px solid #bfe212"
+                              : "3px solid transparent",
+                          }}
+                        >
+                          <input
+                            id={courtId}
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleCourtChange(courtName)}
+                          />
+                          {isSelected ? `✓ ${courtName}` : courtName}
+                        </label>
+                      );
+                    })}
                   </div>
                 )}
               </div>
 
               {(formError || pageError) && (
-                <p className="create-match__error">{formError || pageError}</p>
+                <p className="create-match__error" role="alert">
+                  {formError || pageError}
+                </p>
               )}
 
               <button
                 type="button"
                 className="create-match__btn"
+                aria-label="Create tournament"
                 onClick={handleAdd}
                 disabled={creating || adminCourts.length === 0}
               >
@@ -718,6 +818,17 @@ function AdminTournamentsPage() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={Boolean(tournamentToDelete)}
+        title="Delete tournament?"
+        message="Are you sure you want to delete this tournament? This action cannot be undone."
+        confirmLabel="Delete Tournament"
+        cancelLabel="Cancel"
+        danger
+        onCancel={handleCancelDeleteTournament}
+        onConfirm={handleConfirmDeleteTournament}
+      />
     </div>
   );
 }

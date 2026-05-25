@@ -216,3 +216,22 @@
     font-size: 1.2rem;
   }
 }
+
+.find-matches__card-click {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.find-matches__card-click:focus-visible,
+.find-matches__player-chip:focus-visible,
+.find-matches__btn:focus-visible {
+  outline: 3px solid #111111;
+  outline-offset: 3px;
+}
