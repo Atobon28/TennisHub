@@ -1,18 +1,17 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import AdBanners from "../../components/player/AdBanners";
-import { useAuth } from "../../context/useAuth";
-import { useMatches } from "../../context";
-import type { Match } from "../../context/MatchesContext";
-import "../../styles/find-matches.css";
 import ConfirmModal from "../../components/common/ConfirmModal";
-import { useToast } from "../../context/ToastContext";
 import LoadingState from "../../components/common/LoadingState";
 import EmptyState from "../../components/common/EmptyState";
-import ErrorState from "../../components/common/ErrorState";
 import PrimaryButton from "../../components/common/PrimaryButton";
 import DangerButton from "../../components/common/DangerButton";
+import { useAuth } from "../../context/useAuth";
+import { useMatches } from "../../context";
+import { useToast } from "../../context/ToastContext";
+import type { Match } from "../../context/MatchesContext";
+import "../../styles/find-matches.css";
 
 function FindMatchesPage() {
   const navigate = useNavigate();
@@ -47,13 +46,28 @@ function FindMatchesPage() {
 
         return matchDate >= now;
       })
+      .filter((match) => {
+        if (!selectedDate) return true;
+
+        return match.date === selectedDate;
+      })
+      .filter((match) => {
+        if (selectedType === "All") return true;
+
+        const type = String(match.matchType || match.type || "").toLowerCase();
+
+        if (selectedType === "Singles") return type.includes("single");
+        if (selectedType === "Doubles") return type.includes("double");
+
+        return true;
+      })
       .sort((a, b) => {
         const firstDate = new Date(`${a.date}T${a.time}`).getTime();
         const secondDate = new Date(`${b.date}T${b.time}`).getTime();
 
         return firstDate - secondDate;
       });
-  }, [matches]);
+  }, [matches, selectedDate, selectedType]);
 
   const handleJoin = async (
     event: React.MouseEvent<HTMLButtonElement>,
@@ -73,11 +87,13 @@ function FindMatchesPage() {
     }
   };
 
-  const handleLeave = async (
+  const handleLeave = (
     event: React.MouseEvent<HTMLButtonElement>,
     match: Match,
   ) => {
     event.stopPropagation();
+    setMatchToLeave(match);
+  };
 
   const handleCancelLeave = () => {
     setMatchToLeave(null);
@@ -98,17 +114,20 @@ function FindMatchesPage() {
       }
 
       await loadMatches();
-      setMatchToLeave(null);
+
       showToast(
         matchToLeave.hostId === userData.uid
           ? "Match cancelled successfully."
           : "Match left successfully.",
         "success",
       );
+
+      setMatchToLeave(null);
     } catch (error) {
       console.error("Error leaving match:", error);
+
       showToast(
-        matchToLeave?.hostId === userData?.uid
+        matchToLeave.hostId === userData.uid
           ? "Error cancelling match."
           : "Error leaving match.",
         "error",
@@ -164,6 +183,7 @@ function FindMatchesPage() {
           >
             <input
               type="date"
+              aria-label="Filter matches by date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
               style={{
@@ -179,6 +199,7 @@ function FindMatchesPage() {
             />
 
             <select
+              aria-label="Filter matches by type"
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
               style={{
@@ -197,6 +218,7 @@ function FindMatchesPage() {
               <option value="Doubles">Doubles</option>
             </select>
           </div>
+
           {loading ? (
             <LoadingState message="Loading matches..." />
           ) : error ? (
@@ -335,6 +357,7 @@ function FindMatchesPage() {
 
         <AdBanners />
       </div>
+
       <ConfirmModal
         isOpen={Boolean(matchToLeave)}
         title={
