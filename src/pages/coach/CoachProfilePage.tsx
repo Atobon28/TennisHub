@@ -275,12 +275,14 @@ function CoachProfilePage() {
     try {
       await changePassword(newPassword);
 
-      setPasswordMsg("");
-      setNewPassword("");
-      setConfirmPassword("");
-      setShowPasswordModal(false);
+      setPasswordMsg("Password updated successfully.");
+setNewPassword("");
+setConfirmPassword("");
 
-      alert("Password updated successfully.");
+setTimeout(() => {
+  setShowPasswordModal(false);
+  setPasswordMsg("");
+}, 1200);
     } catch (error) {
       console.error("Error changing password:", error);
 
