@@ -1,6 +1,8 @@
+import courtFallback from "../../assets/court-1.jpg";
+
 interface CourtCardProps {
   name: string;
-  image: string;
+  image?: string;
   courtType?: string;
   className?: string;
   onSeeMore?: () => void;
@@ -13,15 +15,25 @@ function CourtCard({
   className = "",
   onSeeMore,
 }: CourtCardProps) {
+  const courtName = name || "Tennis court";
+
   return (
     <article className={`player-home__court-card ${className}`}>
-      <img src={image} alt={name} className="player-home__court-image" />
+      <img
+        src={image || courtFallback}
+        alt={`${courtName} court`}
+        className="player-home__court-image"
+        onError={(event) => {
+          event.currentTarget.src = courtFallback;
+        }}
+      />
 
       <div className="player-home__court-overlay">
-        <span className="player-home__court-name">{name}</span>
+        <span className="player-home__court-name">{courtName}</span>
 
         {courtType && (
           <span
+            aria-label={`Court type: ${courtType}`}
             style={{
               backgroundColor: "rgba(255, 255, 255, 0.92)",
               color: "#111",
@@ -39,6 +51,7 @@ function CourtCard({
         <button
           type="button"
           className="player-home__court-see-more"
+          aria-label={`See more details for ${courtName}`}
           onClick={onSeeMore}
         >
           See more
