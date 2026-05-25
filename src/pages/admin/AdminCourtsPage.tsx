@@ -5,6 +5,8 @@ import ConfirmModal from "../../components/common/ConfirmModal";
 import { Icon } from "@iconify/react";
 import { useCourts } from "../../context";
 import { useAuth } from "../../context/useAuth";
+import { useToast } from "../../context/ToastContext";
+import ConfirmModal from "../../components/common/ConfirmModal";
 import "../../styles/admin-courts.css";
 import "../../styles/create-match.css";
 import court1 from "../../assets/court-1.jpg";
@@ -29,6 +31,7 @@ function AdminCourtsPage() {
   const isCreatingRef = useRef(false);
 
   const [showModal, setShowModal] = useState(false);
+  const [courtToDelete, setCourtToDelete] = useState<string | null>(null);
 
   const [newName, setNewName] = useState("");
   const [newContact, setNewContact] = useState("");
@@ -104,6 +107,7 @@ function AdminCourtsPage() {
     } catch (error) {
       console.error("Error resizing image:", error);
       setFormError("Error uploading image. Please try another one.");
+      showToast("Error uploading image.", "error");
     }
   };
 
@@ -148,9 +152,11 @@ function AdminCourtsPage() {
       });
 
       handleClose();
+      showToast("Court created successfully.", "success");
     } catch (error) {
       console.error("Error adding court:", error);
       setFormError("Error creating court. Please try again.");
+      showToast("Error creating court. Please try again.", "error");
     } finally {
       isCreatingRef.current = false;
       setCreating(false);

@@ -10,6 +10,7 @@ import type { Tournament } from "../../context/TournamentsContext";
 import ConfirmModal from "../../components/common/ConfirmModal";
 import "../../styles/player-profile.css";
 import player1 from "../../assets/player-1.jpg";
+import { useToast } from "../../context/ToastContext";
 
 const categoryOptions = [
   "First Category",
@@ -66,6 +67,7 @@ const getCategoryLevel = (category: string) => {
 function PlayerProfilePage() {
   const navigate = useNavigate();
   const { userData, refreshUserData } = useAuth();
+  const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const { playerMatches, loadPlayerMatches, leaveExistingMatch, removeMatch } =
@@ -157,13 +159,16 @@ function PlayerProfilePage() {
       await refreshUserData();
 
       setAvatarMsg("Avatar updated successfully.");
+      showToast("Avatar uploaded successfully.", "success");
     } catch (error) {
       console.error("Error uploading avatar:", error);
 
       if (error instanceof Error) {
         setAvatarMsg(error.message);
+        showToast("Error uploading image.", "error");
       } else {
         setAvatarMsg("Error uploading avatar. Please try again.");
+        showToast("Error uploading image.", "error");
       }
     } finally {
       setUploadingAvatar(false);
@@ -228,7 +233,7 @@ setTimeout(() => {
       });
 
       await refreshUserData();
-
+      showToast("Profile saved successfully.", "success");
       setPlayerCategory(tempCategory);
       setTempCategory(tempCategory);
       setShowCategoryModal(false);

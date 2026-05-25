@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useState, type ReactNode } from "react";
+import { createContext, useCallback, useState, type ReactNode } from "react";
 import { getCoaches, updateUser } from "../firebase/services";
 
 export interface CoachScheduleDay {
@@ -52,16 +52,16 @@ export function CoachesProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const clearCoachError = () => {
+  const clearCoachError = useCallback(() => {
     setError("");
-  };
+  }, []);
 
   const getErrorMessage = (err: unknown) => {
     if (err instanceof Error) return err.message;
     return "Something went wrong with coaches.";
   };
 
-  const loadCoaches = async () => {
+  const loadCoaches = useCallback(async () => {
     setLoading(true);
     setError("");
 
@@ -73,16 +73,17 @@ export function CoachesProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const loadCoachById = async (coachId: string) => {
+  const loadCoachById = useCallback(async (coachId: string) => {
     setLoading(true);
     setError("");
 
     try {
       const data = (await getCoaches()) as Coach[];
       const coach =
-  data.find((item) => item.id === coachId || item.uid === coachId) || null;
+        data.find((item) => item.id === coachId || item.uid === coachId) ||
+        null;
 
       setSelectedCoach(coach);
       return coach;
@@ -92,33 +93,36 @@ export function CoachesProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const editCoachProfile = async (coachId: string, coachData: object) => {
-    setLoading(true);
-    setError("");
+  const editCoachProfile = useCallback(
+    async (coachId: string, coachData: object) => {
+      setLoading(true);
+      setError("");
 
-    try {
-      await updateUser(coachId, coachData);
+      try {
+        await updateUser(coachId, coachData);
 
-      setCoaches((currentCoaches) =>
-        currentCoaches.map((coach) =>
-          coach.id === coachId ? { ...coach, ...coachData } : coach,
-        ),
-      );
+        setCoaches((currentCoaches) =>
+          currentCoaches.map((coach) =>
+            coach.id === coachId ? { ...coach, ...coachData } : coach,
+          ),
+        );
 
-      setSelectedCoach((currentCoach) =>
-        currentCoach?.id === coachId
-          ? { ...currentCoach, ...coachData }
-          : currentCoach,
-      );
-    } catch (err) {
-      setError(getErrorMessage(err));
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
+        setSelectedCoach((currentCoach) =>
+          currentCoach?.id === coachId
+            ? { ...currentCoach, ...coachData }
+            : currentCoach,
+        );
+      } catch (err) {
+        setError(getErrorMessage(err));
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
 
   return (
     <CoachesContext.Provider

@@ -1,9 +1,12 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import { Icon } from "@iconify/react";
 import { useCoaches } from "../../context";
 import type { Coach } from "../../context/CoachesContext";
+import LoadingState from "../../components/common/LoadingState";
+import EmptyState from "../../components/common/EmptyState";
+import ErrorState from "../../components/common/ErrorState";
 import "../../styles/find-coach.css";
 import coach1 from "../../assets/coach-1.jpg";
 
@@ -11,6 +14,8 @@ function FindCoachPage() {
   const navigate = useNavigate();
 
   const { coaches, loading, error, loadCoaches } = useCoaches();
+
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     loadCoaches();
@@ -27,6 +32,24 @@ function FindCoachPage() {
     );
   };
 
+  const filteredCoaches = coaches.filter((coach) => {
+    const search = searchTerm.toLowerCase().trim();
+
+    if (!search) return true;
+
+    const username = coach.username?.toLowerCase() || "";
+    const specialty = coach.specialty?.toLowerCase() || "";
+    const price = coach.pricePerHour?.toLowerCase() || "";
+    const availability = coach.availableDays?.join(" ").toLowerCase() || "";
+
+    return (
+      username.includes(search) ||
+      specialty.includes(search) ||
+      price.includes(search) ||
+      availability.includes(search)
+    );
+  });
+
   return (
     <div className="find-coach">
       <div className="find-coach__grid">
@@ -38,15 +61,25 @@ function FindCoachPage() {
             <h2 className="find-coach__section-title">Coaches</h2>
           </div>
 
+          <input
+            type="text"
+            className="find-coach__search"
+            placeholder="Search by name, specialty, price or availability..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+
           {loading ? (
-            <p className="find-coach__empty">Loading coaches...</p>
+            <LoadingState message="Loading coaches..." />
           ) : error ? (
-            <p className="find-coach__empty">{error}</p>
+            <ErrorState message={error} />
           ) : coaches.length === 0 ? (
-            <p className="find-coach__empty">No coaches available yet.</p>
+            <EmptyState message="No coaches available yet." />
+          ) : filteredCoaches.length === 0 ? (
+            <EmptyState message="No coaches match your search." />
           ) : (
             <div className="find-coach__coaches-grid">
-              {coaches.map((coach) => {
+              {filteredCoaches.map((coach) => {
                 const complete = isCoachComplete(coach);
 
                 return (

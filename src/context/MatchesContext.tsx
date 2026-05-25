@@ -51,12 +51,12 @@ interface MatchesContextType {
   joinExistingMatch: (
     matchId: string,
     playerId: string,
-    playerUsername: string,
+    playerUsername: string
   ) => Promise<void>;
   leaveExistingMatch: (
     matchId: string,
     playerId: string,
-    playerUsername: string,
+    playerUsername: string
   ) => Promise<void>;
   removeMatch: (matchId: string) => Promise<void>;
   clearMatchError: () => void;

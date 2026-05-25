@@ -7,10 +7,12 @@ import { useAuth } from "../../context/useAuth";
 import { useCourts, useProfile, useTournaments } from "../../context";
 import "../../styles/admin-profile.css";
 import court1 from "../../assets/court-1.jpg";
+import { useToast } from "../../context/ToastContext";
 
 function AdminProfilePage() {
   const navigate = useNavigate();
   const { userData, refreshUserData } = useAuth();
+  const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -77,13 +79,16 @@ function AdminProfilePage() {
       await refreshUserData();
 
       setAvatarMsg("Avatar updated successfully.");
+      showToast("Avatar uploaded successfully.", "success");
     } catch (error) {
       console.error("Error uploading avatar:", error);
 
       if (error instanceof Error) {
         setAvatarMsg(error.message);
+        showToast("Error uploading image.", "error");
       } else {
         setAvatarMsg("Error uploading avatar. Please try again.");
+        showToast("Error uploading image.", "error");
       }
     } finally {
       setUploadingAvatar(false);

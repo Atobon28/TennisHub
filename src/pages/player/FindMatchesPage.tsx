@@ -6,10 +6,18 @@ import { useAuth } from "../../context/useAuth";
 import { useMatches } from "../../context";
 import type { Match } from "../../context/MatchesContext";
 import "../../styles/find-matches.css";
+import ConfirmModal from "../../components/common/ConfirmModal";
+import { useToast } from "../../context/ToastContext";
+import LoadingState from "../../components/common/LoadingState";
+import EmptyState from "../../components/common/EmptyState";
+import ErrorState from "../../components/common/ErrorState";
+import PrimaryButton from "../../components/common/PrimaryButton";
+import DangerButton from "../../components/common/DangerButton";
 
 function FindMatchesPage() {
   const navigate = useNavigate();
   const { userData } = useAuth();
+  const { showToast } = useToast();
 
   const {
     matches,
@@ -20,6 +28,10 @@ function FindMatchesPage() {
     leaveExistingMatch,
     removeMatch,
   } = useMatches();
+
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedType, setSelectedType] = useState("All");
+  const [matchToLeave, setMatchToLeave] = useState<Match | null>(null);
 
   useEffect(() => {
     loadMatches();
@@ -54,8 +66,10 @@ function FindMatchesPage() {
     try {
       await joinExistingMatch(match.id, userData.uid, userData.username);
       await loadMatches();
+      showToast("Match joined successfully.", "success");
     } catch (error) {
       console.error("Error joining match:", error);
+      showToast("Error joining match.", "error");
     }
   };
 
@@ -65,18 +79,40 @@ function FindMatchesPage() {
   ) => {
     event.stopPropagation();
 
-    if (!userData?.uid || !userData?.username) return;
+  const handleCancelLeave = () => {
+    setMatchToLeave(null);
+  };
+
+  const handleConfirmLeave = async () => {
+    if (!matchToLeave || !userData?.uid || !userData?.username) return;
 
     try {
-      if (match.hostId === userData.uid) {
-        await removeMatch(match.id);
+      if (matchToLeave.hostId === userData.uid) {
+        await removeMatch(matchToLeave.id);
       } else {
-        await leaveExistingMatch(match.id, userData.uid, userData.username);
+        await leaveExistingMatch(
+          matchToLeave.id,
+          userData.uid,
+          userData.username,
+        );
       }
 
       await loadMatches();
+      setMatchToLeave(null);
+      showToast(
+        matchToLeave.hostId === userData.uid
+          ? "Match cancelled successfully."
+          : "Match left successfully.",
+        "success",
+      );
     } catch (error) {
       console.error("Error leaving match:", error);
+      showToast(
+        matchToLeave?.hostId === userData?.uid
+          ? "Error cancelling match."
+          : "Error leaving match.",
+        "error",
+      );
     }
   };
 
@@ -118,14 +154,57 @@ function FindMatchesPage() {
             <h2 className="find-matches__title">Available Matches</h2>
           </div>
 
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+              gap: "0.75rem",
+              marginBottom: "1.5rem",
+            }}
+          >
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              style={{
+                border: "none",
+                borderRadius: "999px",
+                padding: "0.8rem 1rem",
+                fontWeight: 700,
+                fontFamily: "inherit",
+                background: "white",
+                color: "#111",
+                boxShadow: "0 4px 12px rgba(15, 14, 12, 0.08)",
+              }}
+            />
+
+            <select
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value)}
+              style={{
+                border: "none",
+                borderRadius: "999px",
+                padding: "0.8rem 1rem",
+                fontWeight: 800,
+                fontFamily: "inherit",
+                background: "white",
+                color: "#111",
+                boxShadow: "0 4px 12px rgba(15, 14, 12, 0.08)",
+              }}
+            >
+              <option value="All">All Types</option>
+              <option value="Singles">Singles</option>
+              <option value="Doubles">Doubles</option>
+            </select>
+          </div>
           {loading ? (
-            <p className="find-matches__empty">Loading matches...</p>
+            <LoadingState message="Loading matches..." />
           ) : error ? (
             <p className="find-matches__empty" role="alert">
               {error}
             </p>
           ) : upcomingMatches.length === 0 ? (
-            <p className="find-matches__empty">No matches available yet.</p>
+            <EmptyState message="No matches match your filters." />
           ) : (
             <div className="find-matches__list">
               {upcomingMatches.map((match) => {
@@ -226,8 +305,7 @@ function FindMatchesPage() {
 
                     <div className="find-matches__card-actions">
                       {inMatch ? (
-                        <button
-                          type="button"
+                        <DangerButton
                           className="find-matches__btn find-matches__btn--leave"
                           aria-label={
                             isHost
@@ -237,16 +315,15 @@ function FindMatchesPage() {
                           onClick={(event) => handleLeave(event, match)}
                         >
                           {isHost ? "Cancel Match" : "Leave Match"}
-                        </button>
+                        </DangerButton>
                       ) : !full ? (
-                        <button
-                          type="button"
+                        <PrimaryButton
                           className="find-matches__btn find-matches__btn--join"
                           aria-label={`Join match at ${courtName}`}
                           onClick={(event) => handleJoin(event, match)}
                         >
                           Join
-                        </button>
+                        </PrimaryButton>
                       ) : null}
                     </div>
                   </article>
@@ -258,6 +335,28 @@ function FindMatchesPage() {
 
         <AdBanners />
       </div>
+      <ConfirmModal
+        isOpen={Boolean(matchToLeave)}
+        title={
+          matchToLeave?.hostId === userData?.uid
+            ? "Cancel match?"
+            : "Leave match?"
+        }
+        message={
+          matchToLeave?.hostId === userData?.uid
+            ? "Are you sure you want to cancel this match? This will remove it for all players."
+            : "Are you sure you want to leave this match?"
+        }
+        confirmLabel={
+          matchToLeave?.hostId === userData?.uid
+            ? "Cancel Match"
+            : "Leave Match"
+        }
+        cancelLabel="Cancel"
+        danger
+        onCancel={handleCancelLeave}
+        onConfirm={handleConfirmLeave}
+      />
     </div>
   );
 }

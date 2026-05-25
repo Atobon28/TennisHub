@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useState } from "react";
+import { createContext, useCallback, useState, type ReactNode } from "react";
 import {
   addCourt,
   deleteCourt,
@@ -58,23 +58,23 @@ export const CourtsContext = createContext<CourtsContextType>({
   clearCourtError: () => {},
 });
 
-export function CourtsProvider({ children }: { children: React.ReactNode }) {
+export function CourtsProvider({ children }: { children: ReactNode }) {
   const [courts, setCourts] = useState<Court[]>([]);
   const [adminCourts, setAdminCourts] = useState<Court[]>([]);
   const [selectedCourt, setSelectedCourt] = useState<Court | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const clearCourtError = () => {
+  const clearCourtError = useCallback(() => {
     setError("");
-  };
+  }, []);
 
   const getErrorMessage = (err: unknown) => {
     if (err instanceof Error) return err.message;
     return "Something went wrong with courts.";
   };
 
-  const loadCourts = async () => {
+  const loadCourts = useCallback(async () => {
     setLoading(true);
     setError("");
 
@@ -86,9 +86,9 @@ export function CourtsProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const loadAdminCourts = async (adminId: string) => {
+  const loadAdminCourts = useCallback(async (adminId: string) => {
     setLoading(true);
     setError("");
 
@@ -100,9 +100,9 @@ export function CourtsProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const loadCourtById = async (courtId: string) => {
+  const loadCourtById = useCallback(async (courtId: string) => {
     setLoading(true);
     setError("");
 
@@ -117,24 +117,29 @@ export function CourtsProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const createCourt = async (adminId: string, courtData: object) => {
-    setLoading(true);
-    setError("");
+  const createCourt = useCallback(
+    async (adminId: string, courtData: object) => {
+      setLoading(true);
+      setError("");
 
-    try {
-      await addCourt(adminId, courtData);
-      await loadAdminCourts(adminId);
-    } catch (err) {
-      setError(getErrorMessage(err));
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
+      try {
+        await addCourt(adminId, courtData);
 
-  const editCourt = async (courtId: string, courtData: object) => {
+        const data = (await getAdminCourts(adminId)) as Court[];
+        setAdminCourts(data);
+      } catch (err) {
+        setError(getErrorMessage(err));
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
+
+  const editCourt = useCallback(async (courtId: string, courtData: object) => {
     setLoading(true);
     setError("");
 
@@ -146,9 +151,9 @@ export function CourtsProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const removeCourt = async (courtId: string) => {
+  const removeCourt = useCallback(async (courtId: string) => {
     setLoading(true);
     setError("");
 
@@ -168,9 +173,9 @@ export function CourtsProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const uploadCourtPhoto = async (courtId: string, file: File) => {
+  const uploadCourtPhoto = useCallback(async (courtId: string, file: File) => {
     setLoading(true);
     setError("");
 
@@ -183,7 +188,7 @@ export function CourtsProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   return (
     <CourtsContext.Provider

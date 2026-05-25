@@ -6,6 +6,7 @@ import { useProfile } from "../../context";
 import { logoutUser } from "../../firebase/services";
 import "../../styles/coach-profile.css";
 import coach1 from "../../assets/coach-1.jpg";
+import { useToast } from "../../context/ToastContext";
 
 const allDays = [
   "Monday",
@@ -61,6 +62,7 @@ const createEmptySchedule = () => {
 function CoachProfilePage() {
   const navigate = useNavigate();
   const { userData, refreshUserData } = useAuth();
+  const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -161,8 +163,10 @@ function CoachProfilePage() {
       await refreshUserData();
 
       setAvatarMsg("Avatar updated successfully.");
+      showToast("Avatar uploaded successfully.", "success");
     } catch (error) {
       console.error("Error uploading avatar:", error);
+      showToast("Error uploading image.", "error");
 
       if (error instanceof Error) {
         setAvatarMsg(error.message);
@@ -248,6 +252,7 @@ function CoachProfilePage() {
 
       setSaved(true);
       setScheduleError("");
+      showToast("Profile saved successfully.", "success");
     } catch (error) {
       console.error("Error saving schedule:", error);
       setScheduleError("Error saving schedule. Please try again.");

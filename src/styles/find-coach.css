@@ -175,3 +175,21 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+.find-coach__search {
+  width: 100%;
+  border: none;
+  border-radius: 999px;
+  padding: 0.9rem 1rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  background: var(--player-white);
+  color: var(--player-black);
+  box-shadow: 0 8px 18px rgba(15, 14, 12, 0.06);
+  outline: none;
+}
+
+.find-coach__search::placeholder {
+  color: #888;
+  font-weight: 600;
+}

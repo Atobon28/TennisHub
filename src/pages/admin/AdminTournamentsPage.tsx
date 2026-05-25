@@ -8,6 +8,8 @@ import { useCourts, useTournaments } from "../../context";
 import { useAuth } from "../../context/useAuth";
 import "../../styles/admin-tournaments.css";
 import "../../styles/create-match.css";
+import ConfirmModal from "../../components/common/ConfirmModal";
+import { useToast } from "../../context/ToastContext";
 
 const timeOptions = [
   "06:00",
@@ -49,6 +51,7 @@ interface CapacityByCategory {
 function AdminTournamentsPage() {
   const navigate = useNavigate();
   const { userData } = useAuth();
+  const { showToast } = useToast();
 
   const {
     adminTournaments,
@@ -69,7 +72,9 @@ function AdminTournamentsPage() {
   } = useCourts();
 
   const [showModal, setShowModal] = useState(false);
-
+  const [tournamentToDelete, setTournamentToDelete] = useState<string | null>(
+    null,
+  );
   const [newName, setNewName] = useState("");
   const [newDate, setNewDate] = useState("");
   const [newHour, setNewHour] = useState("");
@@ -165,7 +170,9 @@ function AdminTournamentsPage() {
     const capacityByCategory: CapacityByCategory = {};
 
     newCategories.forEach((category) => {
-      const singlesValue = Number(capacityInputs[category]?.singlesPlayers || 0);
+      const singlesValue = Number(
+        capacityInputs[category]?.singlesPlayers || 0,
+      );
       const doublesValue = Number(capacityInputs[category]?.doublesPairs || 0);
 
       capacityByCategory[category] = {};
@@ -184,7 +191,9 @@ function AdminTournamentsPage() {
 
   const validateCapacity = () => {
     for (const category of newCategories) {
-      const singlesValue = Number(capacityInputs[category]?.singlesPlayers || 0);
+      const singlesValue = Number(
+        capacityInputs[category]?.singlesPlayers || 0,
+      );
       const doublesValue = Number(capacityInputs[category]?.doublesPairs || 0);
 
       if (
@@ -261,9 +270,11 @@ function AdminTournamentsPage() {
     try {
       await createTournament(userData.uid, newTournament);
       handleClose();
+      showToast("Error creating tournament. Please try again.", "error");
     } catch (error) {
       console.error("Error adding tournament:", error);
       setFormError("Error creating tournament. Please try again.");
+      showToast("Tournament created successfully.", "success");
     } finally {
       setCreating(false);
     }
