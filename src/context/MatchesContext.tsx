@@ -1,5 +1,11 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   createMatch,
   deleteMatch,
@@ -76,19 +82,21 @@ export function MatchesProvider({ children }: { children: ReactNode }) {
   const [matches, setMatches] = useState<Match[]>([]);
   const [playerMatches, setPlayerMatches] = useState<Match[]>([]);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const clearMatchError = () => {
+  const clearMatchError = useCallback(() => {
     setError("");
-  };
+  }, []);
 
-  const getErrorMessage = (err: unknown) => {
+  const getErrorMessage = useCallback((err: unknown) => {
     if (err instanceof Error) return err.message;
-    return "Something went wrong with matches.";
-  };
 
-  const loadMatches = async () => {
+    return "Something went wrong with matches.";
+  }, []);
+
+  const loadMatches = useCallback(async () => {
     setLoading(true);
     setError("");
 
@@ -100,136 +108,179 @@ export function MatchesProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getErrorMessage]);
 
-  const loadPlayerMatches = async (playerId: string) => {
-    setLoading(true);
-    setError("");
+  const loadPlayerMatches = useCallback(
+    async (playerId: string) => {
+      setLoading(true);
+      setError("");
 
-    try {
-      const data = (await getPlayerMatches(playerId)) as Match[];
-      setPlayerMatches(data);
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  };
+      try {
+        const data = (await getPlayerMatches(playerId)) as Match[];
+        setPlayerMatches(data);
+      } catch (err) {
+        setError(getErrorMessage(err));
+      } finally {
+        setLoading(false);
+      }
+    },
+    [getErrorMessage],
+  );
 
-  const loadMatchById = async (matchId: string) => {
-    setLoading(true);
-    setError("");
+  const loadMatchById = useCallback(
+    async (matchId: string) => {
+      setLoading(true);
+      setError("");
 
-    try {
-      const data = (await getMatches()) as Match[];
-      const match = data.find((item) => item.id === matchId) || null;
+      try {
+        const data = (await getMatches()) as Match[];
+        const match = data.find((item) => item.id === matchId) || null;
 
-      setSelectedMatch(match);
-      return match;
-    } catch (err) {
-      setError(getErrorMessage(err));
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
+        setSelectedMatch(match);
+        return match;
+      } catch (err) {
+        setError(getErrorMessage(err));
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [getErrorMessage],
+  );
 
-  const addNewMatch = async (matchData: object) => {
-    setLoading(true);
-    setError("");
+  const addNewMatch = useCallback(
+    async (matchData: object) => {
+      setLoading(true);
+      setError("");
 
-    try {
-      await createMatch(matchData);
-      await loadMatches();
-    } catch (err) {
-      setError(getErrorMessage(err));
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
+      try {
+        await createMatch(matchData);
 
-  const joinExistingMatch = async (
-    matchId: string,
-    playerId: string,
-    playerUsername: string,
-  ) => {
-    setLoading(true);
-    setError("");
+        const data = (await getMatches()) as Match[];
+        setMatches(data);
+      } catch (err) {
+        setError(getErrorMessage(err));
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [getErrorMessage],
+  );
 
-    try {
-      await joinMatch(matchId, playerId, playerUsername);
-      await loadMatches();
-      await loadPlayerMatches(playerId);
-    } catch (err) {
-      setError(getErrorMessage(err));
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
+  const joinExistingMatch = useCallback(
+    async (matchId: string, playerId: string, playerUsername: string) => {
+      setLoading(true);
+      setError("");
 
-  const leaveExistingMatch = async (
-    matchId: string,
-    playerId: string,
-    playerUsername: string,
-  ) => {
-    setLoading(true);
-    setError("");
+      try {
+        await joinMatch(matchId, playerId, playerUsername);
 
-    try {
-      await leaveMatch(matchId, playerId, playerUsername);
-      await loadMatches();
-      await loadPlayerMatches(playerId);
-    } catch (err) {
-      setError(getErrorMessage(err));
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
+        const [matchesData, playerMatchesData] = await Promise.all([
+          getMatches(),
+          getPlayerMatches(playerId),
+        ]);
 
-  const removeMatch = async (matchId: string) => {
-    setLoading(true);
-    setError("");
+        setMatches(matchesData as Match[]);
+        setPlayerMatches(playerMatchesData as Match[]);
+      } catch (err) {
+        setError(getErrorMessage(err));
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [getErrorMessage],
+  );
 
-    try {
-      await deleteMatch(matchId);
+  const leaveExistingMatch = useCallback(
+    async (matchId: string, playerId: string, playerUsername: string) => {
+      setLoading(true);
+      setError("");
 
-      setMatches((currentMatches) =>
-        currentMatches.filter((match) => match.id !== matchId),
-      );
+      try {
+        await leaveMatch(matchId, playerId, playerUsername);
 
-      setPlayerMatches((currentMatches) =>
-        currentMatches.filter((match) => match.id !== matchId),
-      );
-    } catch (err) {
-      setError(getErrorMessage(err));
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
+        const [matchesData, playerMatchesData] = await Promise.all([
+          getMatches(),
+          getPlayerMatches(playerId),
+        ]);
+
+        setMatches(matchesData as Match[]);
+        setPlayerMatches(playerMatchesData as Match[]);
+      } catch (err) {
+        setError(getErrorMessage(err));
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [getErrorMessage],
+  );
+
+  const removeMatch = useCallback(
+    async (matchId: string) => {
+      setLoading(true);
+      setError("");
+
+      try {
+        await deleteMatch(matchId);
+
+        setMatches((currentMatches) =>
+          currentMatches.filter((match) => match.id !== matchId),
+        );
+
+        setPlayerMatches((currentMatches) =>
+          currentMatches.filter((match) => match.id !== matchId),
+        );
+
+        setSelectedMatch((currentMatch) =>
+          currentMatch?.id === matchId ? null : currentMatch,
+        );
+      } catch (err) {
+        setError(getErrorMessage(err));
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [getErrorMessage],
+  );
+
+  const value = useMemo(
+    () => ({
+      matches,
+      playerMatches,
+      selectedMatch,
+      loading,
+      error,
+      loadMatches,
+      loadPlayerMatches,
+      loadMatchById,
+      addNewMatch,
+      joinExistingMatch,
+      leaveExistingMatch,
+      removeMatch,
+      clearMatchError,
+    }),
+    [
+      matches,
+      playerMatches,
+      selectedMatch,
+      loading,
+      error,
+      loadMatches,
+      loadPlayerMatches,
+      loadMatchById,
+      addNewMatch,
+      joinExistingMatch,
+      leaveExistingMatch,
+      removeMatch,
+      clearMatchError,
+    ],
+  );
 
   return (
-    <MatchesContext.Provider
-      value={{
-        matches,
-        playerMatches,
-        selectedMatch,
-        loading,
-        error,
-        loadMatches,
-        loadPlayerMatches,
-        loadMatchById,
-        addNewMatch,
-        joinExistingMatch,
-        leaveExistingMatch,
-        removeMatch,
-        clearMatchError,
-      }}
-    >
-      {children}
-    </MatchesContext.Provider>
+    <MatchesContext.Provider value={value}>{children}</MatchesContext.Provider>
   );
 }

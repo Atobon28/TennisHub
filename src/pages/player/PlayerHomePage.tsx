@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import "../../styles/player-home.css";
@@ -68,7 +68,42 @@ function PlayerHomePage() {
   const { coaches, loadCoaches } = useCoaches();
   const { matches, loadMatches } = useMatches();
 
-  const playerCategory = getPlayerCategory(userData?.level, userData?.category);
+  const playerCategory = useMemo(
+    () => getPlayerCategory(userData?.level, userData?.category),
+    [userData?.level, userData?.category],
+  );
+
+  const today = useMemo(() => new Date().toISOString().split("T")[0], []);
+
+  const todayMatches = useMemo(() => {
+    return matches.filter((match) => match.date === today);
+  }, [matches, today]);
+
+  const visiblePlayers = useMemo(() => players.slice(0, 3), [players]);
+
+  const visibleCoaches = useMemo(() => coaches.slice(0, 3), [coaches]);
+
+  const visibleCourts = useMemo(() => courts.slice(0, 3), [courts]);
+
+  const visibleTournaments = useMemo(() => {
+    return tournaments.map((tournament) => {
+      const categories = tournament.categories || [];
+
+      const canApply =
+        categories.length === 0 ||
+        categories.includes(playerCategory) ||
+        categories.includes("Open");
+
+      const badge =
+        categories.length === 1 ? getCategoryBadge(categories[0]) : "🎾";
+
+      return {
+        ...tournament,
+        canApply,
+        badge,
+      };
+    });
+  }, [tournaments, playerCategory]);
 
   useEffect(() => {
     if (hasLoadedHomeData.current) return;
@@ -82,21 +117,20 @@ function PlayerHomePage() {
     loadMatches();
   }, [loadTournaments, loadCourts, loadPlayers, loadCoaches, loadMatches]);
 
-  const today = new Date().toISOString().split("T")[0];
+  const scroll = useCallback(
+    (
+      ref: React.RefObject<HTMLDivElement | null>,
+      direction: "left" | "right",
+    ) => {
+      if (!ref.current) return;
 
-  const todayMatches = matches.filter((match) => match.date === today);
-
-  const scroll = (
-    ref: React.RefObject<HTMLDivElement | null>,
-    direction: "left" | "right",
-  ) => {
-    if (!ref.current) return;
-
-    ref.current.scrollBy({
-      left: direction === "right" ? 300 : -300,
-      behavior: "smooth",
-    });
-  };
+      ref.current.scrollBy({
+        left: direction === "right" ? 300 : -300,
+        behavior: "smooth",
+      });
+    },
+    [],
+  );
 
   return (
     <div className="player-home">
@@ -104,6 +138,7 @@ function PlayerHomePage() {
         <button
           type="button"
           className="player-home__action player-home__action--primary"
+          aria-label="Create a new match"
           onClick={() => navigate("/player/create-match")}
         >
           Create Match
@@ -112,11 +147,13 @@ function PlayerHomePage() {
         <button
           type="button"
           className="player-home__action player-home__action--secondary"
+          aria-label="Find a coach"
           onClick={() => navigate("/player/coaches")}
         >
           <Icon
             icon="solar:magnifer-linear"
             className="player-home__action-icon"
+            aria-hidden="true"
           />
 
           <span>Find a Coach</span>
@@ -129,7 +166,10 @@ function PlayerHomePage() {
             <div className="player-home__mini-section">
               <div className="player-home__section-header">
                 <div className="player-home__section-title-wrap">
-                  <span className="player-home__icon-gradient-wrap">
+                  <span
+                    className="player-home__icon-gradient-wrap"
+                    aria-hidden="true"
+                  >
                     <Icon
                       icon="ph:user-fill"
                       className="player-home__section-icon"
@@ -142,6 +182,7 @@ function PlayerHomePage() {
                 <button
                   type="button"
                   className="player-home__section-more-button"
+                  aria-label="See more players nearby"
                   onClick={() => navigate("/player/players")}
                 >
                   See more...
@@ -149,36 +190,51 @@ function PlayerHomePage() {
               </div>
 
               <div className="player-home__small-cards">
-                {players.slice(0, 3).map((player) => (
-                  <div
-                    key={player.id}
-                    onClick={() =>
-                      navigate(`/player/players/view/${player.uid}`)
-                    }
-                    style={{ cursor: "pointer" }}
-                  >
-                    <PersonCard
-                      name={player.username || "Player"}
-                      image={
-                        typeof player.photoURL === "string"
-                          ? player.photoURL
-                          : player1
+                {visiblePlayers.map((player) => {
+                  const playerName = player.username || "Player";
+
+                  return (
+                    <button
+                      key={player.id}
+                      type="button"
+                      aria-label={`Open ${playerName} profile`}
+                      onClick={() =>
+                        navigate(`/player/players/view/${player.uid}`)
                       }
-                      level={
-                        typeof player.level === "number"
-                          ? player.level
-                          : undefined
-                      }
-                    />
-                  </div>
-                ))}
+                      style={{
+                        border: "none",
+                        background: "transparent",
+                        padding: 0,
+                        cursor: "pointer",
+                        font: "inherit",
+                      }}
+                    >
+                      <PersonCard
+                        name={playerName}
+                        image={
+                          typeof player.photoURL === "string"
+                            ? player.photoURL
+                            : player1
+                        }
+                        level={
+                          typeof player.level === "number"
+                            ? player.level
+                            : undefined
+                        }
+                      />
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
             <div className="player-home__mini-section">
               <div className="player-home__section-header">
                 <div className="player-home__section-title-wrap">
-                  <span className="player-home__icon-gradient-wrap">
+                  <span
+                    className="player-home__icon-gradient-wrap"
+                    aria-hidden="true"
+                  >
                     <Icon
                       icon="mdi:arm-flex"
                       className="player-home__section-icon"
@@ -191,6 +247,7 @@ function PlayerHomePage() {
                 <button
                   type="button"
                   className="player-home__section-more-button"
+                  aria-label="See more coaches"
                   onClick={() => navigate("/player/coaches")}
                 >
                   See more...
@@ -198,24 +255,36 @@ function PlayerHomePage() {
               </div>
 
               <div className="player-home__small-cards">
-                {coaches.slice(0, 3).map((coach) => (
-                  <div
-                    key={coach.id}
-                    onClick={() =>
-                      navigate(`/player/coaches/view/${coach.uid}`)
-                    }
-                    style={{ cursor: "pointer" }}
-                  >
-                    <PersonCard
-                      name={coach.username || "Coach"}
-                      image={
-                        typeof coach.photoURL === "string"
-                          ? coach.photoURL
-                          : court1
+                {visibleCoaches.map((coach) => {
+                  const coachName = coach.username || "Coach";
+
+                  return (
+                    <button
+                      key={coach.id}
+                      type="button"
+                      aria-label={`Open ${coachName} coach profile`}
+                      onClick={() =>
+                        navigate(`/player/coaches/view/${coach.uid}`)
                       }
-                    />
-                  </div>
-                ))}
+                      style={{
+                        border: "none",
+                        background: "transparent",
+                        padding: 0,
+                        cursor: "pointer",
+                        font: "inherit",
+                      }}
+                    >
+                      <PersonCard
+                        name={coachName}
+                        image={
+                          typeof coach.photoURL === "string"
+                            ? coach.photoURL
+                            : player1
+                        }
+                      />
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -223,7 +292,10 @@ function PlayerHomePage() {
           <section className="player-home__section">
             <div className="player-home__section-header">
               <div className="player-home__section-title-wrap">
-                <span className="player-home__icon-gradient-wrap">
+                <span
+                  className="player-home__icon-gradient-wrap"
+                  aria-hidden="true"
+                >
                   <Icon
                     icon="game-icons:tennis-racket"
                     className="player-home__section-icon"
@@ -237,6 +309,7 @@ function PlayerHomePage() {
                 <button
                   type="button"
                   className="player-home__section-more-button"
+                  aria-label="See more matches"
                   onClick={() => navigate("/player/matches")}
                 >
                   See more...
@@ -246,6 +319,7 @@ function PlayerHomePage() {
                   <button
                     type="button"
                     className="player-home__scroll-btn"
+                    aria-label="Scroll matches left"
                     onClick={() => scroll(matchesScrollRef, "left")}
                   >
                     ‹
@@ -254,6 +328,7 @@ function PlayerHomePage() {
                   <button
                     type="button"
                     className="player-home__scroll-btn"
+                    aria-label="Scroll matches right"
                     onClick={() => scroll(matchesScrollRef, "right")}
                   >
                     ›
@@ -268,10 +343,12 @@ function PlayerHomePage() {
             >
               {todayMatches.length === 0 ? (
                 <p
+                  role="status"
                   style={{
-                    color: "#888",
+                    color: "#555",
                     fontSize: "0.9rem",
                     padding: "8px 0",
+                    fontWeight: 700,
                   }}
                 >
                   No matches today.
@@ -293,7 +370,10 @@ function PlayerHomePage() {
           <section className="player-home__section">
             <div className="player-home__section-header">
               <div className="player-home__section-title-wrap">
-                <span className="player-home__icon-gradient-wrap">
+                <span
+                  className="player-home__icon-gradient-wrap"
+                  aria-hidden="true"
+                >
                   <Icon
                     icon="game-icons:tennis-racket"
                     className="player-home__section-icon"
@@ -309,6 +389,7 @@ function PlayerHomePage() {
                 <button
                   type="button"
                   className="player-home__section-more-button"
+                  aria-label="See more tournaments"
                   onClick={() => navigate("/player/tournaments")}
                 >
                   See more...
@@ -318,6 +399,7 @@ function PlayerHomePage() {
                   <button
                     type="button"
                     className="player-home__scroll-btn"
+                    aria-label="Scroll tournaments left"
                     onClick={() => scroll(tournamentsScrollRef, "left")}
                   >
                     ‹
@@ -326,6 +408,7 @@ function PlayerHomePage() {
                   <button
                     type="button"
                     className="player-home__scroll-btn"
+                    aria-label="Scroll tournaments right"
                     onClick={() => scroll(tournamentsScrollRef, "right")}
                   >
                     ›
@@ -338,45 +421,33 @@ function PlayerHomePage() {
               className="player-home__horizontal-scroll"
               ref={tournamentsScrollRef}
             >
-              {tournaments.length === 0 ? (
+              {visibleTournaments.length === 0 ? (
                 <p
+                  role="status"
                   style={{
-                    color: "#888",
+                    color: "#555",
                     fontSize: "0.9rem",
                     padding: "8px 0",
+                    fontWeight: 700,
                   }}
                 >
                   No tournaments available.
                 </p>
               ) : (
-                tournaments.map((tournament) => {
-                  const categories = tournament.categories || [];
-
-                  const canApply =
-                    categories.length === 0 ||
-                    categories.includes(playerCategory) ||
-                    categories.includes("Open");
-
-                  const badge =
-                    categories.length === 1
-                      ? getCategoryBadge(categories[0])
-                      : "🎾";
-
-                  return (
-                    <TournamentCard
-                      key={tournament.id}
-                      categoryBadge={badge}
-                      name={tournament.name}
-                      info={tournament.info}
-                      buttonLabel="View"
-                      disabled={!canApply}
-                      disabledLabel="Not eligible"
-                      onView={() =>
-                        navigate(`/player/tournaments/view/${tournament.id}`)
-                      }
-                    />
-                  );
-                })
+                visibleTournaments.map((tournament) => (
+                  <TournamentCard
+                    key={tournament.id}
+                    categoryBadge={tournament.badge}
+                    name={tournament.name}
+                    info={tournament.info}
+                    buttonLabel="View"
+                    disabled={!tournament.canApply}
+                    disabledLabel="Not eligible"
+                    onView={() =>
+                      navigate(`/player/tournaments/view/${tournament.id}`)
+                    }
+                  />
+                ))
               )}
             </div>
           </section>
@@ -384,7 +455,10 @@ function PlayerHomePage() {
           <section className="player-home__section">
             <div className="player-home__section-header">
               <div className="player-home__section-title-wrap">
-                <span className="player-home__icon-gradient-wrap">
+                <span
+                  className="player-home__icon-gradient-wrap"
+                  aria-hidden="true"
+                >
                   <Icon
                     icon="mingcute:fire-fill"
                     className="player-home__section-icon"
@@ -397,6 +471,7 @@ function PlayerHomePage() {
               <button
                 type="button"
                 className="player-home__section-more-button"
+                aria-label="See more courts"
                 onClick={() => navigate("/player/courts")}
               >
                 See more...
@@ -404,7 +479,7 @@ function PlayerHomePage() {
             </div>
 
             <div className="player-home__courts-grid">
-              {courts.slice(0, 3).map((court, index) => (
+              {visibleCourts.map((court, index) => (
                 <CourtCard
                   key={court.id}
                   name={court.name || "Court"}

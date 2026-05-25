@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Icon } from "@iconify/react";
 import { useNavigate } from "react-router-dom";
 import { getCourts } from "../../firebase/services";
@@ -21,26 +21,32 @@ function BookCourtPage() {
   const [courts, setCourts] = useState<Court[]>([]);
   const [selectedType, setSelectedType] = useState("All");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    const fetchCourts = async () => {
-      try {
-        const data = await getCourts();
-        setCourts(data as Court[]);
-      } catch (error) {
-        console.error("Error fetching courts:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchCourts = useCallback(async () => {
+    setLoading(true);
+    setError("");
 
-    fetchCourts();
+    try {
+      const data = await getCourts();
+      setCourts(data as Court[]);
+    } catch (error) {
+      console.error("Error fetching courts:", error);
+      setError("Error loading courts. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const filteredCourts =
-    selectedType === "All"
-      ? courts
-      : courts.filter((court) => court.courtType === selectedType);
+  useEffect(() => {
+    fetchCourts();
+  }, [fetchCourts]);
+
+  const filteredCourts = useMemo(() => {
+    if (selectedType === "All") return courts;
+
+    return courts.filter((court) => court.courtType === selectedType);
+  }, [courts, selectedType]);
 
   return (
     <div className="book-court">
@@ -77,7 +83,9 @@ function BookCourtPage() {
                   aria-label={`Filter courts by ${type}`}
                   onClick={() => setSelectedType(type)}
                   style={{
-                    border: isSelected ? "2px solid #111111" : "1px solid #dddddd",
+                    border: isSelected
+                      ? "2px solid #111111"
+                      : "1px solid #dddddd",
                     borderRadius: "999px",
                     padding: "0.65rem 1rem",
                     fontWeight: 800,
@@ -86,7 +94,7 @@ function BookCourtPage() {
                     background: isSelected
                       ? "linear-gradient(180deg, #bfe212 0%, #6f8500 100%)"
                       : "#ffffff",
-                    color: isSelected ? "#ffffff" : "#111111",
+                    color: isSelected ? "#111111" : "#111111",
                     boxShadow: isSelected
                       ? "0 8px 18px rgba(15, 14, 12, 0.16)"
                       : "0 4px 12px rgba(15, 14, 12, 0.08)",
@@ -99,11 +107,19 @@ function BookCourtPage() {
           </div>
 
           {loading ? (
-            <p className="book-court__loading">Loading courts...</p>
+            <p className="book-court__loading" role="status">
+              Loading courts...
+            </p>
+          ) : error ? (
+            <p className="book-court__loading" role="alert">
+              {error}
+            </p>
           ) : courts.length === 0 ? (
-            <p className="book-court__loading">No courts available.</p>
+            <p className="book-court__loading" role="status">
+              No courts available.
+            </p>
           ) : filteredCourts.length === 0 ? (
-            <p className="book-court__loading">
+            <p className="book-court__loading" role="status">
               No courts found for this surface.
             </p>
           ) : (

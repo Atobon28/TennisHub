@@ -1,5 +1,11 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   addTournament,
   deleteTournament,
@@ -37,6 +43,7 @@ export interface Tournament {
   tournamentId?: string;
   level?: number;
   image?: string;
+  createdAt?: string;
   [key: string]: unknown;
 }
 
@@ -82,10 +89,7 @@ interface TournamentsContextType {
   loadTournamentRegistrations: (
     tournamentId: string,
   ) => Promise<TournamentRegistration[]>;
-  createTournament: (
-    adminId: string,
-    tournamentData: object,
-  ) => Promise<void>;
+  createTournament: (adminId: string, tournamentData: object) => Promise<void>;
   editTournament: (
     tournamentId: string,
     tournamentData: object,
@@ -130,22 +134,24 @@ export function TournamentsProvider({ children }: { children: ReactNode }) {
   >([]);
   const [selectedTournament, setSelectedTournament] =
     useState<Tournament | null>(null);
-  const [registrations, setRegistrations] = useState<
-    TournamentRegistration[]
-  >([]);
+  const [registrations, setRegistrations] = useState<TournamentRegistration[]>(
+    [],
+  );
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const clearTournamentError = () => {
+  const clearTournamentError = useCallback(() => {
     setError("");
-  };
+  }, []);
 
-  const getErrorMessage = (err: unknown) => {
+  const getErrorMessage = useCallback((err: unknown) => {
     if (err instanceof Error) return err.message;
-    return "Something went wrong with tournaments.";
-  };
 
-  const loadTournaments = async () => {
+    return "Something went wrong with tournaments.";
+  }, []);
+
+  const loadTournaments = useCallback(async () => {
     setLoading(true);
     setError("");
 
@@ -157,207 +163,283 @@ export function TournamentsProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getErrorMessage]);
 
-  const loadAdminTournaments = async (adminId: string) => {
-    setLoading(true);
-    setError("");
+  const loadAdminTournaments = useCallback(
+    async (adminId: string) => {
+      setLoading(true);
+      setError("");
 
-    try {
-      const data = (await getAdminTournaments(adminId)) as Tournament[];
-      setAdminTournaments(data);
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  };
+      try {
+        const data = (await getAdminTournaments(adminId)) as Tournament[];
+        setAdminTournaments(data);
+      } catch (err) {
+        setError(getErrorMessage(err));
+      } finally {
+        setLoading(false);
+      }
+    },
+    [getErrorMessage],
+  );
 
-  const loadPlayerTournaments = async (playerId: string) => {
-    setLoading(true);
-    setError("");
+  const loadPlayerTournaments = useCallback(
+    async (playerId: string) => {
+      setLoading(true);
+      setError("");
 
-    try {
-      const data = (await getPlayerTournaments(
-        playerId,
-      )) as TournamentRegistration[];
-      setPlayerTournaments(data);
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  };
+      try {
+        const data = (await getPlayerTournaments(
+          playerId,
+        )) as TournamentRegistration[];
+        setPlayerTournaments(data);
+      } catch (err) {
+        setError(getErrorMessage(err));
+      } finally {
+        setLoading(false);
+      }
+    },
+    [getErrorMessage],
+  );
 
-  const loadTournamentById = async (tournamentId: string) => {
-    setLoading(true);
-    setError("");
+  const loadTournamentById = useCallback(
+    async (tournamentId: string) => {
+      setLoading(true);
+      setError("");
 
-    try {
-      const data = (await getTournaments()) as Tournament[];
-      const tournament =
-        data.find((item) => item.id === tournamentId) || null;
+      try {
+        const data = (await getTournaments()) as Tournament[];
+        const tournament =
+          data.find((item) => item.id === tournamentId) || null;
 
-      setSelectedTournament(tournament);
-      return tournament;
-    } catch (err) {
-      setError(getErrorMessage(err));
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
+        setSelectedTournament(tournament);
+        return tournament;
+      } catch (err) {
+        setError(getErrorMessage(err));
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [getErrorMessage],
+  );
 
-  const loadTournamentRegistrations = async (tournamentId: string) => {
-    setLoading(true);
-    setError("");
+  const loadTournamentRegistrations = useCallback(
+    async (tournamentId: string) => {
+      setLoading(true);
+      setError("");
 
-    try {
-      const data = (await getTournamentRegistrations(
-        tournamentId,
-      )) as TournamentRegistration[];
+      try {
+        const data = (await getTournamentRegistrations(
+          tournamentId,
+        )) as TournamentRegistration[];
 
-      setRegistrations(data);
-      return data;
-    } catch (err) {
-      setError(getErrorMessage(err));
-      return [];
-    } finally {
-      setLoading(false);
-    }
-  };
+        setRegistrations(data);
+        return data;
+      } catch (err) {
+        setError(getErrorMessage(err));
+        return [];
+      } finally {
+        setLoading(false);
+      }
+    },
+    [getErrorMessage],
+  );
 
-  const createTournament = async (
-    adminId: string,
-    tournamentData: object,
-  ) => {
-    setLoading(true);
-    setError("");
+  const createTournament = useCallback(
+    async (adminId: string, tournamentData: object) => {
+      setLoading(true);
+      setError("");
 
-    try {
-      await addTournament(adminId, tournamentData);
-      await loadAdminTournaments(adminId);
-    } catch (err) {
-      setError(getErrorMessage(err));
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
+      try {
+        await addTournament(adminId, tournamentData);
 
-  const editTournament = async (
-    tournamentId: string,
-    tournamentData: object,
-  ) => {
-    setLoading(true);
-    setError("");
+        const data = (await getAdminTournaments(adminId)) as Tournament[];
+        setAdminTournaments(data);
+      } catch (err) {
+        setError(getErrorMessage(err));
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [getErrorMessage],
+  );
 
-    try {
-      await updateTournament(tournamentId, tournamentData);
-    } catch (err) {
-      setError(getErrorMessage(err));
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
+  const editTournament = useCallback(
+    async (tournamentId: string, tournamentData: object) => {
+      setLoading(true);
+      setError("");
 
-  const removeTournament = async (tournamentId: string) => {
-    setLoading(true);
-    setError("");
+      try {
+        await updateTournament(tournamentId, tournamentData);
 
-    try {
-      await deleteTournament(tournamentId);
+        setTournaments((currentTournaments) =>
+          currentTournaments.map((tournament) =>
+            tournament.id === tournamentId
+              ? { ...tournament, ...tournamentData }
+              : tournament,
+          ),
+        );
 
-      setTournaments((currentTournaments) =>
-        currentTournaments.filter(
-          (tournament) => tournament.id !== tournamentId,
-        ),
-      );
+        setAdminTournaments((currentTournaments) =>
+          currentTournaments.map((tournament) =>
+            tournament.id === tournamentId
+              ? { ...tournament, ...tournamentData }
+              : tournament,
+          ),
+        );
 
-      setAdminTournaments((currentTournaments) =>
-        currentTournaments.filter(
-          (tournament) => tournament.id !== tournamentId,
-        ),
-      );
-    } catch (err) {
-      setError(getErrorMessage(err));
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
+        setSelectedTournament((currentTournament) =>
+          currentTournament?.id === tournamentId
+            ? { ...currentTournament, ...tournamentData }
+            : currentTournament,
+        );
+      } catch (err) {
+        setError(getErrorMessage(err));
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [getErrorMessage],
+  );
 
-  const registerInTournament = async (
-    playerId: string,
-    playerUsername: string,
-    tournament: Tournament,
-    registrationInfo: RegistrationInfo,
-  ) => {
-    setLoading(true);
-    setError("");
+  const removeTournament = useCallback(
+    async (tournamentId: string) => {
+      setLoading(true);
+      setError("");
 
-    try {
-      await joinTournament(
-        playerId,
-        playerUsername,
-        tournament,
-        registrationInfo,
-      );
+      try {
+        await deleteTournament(tournamentId);
 
-      await loadPlayerTournaments(playerId);
-      await loadTournamentRegistrations(tournament.id);
-    } catch (err) {
-      setError(getErrorMessage(err));
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
+        setTournaments((currentTournaments) =>
+          currentTournaments.filter(
+            (tournament) => tournament.id !== tournamentId,
+          ),
+        );
 
-  const unregisterFromTournament = async (playerTournamentId: string) => {
-    setLoading(true);
-    setError("");
+        setAdminTournaments((currentTournaments) =>
+          currentTournaments.filter(
+            (tournament) => tournament.id !== tournamentId,
+          ),
+        );
 
-    try {
-      await leaveTournament(playerTournamentId);
+        setSelectedTournament((currentTournament) =>
+          currentTournament?.id === tournamentId ? null : currentTournament,
+        );
+      } catch (err) {
+        setError(getErrorMessage(err));
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [getErrorMessage],
+  );
 
-      setPlayerTournaments((currentTournaments) =>
-        currentTournaments.filter(
-          (tournament) => tournament.id !== playerTournamentId,
-        ),
-      );
-    } catch (err) {
-      setError(getErrorMessage(err));
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
+  const registerInTournament = useCallback(
+    async (
+      playerId: string,
+      playerUsername: string,
+      tournament: Tournament,
+      registrationInfo: RegistrationInfo,
+    ) => {
+      setLoading(true);
+      setError("");
+
+      try {
+        await joinTournament(
+          playerId,
+          playerUsername,
+          tournament,
+          registrationInfo,
+        );
+
+        const [playerData, registrationData] = await Promise.all([
+          getPlayerTournaments(playerId),
+          getTournamentRegistrations(tournament.id),
+        ]);
+
+        setPlayerTournaments(playerData as TournamentRegistration[]);
+        setRegistrations(registrationData as TournamentRegistration[]);
+      } catch (err) {
+        setError(getErrorMessage(err));
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [getErrorMessage],
+  );
+
+  const unregisterFromTournament = useCallback(
+    async (playerTournamentId: string) => {
+      setLoading(true);
+      setError("");
+
+      try {
+        await leaveTournament(playerTournamentId);
+
+        setPlayerTournaments((currentTournaments) =>
+          currentTournaments.filter(
+            (tournament) => tournament.id !== playerTournamentId,
+          ),
+        );
+      } catch (err) {
+        setError(getErrorMessage(err));
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [getErrorMessage],
+  );
+
+  const value = useMemo(
+    () => ({
+      tournaments,
+      adminTournaments,
+      playerTournaments,
+      selectedTournament,
+      registrations,
+      loading,
+      error,
+      loadTournaments,
+      loadAdminTournaments,
+      loadPlayerTournaments,
+      loadTournamentById,
+      loadTournamentRegistrations,
+      createTournament,
+      editTournament,
+      removeTournament,
+      registerInTournament,
+      unregisterFromTournament,
+      clearTournamentError,
+    }),
+    [
+      tournaments,
+      adminTournaments,
+      playerTournaments,
+      selectedTournament,
+      registrations,
+      loading,
+      error,
+      loadTournaments,
+      loadAdminTournaments,
+      loadPlayerTournaments,
+      loadTournamentById,
+      loadTournamentRegistrations,
+      createTournament,
+      editTournament,
+      removeTournament,
+      registerInTournament,
+      unregisterFromTournament,
+      clearTournamentError,
+    ],
+  );
 
   return (
-    <TournamentsContext.Provider
-      value={{
-        tournaments,
-        adminTournaments,
-        playerTournaments,
-        selectedTournament,
-        registrations,
-        loading,
-        error,
-        loadTournaments,
-        loadAdminTournaments,
-        loadPlayerTournaments,
-        loadTournamentById,
-        loadTournamentRegistrations,
-        createTournament,
-        editTournament,
-        removeTournament,
-        registerInTournament,
-        unregisterFromTournament,
-        clearTournamentError,
-      }}
-    >
+    <TournamentsContext.Provider value={value}>
       {children}
     </TournamentsContext.Provider>
   );
