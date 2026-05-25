@@ -208,3 +208,42 @@
     width: 60%;
   }
 }
+
+/* ── ACCESSIBILITY CONTRAST FIXES ── */
+
+.admin-tournaments__loading {
+  color: #555555;
+  font-weight: 700;
+}
+
+.admin-tournaments__modal-title,
+.admin-tournaments__modal-label {
+  color: #ffffff;
+}
+
+.admin-tournaments__modal-input {
+  border: 1.5px solid #777777;
+}
+
+.admin-tournaments__modal-input::placeholder {
+  color: #d1d1d1;
+}
+
+.admin-tournaments__modal-confirm {
+  color: #111111;
+  font-weight: 900;
+}
+
+.admin-tournaments__modal-close:focus-visible,
+.admin-tournaments__modal-input:focus-visible,
+.admin-tournaments__modal-confirm:focus-visible {
+  outline: 3px solid #bfe212;
+  outline-offset: 3px;
+}
+
+@media (min-width: 1024px) {
+  .admin-tournaments__modal-title,
+  .admin-tournaments__modal-label {
+    color: #ffffff;
+  }
+}

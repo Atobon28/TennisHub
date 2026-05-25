@@ -422,3 +422,46 @@
   color: var(--player-white);
   margin: 0 0 4px 0;
 }
+
+/* ── ACCESSIBILITY CONTRAST FIXES ── */
+
+.player-profile__username,
+.player-profile__link,
+.player-profile__tab,
+.player-profile__empty {
+  color: #555555;
+}
+
+.player-profile__link--logout,
+.player-profile__modal-error {
+  color: #b42318;
+  font-weight: 800;
+}
+
+.player-profile__tab--active {
+  color: #111111;
+}
+
+.player-profile__modal-confirm {
+  color: #111111;
+  font-weight: 900;
+}
+
+.player-profile__modal-input {
+  border: 1.5px solid #777777;
+}
+
+.player-profile__modal-input::placeholder {
+  color: #d1d1d1;
+}
+
+.player-profile__edit-btn:focus-visible,
+.player-profile__level-badge--clickable:focus-visible,
+.player-profile__link:focus-visible,
+.player-profile__tab:focus-visible,
+.player-profile__modal-close:focus-visible,
+.player-profile__modal-input:focus-visible,
+.player-profile__modal-confirm:focus-visible {
+  outline: 3px solid #bfe212;
+  outline-offset: 3px;
+}

@@ -265,3 +265,31 @@
     padding: 28px;
   }
 }
+
+/* ── ACCESSIBILITY CONTRAST FIXES ── */
+
+.admin-courts__see-more-btn,
+.admin-courts__modal-confirm {
+  color: #111111;
+  font-weight: 900;
+}
+
+.admin-courts__loading,
+.book-court__loading {
+  color: #555555;
+  font-weight: 700;
+}
+
+.admin-courts__modal-photo-placeholder,
+.admin-courts__modal-input::placeholder {
+  color: #555555;
+}
+
+.admin-courts__modal-close:focus-visible,
+.admin-courts__see-more-btn:focus-visible,
+.admin-courts__modal-photo:focus-visible,
+.admin-courts__modal-confirm:focus-visible,
+.admin-courts__modal-input:focus-visible {
+  outline: 3px solid #111111;
+  outline-offset: 3px;
+}

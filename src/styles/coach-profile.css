@@ -389,3 +389,70 @@
     align-self: center;
   }
 }
+
+/* ── ACCESSIBILITY CONTRAST FIXES ── */
+
+.coach-profile__username,
+.coach-profile__link,
+.coach-profile__change-price {
+  color: #555555;
+}
+
+.coach-profile__link--logout,
+.coach-profile__modal-error {
+  color: #b42318;
+  font-weight: 800;
+}
+
+.coach-profile__saved-msg {
+  color: #1f7a3a;
+  font-weight: 900;
+}
+
+.coach-profile__check-circle {
+  border: 2px solid #555555;
+}
+
+.coach-profile__check-circle--active {
+  border-color: #111111;
+}
+
+.coach-profile__save-btn,
+.coach-profile__modal-confirm {
+  color: #111111;
+  font-weight: 900;
+}
+
+.coach-profile__modal-title,
+.coach-profile__modal-label,
+.coach-profile__modal-subtitle {
+  color: #ffffff;
+}
+
+.coach-profile__modal-input {
+  border: 1.5px solid #777777;
+}
+
+.coach-profile__modal-input::placeholder {
+  color: #d1d1d1;
+}
+
+.coach-profile__edit-btn:focus-visible,
+.coach-profile__link:focus-visible,
+.coach-profile__change-price:focus-visible,
+.coach-profile__check-circle:focus-visible,
+.coach-profile__save-btn:focus-visible,
+.coach-profile__modal-close:focus-visible,
+.coach-profile__modal-input:focus-visible,
+.coach-profile__modal-confirm:focus-visible {
+  outline: 3px solid #bfe212;
+  outline-offset: 3px;
+}
+
+@media (min-width: 1024px) {
+  .coach-profile__modal-title,
+  .coach-profile__modal-label,
+  .coach-profile__modal-subtitle {
+    color: #ffffff;
+  }
+}

@@ -283,3 +283,40 @@ body,
     margin: 16px 0 28px;
   }
 }
+
+/* ── ACCESSIBILITY CONTRAST FIXES ── */
+
+.access-form__button-primary {
+  color: #111111;
+  text-shadow: none;
+}
+
+.access-screen__button-dark:hover,
+.access-form__button-primary:hover {
+  filter: brightness(0.96);
+}
+
+.access-form__error {
+  color: #b42318;
+  font-weight: 800;
+}
+
+.access-form__footer,
+.access-form__footer-line {
+  color: #111111;
+}
+
+.access-form__footer-link,
+.access-form__link {
+  color: #5f7300;
+  font-weight: 800;
+}
+
+.access-form__input:focus-visible,
+.access-screen__button-dark:focus-visible,
+.access-form__button-primary:focus-visible,
+.access-form__footer-link:focus-visible,
+.access-form__link:focus-visible {
+  outline: 3px solid #111111;
+  outline-offset: 3px;
+}
