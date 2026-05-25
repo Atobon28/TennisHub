@@ -2,14 +2,12 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import AdBanners from "../../components/player/AdBanners";
 import { useCourts } from "../../context";
-import { useToast } from "../../context/ToastContext";
 import "../../styles/admin-court-view.css";
 import court1 from "../../assets/court-1.jpg";
 
 function AdminCourtViewPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { showToast } = useToast();
 
   const {
     selectedCourt,
@@ -30,6 +28,7 @@ function AdminCourtViewPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
 
   const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
   const [formError, setFormError] = useState("");
 
   useEffect(() => {
@@ -62,6 +61,7 @@ function AdminCourtViewPage() {
       typeof selectedCourt.image === "string" ? selectedCourt.image : "",
     );
     setImageFile(null);
+    setMessage("");
     setFormError("");
     clearCourtError();
     setShowModal(true);
@@ -75,8 +75,8 @@ function AdminCourtViewPage() {
     clearCourtError();
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
 
     if (!file) return;
 
@@ -104,6 +104,7 @@ function AdminCourtViewPage() {
 
     setSaving(true);
     setFormError("");
+    setMessage("");
     clearCourtError();
 
     try {
@@ -124,17 +125,15 @@ function AdminCourtViewPage() {
 
       await loadCourtById(selectedCourt.id);
 
-      showToast("Court updated successfully.", "success");
+      setMessage("Court updated successfully.");
       setShowModal(false);
     } catch (error) {
       console.error("Error updating court:", error);
 
       if (error instanceof Error) {
         setFormError(error.message);
-        showToast(error.message, "error");
       } else {
         setFormError("Error updating court. Please try again.");
-        showToast("Error updating court. Please try again.", "error");
       }
     } finally {
       setSaving(false);
@@ -289,7 +288,7 @@ function AdminCourtViewPage() {
                 className="admin-court-view__modal-input"
                 value={tempName}
                 required
-                onChange={(e) => setTempName(e.target.value)}
+                onChange={(event) => setTempName(event.target.value)}
               />
 
               <label
@@ -304,7 +303,7 @@ function AdminCourtViewPage() {
                 className="admin-court-view__modal-input"
                 value={tempCourtType}
                 required
-                onChange={(e) => setTempCourtType(e.target.value)}
+                onChange={(event) => setTempCourtType(event.target.value)}
               >
                 <option value="">Select court type</option>
                 <option value="Grass">Grass</option>
@@ -326,7 +325,7 @@ function AdminCourtViewPage() {
                 className="admin-court-view__modal-input"
                 value={tempContact}
                 required
-                onChange={(e) => setTempContact(e.target.value)}
+                onChange={(event) => setTempContact(event.target.value)}
                 placeholder="Example: 3001234567"
               />
 
@@ -343,7 +342,7 @@ function AdminCourtViewPage() {
                 className="admin-court-view__modal-input"
                 value={tempAddress}
                 required
-                onChange={(e) => setTempAddress(e.target.value)}
+                onChange={(event) => setTempAddress(event.target.value)}
               />
 
               <label

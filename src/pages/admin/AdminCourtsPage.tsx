@@ -1,12 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Icon } from "@iconify/react";
 import AdBanners from "../../components/player/AdBanners";
 import ConfirmModal from "../../components/common/ConfirmModal";
-import { Icon } from "@iconify/react";
 import { useCourts } from "../../context";
 import { useAuth } from "../../context/useAuth";
-import { useToast } from "../../context/ToastContext";
-import ConfirmModal from "../../components/common/ConfirmModal";
 import "../../styles/admin-courts.css";
 import "../../styles/create-match.css";
 import court1 from "../../assets/court-1.jpg";
@@ -41,7 +39,6 @@ function AdminCourtsPage() {
 
   const [formError, setFormError] = useState("");
   const [creating, setCreating] = useState(false);
-  const [courtToDelete, setCourtToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     if (!userData?.uid) return;
@@ -95,8 +92,8 @@ function AdminCourtsPage() {
     });
   };
 
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
 
     if (!file) return;
 
@@ -107,7 +104,6 @@ function AdminCourtsPage() {
     } catch (error) {
       console.error("Error resizing image:", error);
       setFormError("Error uploading image. Please try another one.");
-      showToast("Error uploading image.", "error");
     }
   };
 
@@ -152,11 +148,9 @@ function AdminCourtsPage() {
       });
 
       handleClose();
-      showToast("Court created successfully.", "success");
     } catch (error) {
       console.error("Error adding court:", error);
       setFormError("Error creating court. Please try again.");
-      showToast("Error creating court. Please try again.", "error");
     } finally {
       isCreatingRef.current = false;
       setCreating(false);
@@ -345,7 +339,7 @@ function AdminCourtsPage() {
                           className="admin-courts__see-more-btn"
                           aria-label={`Delete ${courtName}`}
                           onClick={() => handleDeleteCourt(court.id)}
-                          style={{ backgroundColor: "#c92a2a" }}
+                          style={{ backgroundColor: "#b42318" }}
                         >
                           Delete
                         </button>
@@ -391,7 +385,7 @@ function AdminCourtsPage() {
                     placeholder="Court name..."
                     value={newName}
                     required
-                    onChange={(e) => setNewName(e.target.value)}
+                    onChange={(event) => setNewName(event.target.value)}
                   />
                 </div>
 
@@ -408,7 +402,7 @@ function AdminCourtsPage() {
                     className="create-match__select"
                     value={newCourtType}
                     required
-                    onChange={(e) => setNewCourtType(e.target.value)}
+                    onChange={(event) => setNewCourtType(event.target.value)}
                   >
                     <option value="">Select court type</option>
 
@@ -436,7 +430,7 @@ function AdminCourtsPage() {
                     placeholder="Contact phone..."
                     value={newContact}
                     required
-                    onChange={(e) => setNewContact(e.target.value)}
+                    onChange={(event) => setNewContact(event.target.value)}
                   />
                 </div>
 
@@ -452,7 +446,7 @@ function AdminCourtsPage() {
                     placeholder="Address..."
                     value={newAddress}
                     required
-                    onChange={(e) => setNewAddress(e.target.value)}
+                    onChange={(event) => setNewAddress(event.target.value)}
                   />
                 </div>
               </div>

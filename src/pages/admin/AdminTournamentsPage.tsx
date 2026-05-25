@@ -8,8 +8,6 @@ import { useCourts, useTournaments } from "../../context";
 import { useAuth } from "../../context/useAuth";
 import "../../styles/admin-tournaments.css";
 import "../../styles/create-match.css";
-import ConfirmModal from "../../components/common/ConfirmModal";
-import { useToast } from "../../context/ToastContext";
 
 const timeOptions = [
   "06:00",
@@ -51,7 +49,6 @@ interface CapacityByCategory {
 function AdminTournamentsPage() {
   const navigate = useNavigate();
   const { userData } = useAuth();
-  const { showToast } = useToast();
 
   const {
     adminTournaments,
@@ -75,6 +72,7 @@ function AdminTournamentsPage() {
   const [tournamentToDelete, setTournamentToDelete] = useState<string | null>(
     null,
   );
+
   const [newName, setNewName] = useState("");
   const [newDate, setNewDate] = useState("");
   const [newHour, setNewHour] = useState("");
@@ -90,9 +88,6 @@ function AdminTournamentsPage() {
 
   const [formError, setFormError] = useState("");
   const [creating, setCreating] = useState(false);
-  const [tournamentToDelete, setTournamentToDelete] = useState<string | null>(
-    null,
-  );
 
   const loading = tournamentsLoading || courtsLoading;
   const pageError = tournamentsError || courtsError;
@@ -170,9 +165,7 @@ function AdminTournamentsPage() {
     const capacityByCategory: CapacityByCategory = {};
 
     newCategories.forEach((category) => {
-      const singlesValue = Number(
-        capacityInputs[category]?.singlesPlayers || 0,
-      );
+      const singlesValue = Number(capacityInputs[category]?.singlesPlayers || 0);
       const doublesValue = Number(capacityInputs[category]?.doublesPairs || 0);
 
       capacityByCategory[category] = {};
@@ -191,9 +184,7 @@ function AdminTournamentsPage() {
 
   const validateCapacity = () => {
     for (const category of newCategories) {
-      const singlesValue = Number(
-        capacityInputs[category]?.singlesPlayers || 0,
-      );
+      const singlesValue = Number(capacityInputs[category]?.singlesPlayers || 0);
       const doublesValue = Number(capacityInputs[category]?.doublesPairs || 0);
 
       if (
@@ -255,26 +246,23 @@ function AdminTournamentsPage() {
 
     const info = `${newDate} - ${newHour} - Type: ${typeText} - Courts: ${courtsText} - Categories: ${categoriesText}`;
 
-    const newTournament = {
-      name: newName.trim(),
-      info,
-      date: newDate,
-      hour: newHour,
-      tournamentType: newTournamentType,
-      courts: selectedCourts,
-      categories: newCategories,
-      capacityByCategory,
-      createdAt: new Date().toISOString(),
-    };
-
     try {
-      await createTournament(userData.uid, newTournament);
+      await createTournament(userData.uid, {
+        name: newName.trim(),
+        info,
+        date: newDate,
+        hour: newHour,
+        tournamentType: newTournamentType,
+        courts: selectedCourts,
+        categories: newCategories,
+        capacityByCategory,
+        createdAt: new Date().toISOString(),
+      });
+
       handleClose();
-      showToast("Error creating tournament. Please try again.", "error");
     } catch (error) {
       console.error("Error adding tournament:", error);
       setFormError("Error creating tournament. Please try again.");
-      showToast("Tournament created successfully.", "success");
     } finally {
       setCreating(false);
     }
@@ -426,7 +414,7 @@ function AdminTournamentsPage() {
                     onClick={() => handleDeleteTournament(tournament.id)}
                     style={{
                       marginTop: "0.75rem",
-                      backgroundColor: "#c92a2a",
+                      backgroundColor: "#b42318",
                       width: "100%",
                     }}
                   >
@@ -457,12 +445,6 @@ function AdminTournamentsPage() {
               className="admin-tournaments__modal-close"
               aria-label="Close create tournament modal"
               onClick={handleClose}
-              style={{
-                position: "sticky",
-                top: 0,
-                marginLeft: "auto",
-                zIndex: 5,
-              }}
             >
               ✕
             </button>
@@ -490,7 +472,7 @@ function AdminTournamentsPage() {
                     placeholder="Tournament name..."
                     value={newName}
                     required
-                    onChange={(e) => setNewName(e.target.value)}
+                    onChange={(event) => setNewName(event.target.value)}
                   />
                 </div>
 
@@ -507,9 +489,9 @@ function AdminTournamentsPage() {
                     className="create-match__select"
                     value={newTournamentType}
                     required
-                    onChange={(e) =>
+                    onChange={(event) =>
                       setNewTournamentType(
-                        e.target.value as "singles" | "doubles" | "both",
+                        event.target.value as "singles" | "doubles" | "both",
                       )
                     }
                   >
@@ -581,128 +563,85 @@ function AdminTournamentsPage() {
                     3. Spots by Category
                   </h3>
 
-                  <p
-                    style={{
-                      margin: 0,
-                      color: "#555",
-                      fontWeight: 700,
-                      fontSize: "0.9rem",
-                    }}
-                  >
-                    For Singles, enter player spots. For Doubles, enter pair
-                    spots.
-                  </p>
+                  {newCategories.map((category) => {
+                    const categorySlug = category
+                      .toLowerCase()
+                      .replace(/\s+/g, "-");
 
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "1rem",
-                    }}
-                  >
-                    {newCategories.map((category) => {
-                      const categorySlug = category
-                        .toLowerCase()
-                        .replace(/\s+/g, "-");
+                    return (
+                      <div
+                        key={category}
+                        style={{
+                          border: "1px solid rgba(0,0,0,0.12)",
+                          borderRadius: "16px",
+                          padding: "1rem",
+                          backgroundColor: "#f8f8f8",
+                        }}
+                      >
+                        <h4>{category}</h4>
 
-                      return (
-                        <div
-                          key={category}
-                          style={{
-                            border: "1px solid rgba(0,0,0,0.12)",
-                            borderRadius: "16px",
-                            padding: "1rem",
-                            backgroundColor: "#f8f8f8",
-                          }}
-                        >
-                          <h4
-                            style={{
-                              margin: "0 0 0.75rem",
-                              fontSize: "1rem",
-                              fontWeight: 900,
-                              color: "#111",
-                            }}
-                          >
-                            {category}
-                          </h4>
+                        {(newTournamentType === "singles" ||
+                          newTournamentType === "both") && (
+                          <>
+                            <label
+                              className="create-match__label"
+                              htmlFor={`${categorySlug}-singles-spots`}
+                            >
+                              Singles player spots:
+                            </label>
 
-                          <div
-                            style={{
-                              display: "grid",
-                              gridTemplateColumns:
-                                newTournamentType === "both"
-                                  ? "repeat(auto-fit, minmax(180px, 1fr))"
-                                  : "1fr",
-                              gap: "0.75rem",
-                            }}
-                          >
-                            {(newTournamentType === "singles" ||
-                              newTournamentType === "both") && (
-                              <div>
-                                <label
-                                  className="create-match__label"
-                                  htmlFor={`${categorySlug}-singles-spots`}
-                                >
-                                  Singles player spots:
-                                </label>
+                            <input
+                              id={`${categorySlug}-singles-spots`}
+                              type="text"
+                              inputMode="numeric"
+                              className="create-match__select"
+                              placeholder="Example: 16"
+                              value={
+                                capacityInputs[category]?.singlesPlayers || ""
+                              }
+                              required
+                              onChange={(event) =>
+                                handleCapacityChange(
+                                  category,
+                                  "singlesPlayers",
+                                  event.target.value,
+                                )
+                              }
+                            />
+                          </>
+                        )}
 
-                                <input
-                                  id={`${categorySlug}-singles-spots`}
-                                  type="text"
-                                  inputMode="numeric"
-                                  className="create-match__select"
-                                  placeholder="Example: 16"
-                                  value={
-                                    capacityInputs[category]?.singlesPlayers ||
-                                    ""
-                                  }
-                                  required
-                                  onChange={(e) =>
-                                    handleCapacityChange(
-                                      category,
-                                      "singlesPlayers",
-                                      e.target.value,
-                                    )
-                                  }
-                                />
-                              </div>
-                            )}
+                        {(newTournamentType === "doubles" ||
+                          newTournamentType === "both") && (
+                          <>
+                            <label
+                              className="create-match__label"
+                              htmlFor={`${categorySlug}-doubles-spots`}
+                            >
+                              Doubles pair spots:
+                            </label>
 
-                            {(newTournamentType === "doubles" ||
-                              newTournamentType === "both") && (
-                              <div>
-                                <label
-                                  className="create-match__label"
-                                  htmlFor={`${categorySlug}-doubles-spots`}
-                                >
-                                  Doubles pair spots:
-                                </label>
-
-                                <input
-                                  id={`${categorySlug}-doubles-spots`}
-                                  type="text"
-                                  inputMode="numeric"
-                                  className="create-match__select"
-                                  placeholder="Example: 8"
-                                  value={
-                                    capacityInputs[category]?.doublesPairs || ""
-                                  }
-                                  required
-                                  onChange={(e) =>
-                                    handleCapacityChange(
-                                      category,
-                                      "doublesPairs",
-                                      e.target.value,
-                                    )
-                                  }
-                                />
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                            <input
+                              id={`${categorySlug}-doubles-spots`}
+                              type="text"
+                              inputMode="numeric"
+                              className="create-match__select"
+                              placeholder="Example: 8"
+                              value={capacityInputs[category]?.doublesPairs || ""}
+                              required
+                              onChange={(event) =>
+                                handleCapacityChange(
+                                  category,
+                                  "doublesPairs",
+                                  event.target.value,
+                                )
+                              }
+                            />
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 
@@ -715,46 +654,38 @@ function AdminTournamentsPage() {
                   Date:
                 </label>
 
-                <div className="create-match__select-wrap">
-                  <input
-                    id="tournament-date"
-                    type="date"
-                    className="create-match__select create-match__date-input"
-                    value={newDate}
-                    required
-                    onChange={(e) => setNewDate(e.target.value)}
-                  />
-                </div>
+                <input
+                  id="tournament-date"
+                  type="date"
+                  className="create-match__select create-match__date-input"
+                  value={newDate}
+                  required
+                  onChange={(event) => setNewDate(event.target.value)}
+                />
 
                 <label className="create-match__label" htmlFor="tournament-hour">
                   Hour:
                 </label>
 
-                <div className="create-match__select-wrap">
-                  <select
-                    id="tournament-hour"
-                    className="create-match__select"
-                    value={newHour}
-                    required
-                    onChange={(e) => setNewHour(e.target.value)}
-                  >
-                    <option value="">Select hour</option>
+                <select
+                  id="tournament-hour"
+                  className="create-match__select"
+                  value={newHour}
+                  required
+                  onChange={(event) => setNewHour(event.target.value)}
+                >
+                  <option value="">Select hour</option>
 
-                    {timeOptions.map((hour) => (
-                      <option key={hour} value={hour}>
-                        {hour}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                  {timeOptions.map((hour) => (
+                    <option key={hour} value={hour}>
+                      {hour}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="create-match__section">
                 <h3 className="create-match__section-title">5. Courts</h3>
-
-                <p className="create-match__label">
-                  Select one or more courts:
-                </p>
 
                 {adminCourts.length === 0 ? (
                   <p className="create-match__error" role="alert">
@@ -767,7 +698,6 @@ function AdminTournamentsPage() {
                       gridTemplateColumns:
                         "repeat(auto-fit, minmax(170px, 1fr))",
                       gap: "0.75rem",
-                      marginTop: "0.75rem",
                     }}
                   >
                     {adminCourts.map((court) => {

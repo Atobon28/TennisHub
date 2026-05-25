@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import AdBanners from "../../components/player/AdBanners";
@@ -7,7 +7,7 @@ import { useTournaments } from "../../context";
 import { useAuth } from "../../context/useAuth";
 import "../../styles/tournaments-page.css";
 
-const categoryFilters = [
+const categoryOptions = [
   "All",
   "Open",
   "First Category",
@@ -20,9 +20,12 @@ const categoryFilters = [
   "Senior",
 ];
 
-const statusFilters = ["All", "Open", "Full", "Closed"];
+const statusOptions = ["All", "Open", "Full", "Closed"];
 
-const getPlayerCategory = (level?: number | null, category?: string | null) => {
+const getPlayerCategory = (
+  level?: number | null,
+  category?: string | null,
+) => {
   if (category) return category;
 
   if (level === 1) return "First Category";
@@ -59,30 +62,49 @@ function TournamentsPage() {
   const { tournaments, loading, error, loadTournaments } = useTournaments();
   const hasLoadedTournaments = useRef(false);
 
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedStatus, setSelectedStatus] = useState("All");
+
   const playerCategory = useMemo(
     () => getPlayerCategory(userData?.level, userData?.category),
     [userData?.level, userData?.category],
   );
 
   const visibleTournaments = useMemo(() => {
-    return tournaments.map((tournament) => {
-      const categories = tournament.categories || [];
+    return tournaments
+      .map((tournament) => {
+        const categories = tournament.categories || [];
+        const status = tournament.status || "Open";
 
-      const canApply =
-        categories.length === 0 ||
-        categories.includes(playerCategory) ||
-        categories.includes("Open");
+        const canApply =
+          categories.length === 0 ||
+          categories.includes(playerCategory) ||
+          categories.includes("Open");
 
-      const badge =
-        categories.length === 1 ? getCategoryBadge(categories[0]) : "🎾";
+        const badge =
+          categories.length === 1 ? getCategoryBadge(categories[0]) : "🎾";
 
-      return {
-        ...tournament,
-        canApply,
-        badge,
-      };
-    });
-  }, [tournaments, playerCategory]);
+        return {
+          ...tournament,
+          categories,
+          status,
+          canApply,
+          badge,
+        };
+      })
+      .filter((tournament) => {
+        const matchesCategory =
+          selectedCategory === "All" ||
+          tournament.categories.includes(selectedCategory) ||
+          (selectedCategory === "Open" &&
+            tournament.categories.includes("Open"));
+
+        const matchesStatus =
+          selectedStatus === "All" || tournament.status === selectedStatus;
+
+        return matchesCategory && matchesStatus;
+      });
+  }, [tournaments, playerCategory, selectedCategory, selectedStatus]);
 
   useEffect(() => {
     if (hasLoadedTournaments.current) return;
@@ -90,20 +112,6 @@ function TournamentsPage() {
     hasLoadedTournaments.current = true;
     loadTournaments();
   }, [loadTournaments]);
-
-  const filteredTournaments = tournaments.filter((tournament) => {
-    const categories = tournament.categories || [];
-    const status = tournament.status || "Open";
-
-    const matchesCategory =
-      selectedCategory === "All" ||
-      categories.includes(selectedCategory) ||
-      (selectedCategory === "Open" && categories.includes("Open"));
-
-    const matchesStatus = selectedStatus === "All" || status === selectedStatus;
-
-    return matchesCategory && matchesStatus;
-  });
 
   return (
     <div className="tournaments-page">
@@ -146,8 +154,9 @@ function TournamentsPage() {
             }}
           >
             <select
+              aria-label="Filter tournaments by category"
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+              onChange={(event) => setSelectedCategory(event.target.value)}
               style={{
                 border: "none",
                 borderRadius: "999px",
@@ -159,16 +168,17 @@ function TournamentsPage() {
                 boxShadow: "0 4px 12px rgba(15, 14, 12, 0.08)",
               }}
             >
-              {categoryFilters.map((category) => (
+              {categoryOptions.map((category) => (
                 <option key={category} value={category}>
-                  Category: {category}
+                  {category === "All" ? "All Categories" : category}
                 </option>
               ))}
             </select>
 
             <select
+              aria-label="Filter tournaments by status"
               value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
+              onChange={(event) => setSelectedStatus(event.target.value)}
               style={{
                 border: "none",
                 borderRadius: "999px",
@@ -180,9 +190,9 @@ function TournamentsPage() {
                 boxShadow: "0 4px 12px rgba(15, 14, 12, 0.08)",
               }}
             >
-              {statusFilters.map((status) => (
+              {statusOptions.map((status) => (
                 <option key={status} value={status}>
-                  Status: {status}
+                  {status === "All" ? "All Statuses" : status}
                 </option>
               ))}
             </select>
@@ -197,12 +207,8 @@ function TournamentsPage() {
               {error}
             </p>
           ) : visibleTournaments.length === 0 ? (
-            <p className="tournaments-page__loading">
-              No tournaments available yet.
-            </p>
-          ) : filteredTournaments.length === 0 ? (
-            <p className="tournaments-page__loading">
-              No tournaments match these filters.
+            <p className="tournaments-page__loading" role="status">
+              No tournaments match your filters.
             </p>
           ) : (
             <div className="tournaments-page__cards-grid">

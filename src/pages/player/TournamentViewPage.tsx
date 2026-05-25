@@ -8,8 +8,6 @@ import { useTournaments } from "../../context";
 import type { EntryType, Tournament } from "../../context/TournamentsContext";
 import "../../styles/tournament-view.css";
 import court1 from "../../assets/court-1.jpg";
-import ConfirmModal from "../../components/common/ConfirmModal";
-import { useToast } from "../../context/ToastContext";
 
 interface PlayerTournament {
   id: string;
@@ -58,7 +56,6 @@ function TournamentViewPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { userData } = useAuth();
-  const { showToast } = useToast();
 
   const {
     selectedTournament,
@@ -189,8 +186,8 @@ function TournamentViewPage() {
             setRegistrationId(null);
           }
         }
-      } catch (err) {
-        console.error("Error loading tournament:", err);
+      } catch (error) {
+        console.error("Error loading tournament:", error);
         setLocalError("Error loading tournament.");
       }
     };
@@ -247,12 +244,11 @@ function TournamentViewPage() {
       setJoined(true);
       setRegistrationId(existingTournament?.id || null);
       setSuccessMessage("Tournament joined successfully.");
-    } catch (err) {
-      console.error("Error joining tournament:", err);
-      showToast("Error joining tournament.", "error");
+    } catch (error) {
+      console.error("Error joining tournament:", error);
 
-      if (err instanceof Error) {
-        setLocalError(err.message);
+      if (error instanceof Error) {
+        setLocalError(error.message);
       } else {
         setLocalError("Error joining tournament.");
       }
@@ -288,10 +284,9 @@ function TournamentViewPage() {
       setEntryType(tournamentType === "doubles" ? "doubles" : "singles");
       setShowLeaveConfirm(false);
       setSuccessMessage("Tournament left successfully.");
-    } catch (err) {
-      console.error("Error leaving tournament:", err);
+    } catch (error) {
+      console.error("Error leaving tournament:", error);
       setLocalError("Error leaving tournament.");
-      showToast("Error leaving tournament.", "error");
     } finally {
       setLeaving(false);
     }
@@ -451,8 +446,8 @@ function TournamentViewPage() {
                     <select
                       id="tournament-entry-type"
                       value={entryType}
-                      onChange={(e) => {
-                        setEntryType(e.target.value as EntryType);
+                      onChange={(event) => {
+                        setEntryType(event.target.value as EntryType);
                         setHasPartner("");
                         setPartnerName("");
                       }}
@@ -487,8 +482,8 @@ function TournamentViewPage() {
                     <select
                       id="tournament-partner-option"
                       value={hasPartner}
-                      onChange={(e) => {
-                        setHasPartner(e.target.value);
+                      onChange={(event) => {
+                        setHasPartner(event.target.value);
                         setPartnerName("");
                       }}
                       style={{
@@ -524,7 +519,7 @@ function TournamentViewPage() {
                       id="tournament-partner-name"
                       type="text"
                       value={partnerName}
-                      onChange={(e) => setPartnerName(e.target.value)}
+                      onChange={(event) => setPartnerName(event.target.value)}
                       placeholder="Enter your partner name..."
                       style={{
                         width: "100%",
