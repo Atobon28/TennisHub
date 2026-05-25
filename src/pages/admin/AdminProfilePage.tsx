@@ -148,13 +148,14 @@ function AdminProfilePage() {
             <div className="admin-profile__avatar-wrap">
               <img
                 src={avatar || court1}
-                alt={name}
+                alt={`${name} admin profile avatar`}
                 className="admin-profile__avatar"
               />
 
               <button
                 type="button"
                 className="admin-profile__edit-btn"
+                aria-label="Upload admin avatar"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadingAvatar || profileLoading}
               >
@@ -176,14 +177,15 @@ function AdminProfilePage() {
 
               {(avatarMsg || profileError || profileSuccess) && (
                 <p
+                  role="status"
                   style={{
                     margin: "0.35rem 0 0",
                     fontSize: "0.8rem",
                     fontWeight: 700,
                     color:
                       avatarMsg.includes("successfully") || profileSuccess
-                        ? "#2f9e44"
-                        : "#e05252",
+                        ? "#1f7a3a"
+                        : "#b42318",
                   }}
                 >
                   {avatarMsg || profileError || profileSuccess}
@@ -216,6 +218,7 @@ function AdminProfilePage() {
               className={`admin-profile__tab ${
                 activeTab === "courts" ? "admin-profile__tab--active" : ""
               }`}
+              aria-label="Show my courts"
               onClick={() => setActiveTab("courts")}
             >
               My Courts
@@ -226,6 +229,7 @@ function AdminProfilePage() {
               className={`admin-profile__tab ${
                 activeTab === "tournaments" ? "admin-profile__tab--active" : ""
               }`}
+              aria-label="Show my tournaments"
               onClick={() => setActiveTab("tournaments")}
             >
               My Tournaments
@@ -236,7 +240,9 @@ function AdminProfilePage() {
             {loading ? (
               <p className="admin-profile__empty">Loading profile data...</p>
             ) : pageError ? (
-              <p className="admin-profile__empty">{pageError}</p>
+              <p className="admin-profile__empty" role="alert">
+                {pageError}
+              </p>
             ) : activeTab === "courts" ? (
               adminCourts.length === 0 ? (
                 <p className="admin-profile__empty">No courts yet.</p>
@@ -244,8 +250,10 @@ function AdminProfilePage() {
                 adminCourts.map((court) => (
                   <div key={court.id} className="admin-profile__court-card">
                     <img
-                      src={typeof court.image === "string" ? court.image : court1}
-                      alt={court.name || "Court"}
+                      src={
+                        typeof court.image === "string" ? court.image : court1
+                      }
+                      alt={`${court.name || "Tennis court"} court image`}
                       className="admin-profile__court-image"
                     />
 
@@ -273,6 +281,9 @@ function AdminProfilePage() {
                       <button
                         type="button"
                         className="admin-profile__link"
+                        aria-label={`See more details for ${
+                          court.name || "this court"
+                        }`}
                         onClick={() =>
                           navigate(`/admin/courts/view/${court.id}`)
                         }
@@ -321,6 +332,7 @@ function AdminProfilePage() {
             <button
               type="button"
               className="admin-profile__modal-close"
+              aria-label="Close change password modal"
               onClick={() => {
                 setShowPasswordModal(false);
                 setPasswordMsg("");
@@ -336,11 +348,15 @@ function AdminProfilePage() {
             <div className="admin-profile__modal-section">
               <h3 className="admin-profile__modal-subtitle">Password</h3>
 
-              <label className="admin-profile__modal-label">
+              <label
+                className="admin-profile__modal-label"
+                htmlFor="new-admin-password"
+              >
                 New Password:
               </label>
 
               <input
+                id="new-admin-password"
                 type="password"
                 className="admin-profile__modal-input"
                 placeholder="New Password..."
@@ -348,11 +364,15 @@ function AdminProfilePage() {
                 onChange={(e) => setNewPassword(e.target.value)}
               />
 
-              <label className="admin-profile__modal-label">
+              <label
+                className="admin-profile__modal-label"
+                htmlFor="confirm-admin-password"
+              >
                 Confirm Password:
               </label>
 
               <input
+                id="confirm-admin-password"
                 type="password"
                 className="admin-profile__modal-input"
                 placeholder="Confirm Password..."
@@ -361,7 +381,9 @@ function AdminProfilePage() {
               />
 
               {passwordMsg && (
-                <p className="admin-profile__modal-error">{passwordMsg}</p>
+                <p className="admin-profile__modal-error" role="alert">
+                  {passwordMsg}
+                </p>
               )}
             </div>
 
